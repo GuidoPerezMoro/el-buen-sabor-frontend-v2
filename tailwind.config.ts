@@ -12,10 +12,14 @@ const config: Config = {
         background: '#f9f9f9', // app background (dominant)
         text: '#0f0f0f', // default text
         primary: '#e66200', // CTA / brand highlight
+        primaryHover: '#cc5200',
         muted: '#c6c6cd', // disabled/inactive background
-        danger: '#ff0000', // error
+        danger: '#ff0000', // errors / danger zone
+        dangerHover: '#cc0000',
         success: '#5cb85c', // success
-        warning: '#eed202', // warning
+        warning: '#eed202', // warnings
+        surface: '#e5e7eb', // secondary buttons
+        surfaceHover: '#d1d5db',
       },
     },
   },
