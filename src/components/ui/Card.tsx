@@ -20,7 +20,7 @@ interface CardProps {
 
 export default function Card({
   imageSrc,
-  imageAlt = 'Card image',
+  imageAlt,
   title,
   line1,
   line2,
@@ -35,7 +35,7 @@ export default function Card({
       <div className="relative w-full h-52">
         <Image
           src={imageSrc || defaultImage}
-          alt={title}
+          alt={imageAlt || title}
           fill
           className="object-cover"
           sizes="100%"
