@@ -1,53 +1,15 @@
 'use client'
 
 import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-
-import {useState} from 'react'
 
 export default function HomePage() {
-  const [value, setValue] = useState('')
-
   return (
-    <main className="flex min-h-screen flex-col gap-6 p-8 bg-background text-text">
-      <h1 className="text-2xl font-bold">Input Component Tests</h1>
-
-      {/* Standard input */}
-      <Input label="Nombre" placeholder="Escribe tu nombre" />
-
-      {/* Input con valor controlado */}
-      <Input
-        label="Nombre controlado"
-        placeholder="Escribe tu nombre"
-        value={value}
-        onChange={e => setValue(e.target.value)}
-      />
-
-      {/* Input con error */}
-      <Input label="Email" placeholder="email@dominio.com" error="Campo requerido" />
-
-      {/* Input con ícono izquierdo */}
-      <Input label="Buscar" placeholder="Buscar..." iconLeft={<span>🔍</span>} />
-
-      {/* Input bloqueado */}
-      <Input label="Bloqueado" value="No editable" readOnly />
-
-      {/* Input deshabilitado */}
-      <Input label="Deshabilitado" placeholder="No se puede escribir" disabled />
-
-      {/* Input tipo contraseña */}
-      <Input label="Contraseña" type="password" placeholder="********" showPasswordToggle={true} />
-
-      {/* Textarea multiline */}
-      <Input label="Comentarios" placeholder="Escribe algo..." multiline />
-
-      {/* Combinación de elementos */}
-      <Input
-        label="Con todo"
-        placeholder="Escribe algo..."
-        iconLeft={<span>✏️</span>}
-        error="Algo salió mal"
-      />
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 text-center">
+      <h1 className="text-4xl font-bold text-text">Bienvenido a El Buen Sabor</h1>
+      <p className="text-lg text-muted">Empecemos tu experiencia gastronómica digital.</p>
+      <Button onClick={() => alert('¡Bienvenido!')} variant="primary">
+        Empezar
+      </Button>
     </main>
   )
 }
