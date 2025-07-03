@@ -60,6 +60,8 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
 
     const hasRightContent = !!iconRight || (isPassword && showPasswordToggle)
 
+    const {type: _ignoredType, ...restProps} = props as InputHTMLAttributes<HTMLInputElement>
+
     return (
       <div className="w-full">
         {label && <label className="block mb-1 text-sm font-medium text-text">{label}</label>}
@@ -76,7 +78,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
             <input
               ref={ref as React.Ref<HTMLInputElement>}
               type={inputType}
-              {...(props as Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>)}
+              {...restProps}
               className={cn(
                 inputClasses,
                 !!iconLeft ? 'pl-8' : undefined,
