@@ -28,13 +28,21 @@ export default function SucursalPage() {
         </div>
       </Dialog>
 
-      {/* sucursals */}
+      {/* sucursales */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
         {/* Repetir Card para cada sucursal */}
-        {[...Array(6)].map((_, i) => (
+        <Card
+          title="Sucursal Central"
+          line1="Dirección: San Martín 733, Mendoza, Argentina"
+          line2="Horario: 08:00 - 23:59"
+          badge="Casa matriz"
+          onPrimaryClick={() => console.log('Seleccionar')}
+          onSecondaryClick={() => console.log('Editar')}
+        />
+        {[...Array(5)].map((_, i) => (
           <Card
             key={i}
-            title={`Sucursal ${i + 1}`}
+            title={`Sucursal ${i + 2}`}
             line1="Dirección: San Martín 733, Mendoza, Argentina"
             line2="Horario: 08:00 - 23:59"
             onPrimaryClick={() => console.log('Seleccionar')}

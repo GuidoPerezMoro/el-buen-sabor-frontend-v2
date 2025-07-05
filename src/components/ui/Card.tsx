@@ -15,6 +15,7 @@ interface CardProps {
   onSecondaryClick?: () => void
   primaryLabel?: string
   secondaryLabel?: string
+  badge?: string | React.ReactNode
   className?: string
 }
 
@@ -28,10 +29,19 @@ export default function Card({
   onSecondaryClick,
   primaryLabel = 'Seleccionar',
   secondaryLabel = 'Editar',
+  badge,
   className,
 }: CardProps) {
+  const hasBadge = Boolean(badge)
+
   return (
-    <div className={cn('bg-white border rounded-lg shadow-sm p-4 flex flex-col gap-4', className)}>
+    <div
+      className={cn(
+        'bg-white border rounded-lg shadow-sm p-4 flex flex-col gap-4 transition-all',
+        hasBadge ? 'border-2 border-primary' : 'border',
+        className
+      )}
+    >
       <div className="relative w-full h-52">
         <Image
           src={imageSrc || defaultImage}
@@ -40,6 +50,11 @@ export default function Card({
           className="object-cover"
           sizes="100%"
         />
+        {badge && (
+          <span className="absolute top-2 left-2 bg-surface text-text text-[11px] font-medium px-2 py-0.5 rounded border border-muted">
+            {badge}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col gap-1">
