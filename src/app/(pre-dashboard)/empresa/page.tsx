@@ -2,11 +2,14 @@
 
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Dialog from '@/components/ui/Dialog'
+import useDialog from '@/hooks/useDialog'
 
 export default function EmpresaPage() {
+  const {openDialog} = useDialog()
+
   const handleCreateEmpresa = () => {
-    console.log('Crear nueva empresa')
-    // Aquí podrías redirigir a un formulario: router.push('/empresa/nueva')
+    openDialog('nueva-empresa')
   }
 
   return (
@@ -17,6 +20,13 @@ export default function EmpresaPage() {
           + Nueva empresa
         </Button>
       </div>
+
+      {/* Dialog para nueva empresa */}
+      <Dialog name="nueva-empresa" title="Crear nueva empresa" message="Aquí irá el formulario">
+        <div className="mt-2 text-sm text-gray-600">
+          Este es un placeholder. Acá va el formulario para crear una nueva empresa.
+        </div>
+      </Dialog>
 
       {/* Empresas */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
