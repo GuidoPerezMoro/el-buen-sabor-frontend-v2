@@ -8,13 +8,15 @@ import useDialog from '@/hooks/useDialog'
 import {fetchAllEmpresas} from '@/services/empresa'
 import {Empresa} from '@/services/types'
 import EmpresaForm from '@/components/domain/empresa/EmpresaForm'
+import {useRouter} from 'next/navigation'
 
 export default function EmpresaPage() {
+  const router = useRouter()
   const {openDialog} = useDialog()
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<Empresa | null>(null)
+  const [empresaAEditar, setEmpresaAEditar] = useState<Empresa | null>(null)
 
   const loadEmpresas = async () => {
     try {
@@ -28,18 +30,22 @@ export default function EmpresaPage() {
     }
   }
 
+  useEffect(() => {
+    loadEmpresas()
+  }, [])
+
   const handleCreateEmpresa = () => {
     openDialog('nueva-empresa')
   }
 
   const handleEditEmpresa = (empresa: Empresa) => {
-    setEmpresaSeleccionada(empresa)
+    setEmpresaAEditar(empresa)
     openDialog('editar-empresa')
   }
 
-  useEffect(() => {
-    loadEmpresas()
-  }, [])
+  const handleSelectEmpresa = (empresaId: number) => {
+    router.push(`/empresa/${empresaId}/sucursal`)
+  }
 
   return (
     <main className="p-6">
@@ -56,18 +62,14 @@ export default function EmpresaPage() {
       </Dialog>
 
       {/* Form para editar empresa */}
-      <Dialog
-        name="editar-empresa"
-        title="Editar empresa"
-        onClose={() => setEmpresaSeleccionada(null)}
-      >
-        {empresaSeleccionada && (
+      <Dialog name="editar-empresa" title="Editar empresa" onClose={() => setEmpresaAEditar(null)}>
+        {empresaAEditar && (
           <EmpresaForm
-            initialData={empresaSeleccionada}
+            initialData={empresaAEditar}
             dialogName="editar-empresa"
             onSuccess={() => {
               loadEmpresas()
-              setEmpresaSeleccionada(null)
+              setEmpresaAEditar(null)
             }}
           />
         )}
@@ -86,7 +88,7 @@ export default function EmpresaPage() {
               title={empresa.nombre}
               line1={`CUIT: ${empresa.cuil}`}
               line2={empresa.razonSocial}
-              onPrimaryClick={() => console.log('Seleccionar', empresa.id)}
+              onPrimaryClick={() => handleSelectEmpresa(empresa.id)}
               onSecondaryClick={() => handleEditEmpresa(empresa)}
             />
           ))}

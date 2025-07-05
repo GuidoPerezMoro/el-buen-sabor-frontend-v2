@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import {Empresa} from '@/services/types'
 import {createEmpresa, updateEmpresa} from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
+import {z} from 'zod'
 
 interface EmpresaFormProps {
   initialData?: Empresa
@@ -13,6 +14,15 @@ interface EmpresaFormProps {
   onCancel?: () => void
   dialogName?: string
 }
+
+const empresaSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  razonSocial: z.string().min(1, 'La razón social es obligatoria'),
+  cuil: z
+    .string()
+    .min(1, 'El CUIL es obligatorio')
+    .regex(/^\d+$/, 'El CUIL debe contener solo números'),
+})
 
 export default function EmpresaForm({
   initialData,
@@ -26,23 +36,33 @@ export default function EmpresaForm({
   const [razonSocial, setRazonSocial] = useState(initialData?.razonSocial || '')
   const [cuil, setCuil] = useState(initialData?.cuil?.toString() || '')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const isEdit = !!initialData
 
   const handleSubmit = async () => {
-    setError(null)
+    setFormErrors({})
     setLoading(true)
+
+    const result = empresaSchema.safeParse({nombre, razonSocial, cuil})
+
+    if (!result.success) {
+      const errors: Record<string, string> = {}
+      result.error.errors.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0]] = err.message
+        }
+      })
+      setFormErrors(errors)
+      setLoading(false)
+      return
+    }
 
     try {
       const payload = {
-        nombre: nombre.trim(),
-        razonSocial: razonSocial.trim(),
-        cuil: parseInt(cuil),
-      }
-
-      if (isNaN(payload.cuil)) {
-        throw new Error('CUIL inválido')
+        nombre: result.data.nombre.trim(),
+        razonSocial: result.data.razonSocial.trim(),
+        cuil: parseInt(result.data.cuil),
       }
 
       if (isEdit) {
@@ -57,7 +77,7 @@ export default function EmpresaForm({
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
     } catch (err: any) {
-      setError(err.message || 'Error al guardar la empresa')
+      setFormErrors({general: err.message || 'Error al guardar la empresa'})
     } finally {
       setLoading(false)
     }
@@ -67,26 +87,33 @@ export default function EmpresaForm({
     setNombre(initialData?.nombre || '')
     setRazonSocial(initialData?.razonSocial || '')
     setCuil(initialData?.cuil?.toString() || '')
-    setError(null)
+    setFormErrors({})
   }, [initialData])
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Nombre" value={nombre} onChange={e => setNombre(e.target.value)} />
+      <Input
+        label="Nombre"
+        value={nombre}
+        onChange={e => setNombre(e.target.value)}
+        error={formErrors.nombre}
+      />
       <Input
         label="Razón social"
         value={razonSocial}
         onChange={e => setRazonSocial(e.target.value)}
+        error={formErrors.razonSocial}
       />
       <Input
         label="CUIL"
         type="number"
+        inputMode="numeric"
         value={cuil}
         onChange={e => setCuil(e.target.value)}
-        inputMode="numeric"
+        error={formErrors.cuil}
       />
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}
 
       <div className="flex justify-end gap-2 mt-2">
         {onCancel && (
