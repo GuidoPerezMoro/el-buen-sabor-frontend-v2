@@ -69,7 +69,6 @@ export default function EmpresaPage() {
               loadEmpresas()
               setEmpresaSeleccionada(null)
             }}
-            onCancel={() => setEmpresaSeleccionada(null)}
           />
         )}
       </Dialog>
