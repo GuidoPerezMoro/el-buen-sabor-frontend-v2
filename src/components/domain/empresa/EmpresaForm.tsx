@@ -8,6 +8,7 @@ import {Empresa} from '@/services/types'
 import {createEmpresa, updateEmpresa} from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
 import {z} from 'zod'
+import {empresaSchema, EmpresaInput} from '@/schemas/empresaSchema'
 
 interface EmpresaFormProps {
   initialData?: Empresa
@@ -15,15 +16,6 @@ interface EmpresaFormProps {
   onCancel?: () => void
   dialogName?: string
 }
-
-const empresaSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  razonSocial: z.string().min(1, 'La razón social es obligatoria'),
-  cuil: z
-    .string()
-    .min(1, 'El CUIL es obligatorio')
-    .regex(/^\d+$/, 'El CUIL debe contener solo números'),
-})
 
 export default function EmpresaForm({
   initialData,
@@ -65,7 +57,7 @@ export default function EmpresaForm({
       const payload = {
         nombre: result.data.nombre.trim(),
         razonSocial: result.data.razonSocial.trim(),
-        cuil: parseInt(result.data.cuil),
+        cuil: result.data.cuil,
       }
 
       if (isEdit) {

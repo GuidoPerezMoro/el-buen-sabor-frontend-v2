@@ -9,6 +9,7 @@ import {fetchAllEmpresas} from '@/services/empresa'
 import {Empresa} from '@/services/types'
 import EmpresaForm from '@/components/domain/empresa/EmpresaForm'
 import {useRouter} from 'next/navigation'
+import StatusMessage from '@/components/ui/StatusMessage'
 
 export default function EmpresaPage() {
   const router = useRouter()
@@ -47,6 +48,15 @@ export default function EmpresaPage() {
     router.push(`/empresa/${empresaId}/sucursal`)
   }
 
+  if (loading) return <StatusMessage type="loading" message="Cargando empresas..." />
+  if (error)
+    return (
+      <StatusMessage
+        type="error"
+        message="Error al cargar las empresas. Intente nuevamente más tarde."
+      />
+    )
+
   return (
     <main className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -76,10 +86,8 @@ export default function EmpresaPage() {
       </Dialog>
 
       {/* Empresas */}
-      {loading ? (
-        <p className="text-sm text-muted">Cargando empresas...</p>
-      ) : error ? (
-        <p className="text-sm text-danger">Error al cargar empresas.</p>
+      {empresas.length === 0 ? (
+        <StatusMessage type="empty" message="Aún no se ha cargado ninguna empresa." />
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           {empresas.map(empresa => (

@@ -1,5 +1,6 @@
 import api from './baseService'
 import {Empresa} from './types'
+import {EmpresaInput} from '@/schemas/empresaSchema'
 
 // Obtener todas las empresas
 export async function fetchAllEmpresas(): Promise<Empresa[]> {
@@ -14,7 +15,7 @@ export async function fetchEmpresaById(id: number): Promise<Empresa> {
 }
 
 // Crear nueva empresa
-export async function createEmpresa(data: Omit<Empresa, 'id'>): Promise<Empresa> {
+export async function createEmpresa(data: EmpresaInput): Promise<Empresa> {
   const response = await api.post<Empresa>('/empresas', data)
   // imagen? No. El Nico va a agregarlo al constructor
   return response.data
