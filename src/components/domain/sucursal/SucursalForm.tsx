@@ -10,7 +10,6 @@ import useDialog from '@/hooks/useDialog'
 import {createSucursal, updateSucursal} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {sucursalSchema, SucursalInput} from '@/schemas/sucursalSchema'
-import {z} from 'zod'
 
 interface SucursalFormProps {
   initialData?: Sucursal

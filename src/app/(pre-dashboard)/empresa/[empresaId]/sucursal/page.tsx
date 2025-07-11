@@ -69,7 +69,7 @@ export default function SucursalPage() {
         </Button>
       </div>
 
-      <Dialog name="nueva-sucursal" title="Crear nueva sucursal" fullscreen>
+      <Dialog name="nueva-sucursal" title="Crear nueva sucursal">
         <SucursalForm
           empresaId={Number(empresaId)}
           dialogName="nueva-sucursal"
@@ -80,7 +80,6 @@ export default function SucursalPage() {
       <Dialog
         name="editar-sucursal"
         title="Editar sucursal"
-        fullscreen
         onClose={() => setSucursalAEditar(null)}
       >
         {sucursalAEditar && (
