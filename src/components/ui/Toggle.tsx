@@ -51,5 +51,4 @@ export default Toggle
   // - Add size variants (sm/md/lg) via a `size` prop
   // - Support on/off labels with an optional `labelOn`/`labelOff`
   // - Allow custom colors via a `variant` prop
-  // - Accept additional ARIA labels or test IDs via rest props 
 */
