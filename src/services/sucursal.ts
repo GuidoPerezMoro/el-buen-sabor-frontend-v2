@@ -21,7 +21,7 @@ export async function createSucursal(data: SucursalInput): Promise<Sucursal> {
 }
 
 // Actualizar una sucursal
-export async function updateSucursal(id: number, data: Partial<Sucursal>): Promise<Sucursal> {
+export async function updateSucursal(id: number, data: SucursalInput): Promise<Sucursal> {
   const response = await api.put<Sucursal>(`/sucursales/${id}`, data)
   return response.data
 }
