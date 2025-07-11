@@ -1,35 +1,32 @@
 'use client'
 
-import React, {useState, useEffect, forwardRef} from 'react'
+import React, {useState, useEffect, forwardRef, Ref, useRef, useImperativeHandle} from 'react'
 import {cn} from '@/lib/utils'
 
-type OptionType = string | {value: string; label: string}
+type BaseOption = string | {value: string; label: string}
 
-interface DropdownProps {
-  /** list of options (string or { value,label }) */
-  options: OptionType[]
-  /** current selection (string or object) */
-  value: OptionType | null
-  /** callback with the same type you passed in */
-  onChange: (val: OptionType) => void
-  /** placeholder when nothing’s selected */
+interface DropdownProps<T extends BaseOption> {
+  options: T[]
+  value: T | null
+  onChange: (val: T) => void
   placeholder?: string
-  /** disable all interaction */
   disabled?: boolean
-  /** extra wrapper classes */
   className?: string
 }
 
-const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
+type DropdownComponent = <T extends BaseOption>(
+  props: DropdownProps<T> & {ref?: Ref<HTMLDivElement>}
+) => React.ReactElement | null
+
+const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
   ({options, value, onChange, placeholder = '', disabled = false, className}, ref) => {
-    // normalize all options to have { value, label, original }
+    // Normalize to {value, label, original}
     const normalized = options.map(opt =>
       typeof opt === 'string'
         ? {value: opt, label: opt, original: opt}
         : {value: opt.value, label: opt.label, original: opt}
     )
 
-    // figure out the currently selected label
     const selectedValue = value == null ? '' : typeof value === 'string' ? value : value.value
     const selectedOption = normalized.find(o => o.value === selectedValue)
     const selectedLabel = selectedOption?.label ?? ''
@@ -37,16 +34,20 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
     const [isOpen, setIsOpen] = useState(false)
     const [filter, setFilter] = useState(selectedLabel)
 
-    // whenever we close or the selection changes, reset input to show selectedLabel
+    // Reset filter when selection or open state changes
     useEffect(() => {
       if (!isOpen) setFilter(selectedLabel)
     }, [selectedLabel, isOpen])
 
     const filtered = normalized.filter(o => o.label.toLowerCase().includes(filter.toLowerCase()))
 
+    // Expose wrapper div for ref
+    const wrapperRef = useRef<HTMLDivElement>(null)
+    useImperativeHandle(ref, () => wrapperRef.current!)
+
     return (
       <div
-        ref={ref}
+        ref={wrapperRef}
         tabIndex={0}
         onBlur={() => setIsOpen(false)}
         className={cn('relative inline-block w-full', className)}
@@ -76,16 +77,14 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                 key={o.value}
                 className="px-3 py-2 text-sm text-text hover:bg-surfaceHover cursor-pointer"
                 onMouseDown={e => {
-                  // use onMouseDown so blur doesn’t fire first
                   e.preventDefault()
-                  onChange(o.original)
+                  onChange(o.original as any)
                   setIsOpen(false)
                 }}
               >
                 {o.label}
               </li>
             ))}
-
             {filtered.length === 0 && (
               <li className="px-3 py-2 text-sm text-muted cursor-default">No options</li>
             )}
@@ -96,12 +95,12 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
   }
 )
 
-Dropdown.displayName = 'Dropdown'
+const Dropdown = _Dropdown as DropdownComponent
 export default Dropdown
 
 /* 
   // Future expansions:
-  // - make it generic so `OptionType` can carry extra data
-  // - add custom renderProp for options
-  // - size/variant props
+  // - Make it fully generic so extra data flows through `T`
+  // - Add render props for custom option layouts
+  // - Size / color variants via extra props
 */
