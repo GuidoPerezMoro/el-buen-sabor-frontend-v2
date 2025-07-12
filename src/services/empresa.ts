@@ -23,32 +23,27 @@ export async function createEmpresa(data: EmpresaInput): Promise<Empresa> {
 
 // Crear nueva empresa con imagen
 export async function createEmpresaWithImage(data: EmpresaInput, image: File): Promise<Empresa> {
-  const formData = new FormData()
-
-  // → wrap JSON in a Blob so the part has Content-Type: application/json
+  // prepare JSON payload as a Blob so Spring can bind @RequestPart("data")
   const payload = {
     nombre: data.nombre.trim(),
     razonSocial: data.razonSocial.trim(),
     cuil: data.cuil,
   }
-  const jsonBlob = new Blob([JSON.stringify(payload)], {
+  const dataBlob = new Blob([JSON.stringify(payload)], {
     type: 'application/json',
   })
-  formData.append('data', jsonBlob)
 
-  // → file part must be called “file” to match @RequestPart("file")
+  const formData = new FormData()
+  formData.append('data', dataBlob)
   formData.append('file', image)
 
-  console.log('[empresaService][fetch] formData keys →', Array.from(formData.keys()))
+  console.log('[empresaService] create-with-image formData keys →', Array.from(formData.keys()))
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/empresas/create-with-image`, {
-    method: 'POST',
-    body: formData,
-    // no explicit headers!
-  })
+  // interceptor in baseService will strip JSON header and let the browser set multipart boundary
+  const response = await api.post<Empresa>('/empresas/create-with-image', formData)
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
-  return (await res.json()) as Empresa
+  console.log('[empresaService] create-with-image response →', response.data)
+  return response.data
 }
 
 // Actualizar empresa

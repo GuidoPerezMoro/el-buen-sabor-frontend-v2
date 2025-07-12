@@ -5,6 +5,7 @@ export interface Empresa extends BaseEntity {
   nombre: string
   razonSocial: string
   cuil: number
+  imagenUrl: string
 
   sucursales: Sucursal[]
 }
