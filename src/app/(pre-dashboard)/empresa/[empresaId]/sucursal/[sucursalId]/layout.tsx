@@ -1,12 +1,11 @@
-// app/empresa/[empresaId]/sucursal/[sucursalId]/layout.tsx
-'use client'
+import Sidenav from '@/components/layouts/Sidenav'
 
 export default function SucursalLayout({children}: {children: React.ReactNode}) {
   return (
     <div className="min-h-screen flex">
-      {/* SideNav placeholder */}
-      <aside className="w-64 bg-surface p-4 border-r border-muted">
-        <p className="text-sm text-muted">[SideNav placeholder]</p>
+      {/* SideNav */}
+      <aside className="w-64 bg-primary/10 p-4 border-r border-surface">
+        <Sidenav />
       </aside>
 
       {/* Main content area */}

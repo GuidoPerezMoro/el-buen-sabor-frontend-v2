@@ -31,7 +31,7 @@ export default function Header() {
   }, [sucursalId])
 
   return (
-    <header className="w-full bg-surface border-b border-muted px-4 py-3 flex items-center justify-between">
+    <header className="w-full bg-primary/10 border-b border-surface px-4 py-3 flex items-center justify-between">
       {/* Left section: user + breadcrumbs */}
       <div className="flex items-center space-x-4">
         <span className="text-sm font-medium text-text">White Dragon</span>
@@ -58,7 +58,7 @@ export default function Header() {
       {/* Right section: user icon */}
       <button
         type="button"
-        className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-300 hover:bg-muted transition-colors"
+        className="w-10 h-10 flex items-center justify-center rounded-full bg-surface hover:bg-surfaceHover transition-colors"
         title="Perfil de usuario"
       >
         <PersonIcon className="w-5 h-5 text-black" />
