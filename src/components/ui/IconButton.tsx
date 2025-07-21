@@ -14,7 +14,7 @@ export default function IconButton({icon, variant = 'ghost', className, ...rest}
       {...rest}
       className={cn(
         'p-2 rounded-full transition-colors',
-        variant === 'ghost' ? 'hover:bg-surfaceHover' : 'bg-surface',
+        variant === 'ghost' ? 'hover:bg-muted' : 'bg-surface',
         className
       )}
     >
