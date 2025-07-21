@@ -2,7 +2,7 @@ import api from './baseService'
 import {Sucursal} from './types'
 import {SucursalInput} from '@/schemas/sucursalSchema'
 
-// Obtener todas las sucursales (⚠️ incluye todas las empresas)
+// Obtener todas las sucursales (⚠️ incluye de todas las empresas)
 export async function fetchAllSucursales(): Promise<Sucursal[]> {
   const response = await api.get<Sucursal[]>('/sucursales')
   return response.data
