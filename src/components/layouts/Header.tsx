@@ -31,7 +31,7 @@ export default function Header() {
   }, [sucursalId])
 
   return (
-    <header className="w-full bg-primary/10 border-b border-surface px-4 py-3 flex items-center justify-between">
+    <header className="w-full bg-primary/10 border-surface px-4 py-3 flex items-center justify-between">
       {/* Left section: user + breadcrumbs */}
       <div className="flex items-center space-x-4">
         <span className="text-sm font-medium text-text">White Dragon</span>
