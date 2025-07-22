@@ -85,7 +85,7 @@ export default function Table<T>({columns, data, alignLastColumnEnd = false}: Ta
       </thead>
       <tbody>
         {sortedData.map((row, ri) => (
-          <tr key={ri} className="border-t hover:bg-surfaceHover transition-colors">
+          <tr key={ri} className="border-t hover:bg-primary/10 transition-colors">
             {columns.map((col, ci) => (
               <td
                 key={ci}
