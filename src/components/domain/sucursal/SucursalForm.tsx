@@ -164,7 +164,7 @@ export default function SucursalForm({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       {/* Detalles: Nombre + horarios */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
@@ -237,10 +237,10 @@ export default function SucursalForm({
             Cancelar
           </Button>
         )}
-        <Button variant="primary" onClick={handleSubmit} loading={loading}>
+        <Button type="submit" variant="primary" loading={loading}>
           {isEdit ? 'Guardar cambios' : 'Crear sucursal'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

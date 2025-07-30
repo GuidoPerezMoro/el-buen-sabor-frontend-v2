@@ -1,6 +1,6 @@
 'use client'
 
-import {PropsWithChildren, SyntheticEvent, useCallback} from 'react'
+import {PropsWithChildren, SyntheticEvent, useCallback, useEffect} from 'react'
 import {cn} from '@/lib/utils'
 import useDialog from '@/hooks/useDialog'
 import XIcon from '@/assets/icons/x.svg'
@@ -51,6 +51,26 @@ const Dialog = ({
     closeDialog(name)
     onClose()
   }
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isOpen = isDialogOpened(name)
+
+      if (!isOpen || !onPrimary) return
+
+      const tag = (e.target as HTMLElement).tagName
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA'
+
+      if (isTyping) return
+
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        onPrimary()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isDialogOpened, name, onPrimary])
 
   return (
     <div className="fixed z-50 top-0 left-0 h-screen w-screen pointer-events-none overflow-hidden">

@@ -35,7 +35,9 @@ export default function EmpresaForm({
 
   const isEdit = !!initialData
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
     setFormErrors({})
     setLoading(true)
 
@@ -95,7 +97,7 @@ export default function EmpresaForm({
   }, [initialData])
 
   return (
-    <div className="flex flex-col gap-6">
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       {/* Sección principal con imagen + inputs */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Imagen */}
@@ -139,10 +141,10 @@ export default function EmpresaForm({
             Cancelar
           </Button>
         )}
-        <Button variant="primary" onClick={handleSubmit} loading={loading}>
+        <Button type="submit" variant="primary" loading={loading}>
           {isEdit ? 'Guardar cambios' : 'Crear empresa'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

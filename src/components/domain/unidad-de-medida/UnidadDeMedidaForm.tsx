@@ -67,7 +67,7 @@ export default function UnidadDeMedidaForm({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <form className="flex flex-col gap-4 p-4" onSubmit={handleSubmit}>
       <Input
         label="Denominación"
         value={denominacion}
@@ -83,10 +83,10 @@ export default function UnidadDeMedidaForm({
             Cancelar
           </Button>
         )}
-        <Button variant="primary" onClick={handleSubmit} loading={loading}>
+        <Button type="submit" variant="primary" loading={loading}>
           {isEdit ? 'Guardar cambios' : 'Crear unidad'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }
