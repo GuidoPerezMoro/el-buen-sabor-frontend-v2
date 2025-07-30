@@ -42,6 +42,7 @@ export default function Card({
         className
       )}
     >
+      {/* TODO: Fix image square */}
       <div className="relative w-full h-52">
         <Image
           src={imageSrc || defaultImage}

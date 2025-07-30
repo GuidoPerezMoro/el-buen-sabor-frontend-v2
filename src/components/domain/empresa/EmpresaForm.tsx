@@ -5,9 +5,13 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import {Empresa} from '@/services/types'
-import {createEmpresa, createEmpresaWithImage, updateEmpresa} from '@/services/empresa'
+import {
+  createEmpresa,
+  createEmpresaWithImage,
+  updateEmpresa,
+  updateEmpresaWithImage,
+} from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
-import {z} from 'zod'
 import {empresaSchema, EmpresaInput} from '@/schemas/empresaSchema'
 
 interface EmpresaFormProps {
@@ -62,9 +66,14 @@ export default function EmpresaForm({
         cuil: result.data.cuil,
       }
 
-      if (isEdit) {
-        console.log('[EmpresaForm] Updating empresa id:', initialData.id, 'payload:', payload)
-        await updateEmpresa(initialData.id, payload)
+      if (isEdit && initialData) {
+        if (imagen) {
+          console.log('[EmpresaForm] Updating empresa WITH new image:', initialData.id)
+          await updateEmpresaWithImage(initialData.id, payload, imagen)
+        } else {
+          console.log('[EmpresaForm] Updating empresa WITHOUT image:', initialData.id)
+          await updateEmpresa(initialData.id, payload)
+        }
       } else {
         if (imagen) {
           console.log('[EmpresaForm] Creating empresa WITH image:', imagen)

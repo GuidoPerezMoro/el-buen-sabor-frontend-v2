@@ -52,6 +52,34 @@ export async function updateEmpresa(id: number, data: Partial<Empresa>): Promise
   return response.data
 }
 
+/** Update empresa and upload a new logo in one request */
+export async function updateEmpresaWithImage(
+  id: number,
+  data: EmpresaInput,
+  image: File
+): Promise<Empresa> {
+  // prepare JSON part
+  const payload = {
+    nombre: data.nombre.trim(),
+    razonSocial: data.razonSocial.trim(),
+    cuil: data.cuil,
+  }
+  const dataBlob = new Blob([JSON.stringify(payload)], {
+    type: 'application/json',
+  })
+
+  const formData = new FormData()
+  formData.append('data', dataBlob)
+  formData.append('file', image)
+
+  console.log('[empresaService] update-with-image formData keys →', Array.from(formData.keys()))
+
+  // thanks to our interceptor, api will strip JSON header and set multipart boundary
+  const response = await api.put<Empresa>(`/empresas/update-with-image/${id}`, formData)
+  console.log('[empresaService] update-with-image response →', response.data)
+  return response.data
+}
+
 // Eliminar empresa
 export async function deleteEmpresa(id: number): Promise<void> {
   await api.delete(`/Empresas/${id}`)
