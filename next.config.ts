@@ -3,6 +3,9 @@ import {NextConfig as BaseNextConfig} from 'next'
 import {Configuration} from 'webpack'
 
 const nextConfig: NextConfig = {
+  images: {
+    domains: ['res.cloudinary.com'],
+  },
   webpack(config: Configuration) {
     config.module?.rules?.push({
       test: /\.svg$/,

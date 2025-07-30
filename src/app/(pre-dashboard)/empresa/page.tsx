@@ -93,6 +93,8 @@ export default function EmpresaPage() {
           {empresas.map(empresa => (
             <Card
               key={empresa.id}
+              imageSrc={empresa.imagenUrl}
+              imageAlt={`Logo de ${empresa.nombre}`}
               title={empresa.nombre}
               line1={`CUIT: ${empresa.cuil}`}
               line2={empresa.razonSocial}

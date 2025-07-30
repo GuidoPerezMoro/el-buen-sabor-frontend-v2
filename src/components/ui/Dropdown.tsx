@@ -2,6 +2,7 @@
 
 import React, {useState, useEffect, forwardRef, Ref, useRef, useImperativeHandle} from 'react'
 import {cn} from '@/lib/utils'
+import ChevronDownIcon from '@/assets/icons/chevron-down.svg'
 
 type BaseOption = string | {value: string; label: string}
 
@@ -11,6 +12,7 @@ interface DropdownProps<T extends BaseOption> {
   onChange: (val: T) => void
   placeholder?: string
   disabled?: boolean
+  searchable?: boolean
   className?: string
 }
 
@@ -19,7 +21,10 @@ type DropdownComponent = <T extends BaseOption>(
 ) => React.ReactElement | null
 
 const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
-  ({options, value, onChange, placeholder = '', disabled = false, className}, ref) => {
+  (
+    {options, value, onChange, placeholder = '', disabled = false, searchable = true, className},
+    ref
+  ) => {
     // Normalize to {value, label, original}
     const normalized = options.map(opt =>
       typeof opt === 'string'
@@ -32,14 +37,16 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
     const selectedLabel = selectedOption?.label ?? ''
 
     const [isOpen, setIsOpen] = useState(false)
-    const [filter, setFilter] = useState(selectedLabel)
+    const [filter, setFilter] = useState(searchable ? selectedLabel : '')
 
     // Reset filter when selection or open state changes
     useEffect(() => {
-      if (!isOpen) setFilter(selectedLabel)
+      if (!isOpen) setFilter(searchable ? selectedLabel : '')
     }, [selectedLabel, isOpen])
 
-    const filtered = normalized.filter(o => o.label.toLowerCase().includes(filter.toLowerCase()))
+    const filtered = searchable
+      ? normalized.filter(o => o.label.toLowerCase().includes(filter.toLowerCase()))
+      : normalized
 
     // Expose wrapper div for ref
     const wrapperRef = useRef<HTMLDivElement>(null)
@@ -61,14 +68,26 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
               : 'border-muted focus:ring-primary'
           )}
           placeholder={placeholder}
-          value={filter}
+          value={searchable ? filter : selectedLabel}
           disabled={disabled}
+          // Always open on focus/click if not disabled
           onFocus={() => !disabled && setIsOpen(true)}
+          onClick={() => !disabled && setIsOpen(true)}
+          // Only allow typing if searchable
           onChange={e => {
+            if (!searchable) return
             setFilter(e.target.value)
             setIsOpen(true)
           }}
+          readOnly={!searchable}
         />
+
+        {/* Arrow icon */}
+        <span className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <ChevronDownIcon
+            className={cn('w-4 h-4 transition-transform duration-200', {'rotate-180': isOpen})}
+          />
+        </span>
 
         {isOpen && !disabled && (
           <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-background border border-muted shadow-lg">
@@ -78,7 +97,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
                 className="px-3 py-2 text-sm text-text hover:bg-surfaceHover cursor-pointer"
                 onMouseDown={e => {
                   e.preventDefault()
-                  onChange(o.original as any)
+                  onChange(o.original as BaseOption as any)
                   setIsOpen(false)
                 }}
               >

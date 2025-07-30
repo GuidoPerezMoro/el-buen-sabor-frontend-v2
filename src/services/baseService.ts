@@ -9,4 +9,13 @@ const api = axios.create({
   //   withCredentials: true, // no vamos a usamos cookies para auth nunca
 })
 
+// strip out JSON header when sending FormData
+api.interceptors.request.use(config => {
+  if (config.data instanceof FormData) {
+    // let the browser set multipart/form-data; boundary=…
+    delete config.headers!['Content-Type']
+  }
+  return config
+})
+
 export default api
