@@ -178,10 +178,9 @@ export default function CategoriasPage() {
           <CategoriaCard
             key={cat.id}
             categoria={cat}
-            childrenCategorias={cat.children}
-            onSelect={() => console.log('Select', cat.id)}
-            onEdit={() => console.log('Edit', cat.id)}
-            onDelete={() => console.log('Delete', cat.id)}
+            onSelect={id => console.log('Select', id)}
+            onEdit={id => console.log('Edit', id)}
+            onDelete={id => console.log('Delete', id)}
           />
         ))}
       </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, {useState} from 'react'
-import {Categoria, CategoriaNode} from '@/services/types/categoria'
+import {CategoriaNode} from '@/services/types/categoria'
 import {Tag, ChevronDown} from 'lucide-react'
 import IconButton from '@/components/ui/IconButton'
 import {Pencil, Trash} from 'lucide-react'
@@ -9,10 +9,9 @@ import {cn} from '@/lib/utils'
 
 export interface CategoriaCardProps {
   categoria: CategoriaNode
-  childrenCategorias?: Categoria[]
-  onSelect?: () => void
-  onEdit?: () => void
-  onDelete?: () => void
+  onSelect?: (id: number) => void
+  onEdit?: (id: number) => void
+  onDelete?: (id: number) => void
 }
 
 export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: CategoriaCardProps) {
@@ -20,18 +19,33 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
   const [collapsed, setCollapsed] = useState(false)
   const hasChildren = children.length > 0
 
+  // Use the real ID here:
+  const handleToggle = () => setCollapsed(prev => !prev)
+  const handleSelect = () => onSelect?.(categoria.id)
+  const handleEdit = () => onEdit?.(categoria.id)
+  const handleDelete = () => onDelete?.(categoria.id)
+
   return (
     <div className="bg-white border rounded-lg shadow-sm p-4 flex flex-col justify-between h-full">
-      {/* Header row: toggle - icon - title - badge - actions */}
+      {/* Header row: chevron, icon, title, badge, actions */}
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          {hasChildren && (
-            <button onClick={() => setCollapsed(!collapsed)} className="transition-transform">
-              <ChevronDown className={cn('w-5 h-5 text-muted', collapsed ? '' : 'rotate-180')} />
-            </button>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleToggle}>
+          {hasChildren ? (
+            <ChevronDown
+              className={cn(
+                'w-5 h-5 text-muted transition-transform',
+                collapsed ? '' : 'rotate-180'
+              )}
+            />
+          ) : (
+            <div className="w-5 h-5"></div>
           )}
+
           <Tag className="w-6 h-6 text-primary" />
-          <h3 className="text-lg font-semibold text-text cursor-pointer" onClick={onSelect}>
+          <h3
+            className="text-lg font-semibold text-text cursor-pointer"
+            onClick={() => handleSelect()}
+          >
             {denominacion}
           </h3>
           {esInsumo && (
@@ -41,10 +55,18 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
 
         <div className="flex gap-2">
           {onEdit && (
-            <IconButton icon={<Pencil size={16} />} aria-label="Editar" onClick={onEdit} />
+            <IconButton
+              icon={<Pencil size={16} />}
+              aria-label="Editar"
+              onClick={() => handleEdit()}
+            />
           )}
           {onDelete && (
-            <IconButton icon={<Trash size={16} />} aria-label="Eliminar" onClick={onDelete} />
+            <IconButton
+              icon={<Trash size={16} />}
+              aria-label="Eliminar"
+              onClick={() => handleDelete()}
+            />
           )}
         </div>
       </div>
@@ -56,9 +78,9 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
             <CategoriaCard
               key={child.id}
               categoria={child}
-              onSelect={() => onSelect?.()}
-              onEdit={() => onEdit?.()}
-              onDelete={() => onDelete?.()}
+              onSelect={onSelect}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </div>
