@@ -17,7 +17,7 @@ export default function StatusMessage({type, title, message, className}: StatusM
 
   const defaultTitles = {
     loading: 'Cargando...',
-    error: 'Ocurrió un error',
+    error: 'Ocurrió un error. Intente nuevamente más tarde.',
     empty: 'No hay datos disponibles',
   }
 
