@@ -2,7 +2,7 @@
 
 import {useState} from 'react'
 import Sidenav from '@/components/layouts/Sidenav'
-import Drawer from '@/components/ui/Drawer'
+import Drawer from '@/components/layouts/Drawer'
 import {Menu} from 'lucide-react'
 import Button from '@/components/ui/Button'
 

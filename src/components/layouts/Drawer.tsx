@@ -37,7 +37,7 @@ export default function Drawer({isOpen, onClose, children}: DrawerProps) {
       <aside
         className={cn(
           'fixed top-0 left-0 h-full w-64 z-50 transform transition-transform',
-          'bg-background/90 backdrop-blur-sm',
+          'bg-background backdrop-blur-sm',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
