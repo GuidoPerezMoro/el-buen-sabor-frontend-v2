@@ -92,7 +92,7 @@ export default function UnidadDeMedidaPage() {
   if (error) return <StatusMessage type="error" message="Error al cargar unidades" />
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-2xl font-bold mb-4">Unidades de medida</h1>
 
       <SearchAddBar
