@@ -26,7 +26,7 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
   const handleDelete = () => onDelete?.(categoria.id)
 
   return (
-    <div className="bg-white border rounded-lg shadow-sm p-3 md:p-4 flex flex-col gap-2">
+    <div className="bg-white border rounded-lg shadow-sm p-4 flex flex-col gap-2">
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 cursor-pointer" onClick={handleToggle}>
@@ -38,23 +38,21 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
               )}
             />
           ) : (
-            <div className="w-5 h-5"></div>
+            <div className="w-5 h-5" />
           )}
-          <Tag className="w-5 h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
+          <Tag className="w-6 h-6 text-primary flex-shrink-0" />
           <h3
-            className="text-base md:text-lg font-semibold text-text cursor-pointer"
+            className="text-lg font-semibold text-text cursor-pointer"
             onClick={() => handleSelect()}
           >
             {denominacion}
           </h3>
           {esInsumo && (
-            <span className="text-xs md:text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-              Insumo
-            </span>
+            <span className="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">Insumo</span>
           )}
         </div>
 
-        <div className="flex gap-1 md:gap-2">
+        <div className="flex gap-2">
           {onEdit && (
             <IconButton
               icon={<Pencil size={16} />}
@@ -74,7 +72,7 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
 
       {/* Nested children */}
       {!collapsed && hasChildren && (
-        <div className="mt-3 ml-4 md:ml-6 flex flex-col gap-3 md:gap-4">
+        <div className="mt-3 ml-6 flex flex-col gap-4">
           {children.map(child => (
             <CategoriaCard
               key={child.id}

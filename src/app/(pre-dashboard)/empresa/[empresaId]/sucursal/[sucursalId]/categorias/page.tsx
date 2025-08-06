@@ -163,7 +163,7 @@ export default function CategoriasPage() {
   )
 
   return (
-    <div className="p-6">
+    <div className="p-0 md:px-6">
       <h1 className="text-2xl font-bold mb-4">Categorías</h1>
 
       <SearchAddBar
