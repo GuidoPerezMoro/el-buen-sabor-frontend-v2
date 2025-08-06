@@ -4,6 +4,7 @@ import {useState, useEffect} from 'react'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import CategoriaCard from '@/components/domain/categoria/CategoriaCard'
 import {Categoria, CategoriaNode} from '@/services/types/categoria'
+import CategoriaAccordion from '@/components/domain/categoria/CategoriaAccordion'
 
 export default function CategoriasPage() {
   const [filter, setFilter] = useState('')
@@ -172,9 +173,22 @@ export default function CategoriasPage() {
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
       />
+      {/* mobile accordion */}
+      <div className="md:hidden space-y-2">
+        {filteredRoots.map(cat => (
+          <CategoriaAccordion
+            key={cat.id}
+            categoria={cat}
+            onSelect={id => console.log('Select', id)}
+            onEdit={id => console.log('Edit', id)}
+            onDelete={id => console.log('Delete', id)}
+          />
+        ))}
+      </div>
 
-      <div className="flex flex-col gap-6">
-        {filteredRoots.map((cat: CategoriaNode) => (
+      {/* desktop grid */}
+      <div className="hidden md:flex md:flex-col gap-6">
+        {filteredRoots.map(cat => (
           <CategoriaCard
             key={cat.id}
             categoria={cat}
