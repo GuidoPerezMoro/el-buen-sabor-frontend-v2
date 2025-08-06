@@ -2,9 +2,9 @@
 
 import {useState, useEffect} from 'react'
 import SearchAddBar from '@/components/ui/SearchAddBar'
-import CategoriaCard from '@/components/domain/categoria/CategoriaCard'
+import CategoriaCardDesktop from '@/components/domain/categoria/CategoriaCardDesktop'
 import {Categoria, CategoriaNode} from '@/services/types/categoria'
-import CategoriaAccordion from '@/components/domain/categoria/CategoriaAccordion'
+import CategoriaCardMobile from '@/components/domain/categoria/CategoriaCardMobile'
 
 export default function CategoriasPage() {
   const [filter, setFilter] = useState('')
@@ -163,7 +163,7 @@ export default function CategoriasPage() {
   )
 
   return (
-    <div className="p-0 md:px-6">
+    <div>
       <h1 className="text-2xl font-bold mb-4">Categorías</h1>
 
       <SearchAddBar
@@ -173,10 +173,10 @@ export default function CategoriasPage() {
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
       />
-      {/* mobile accordion */}
+      {/* Mobile */}
       <div className="md:hidden space-y-2">
         {filteredRoots.map(cat => (
-          <CategoriaAccordion
+          <CategoriaCardMobile
             key={cat.id}
             categoria={cat}
             onSelect={id => console.log('Select', id)}
@@ -186,10 +186,10 @@ export default function CategoriasPage() {
         ))}
       </div>
 
-      {/* desktop grid */}
+      {/* Desktop */}
       <div className="hidden md:flex md:flex-col gap-6">
         {filteredRoots.map(cat => (
-          <CategoriaCard
+          <CategoriaCardDesktop
             key={cat.id}
             categoria={cat}
             onSelect={id => console.log('Select', id)}

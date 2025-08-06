@@ -22,9 +22,9 @@ export default function SucursalLayout({children}: {children: React.ReactNode}) 
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-6 bg-background text-text w-full">
+      <main className="flex-1 p-4 md:p-6 bg-background text-text w-full">
         {/* Toggle only on mobile */}
-        <div className="md:hidden mb-4">
+        <div className="md:hidden mb-1">
           <Button
             variant="secondary"
             size="sm"

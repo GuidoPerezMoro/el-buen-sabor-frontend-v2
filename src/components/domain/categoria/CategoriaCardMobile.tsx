@@ -7,7 +7,7 @@ import IconButton from '@/components/ui/IconButton'
 import {Pencil, Trash} from 'lucide-react'
 import {cn} from '@/lib/utils'
 
-export interface CategoriaAccordionProps {
+interface CategoriaCardMobileProps {
   categoria: CategoriaNode
   level?: number
   onSelect?: (id: number) => void
@@ -15,13 +15,13 @@ export interface CategoriaAccordionProps {
   onDelete?: (id: number) => void
 }
 
-export default function CategoriaAccordion({
+export default function CategoriaCardMobile({
   categoria,
   level = 0,
   onSelect,
   onEdit,
   onDelete,
-}: CategoriaAccordionProps) {
+}: CategoriaCardMobileProps) {
   const [open, setOpen] = useState(false)
   const hasChildren = categoria.children.length > 0
 
@@ -88,7 +88,7 @@ export default function CategoriaAccordion({
       {hasChildren && open && (
         <div className="mt-2 flex flex-col">
           {categoria.children.map(child => (
-            <CategoriaAccordion
+            <CategoriaCardMobile
               key={child.id}
               categoria={child}
               level={level + 1}

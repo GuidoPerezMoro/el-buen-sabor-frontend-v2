@@ -2,19 +2,24 @@
 
 import React, {useState} from 'react'
 import {CategoriaNode} from '@/services/types/categoria'
-import {Tag, ChevronDown} from 'lucide-react'
+import {ChevronDown, Tag} from 'lucide-react'
 import IconButton from '@/components/ui/IconButton'
 import {Pencil, Trash} from 'lucide-react'
 import {cn} from '@/lib/utils'
 
-interface CategoriaCardProps {
+interface CategoriaCardDesktopProps {
   categoria: CategoriaNode
   onSelect?: (id: number) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
 }
 
-export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: CategoriaCardProps) {
+export default function CategoriaCardDesktop({
+  categoria,
+  onSelect,
+  onEdit,
+  onDelete,
+}: CategoriaCardDesktopProps) {
   const {denominacion, esInsumo, children} = categoria
   const [collapsed, setCollapsed] = useState(false)
   const hasChildren = children.length > 0
@@ -74,7 +79,7 @@ export default function CategoriaCard({categoria, onSelect, onEdit, onDelete}: C
       {!collapsed && hasChildren && (
         <div className="mt-3 ml-6 flex flex-col gap-4">
           {children.map(child => (
-            <CategoriaCard
+            <CategoriaCardDesktop
               key={child.id}
               categoria={child}
               onSelect={onSelect}
