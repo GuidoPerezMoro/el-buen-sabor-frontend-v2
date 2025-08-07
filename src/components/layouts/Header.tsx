@@ -55,6 +55,7 @@ export default function Header() {
           />
         )}
       </div>
+
       {/* Right section: user icon */}
       <button
         type="button"
