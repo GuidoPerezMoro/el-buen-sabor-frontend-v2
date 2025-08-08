@@ -88,7 +88,7 @@ const Dialog = ({
             'opacity-0 !pointer-events-none !scale-50': !isDialogOpened(name),
             'h-screen w-screen': fullscreen,
           },
-          fullscreen ? 'w-screen h-screen' : 'w-screen md:w-auto md:max-w-[80vw] md:h-auto'
+          fullscreen ? 'w-screen h-screen p-4' : 'w-screen md:w-auto md:max-w-[80vw] md:h-auto'
         )}
       >
         <div
