@@ -9,7 +9,6 @@ import {cn} from '@/lib/utils'
 interface CategoriaCardDesktopProps {
   categoria: CategoriaNode
   onAddChild?: (id: number, label: string, esInsumo: boolean) => void
-  onSelect?: (id: number) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
 }
@@ -17,7 +16,6 @@ interface CategoriaCardDesktopProps {
 export default function CategoriaCardDesktop({
   categoria,
   onAddChild,
-  onSelect,
   onEdit,
   onDelete,
 }: CategoriaCardDesktopProps) {
@@ -28,7 +26,6 @@ export default function CategoriaCardDesktop({
   // Use the real ID here:
   const handleToggle = () => setCollapsed(prev => !prev)
   const handleAddChild = () => onAddChild?.(categoria.id, denominacion, esInsumo)
-  const handleSelect = () => onSelect?.(categoria.id)
   const handleEdit = () => onEdit?.(categoria.id)
   const handleDelete = () => onDelete?.(categoria.id)
 
@@ -48,12 +45,7 @@ export default function CategoriaCardDesktop({
             <div className="w-5 h-5" />
           )}
           <Tag className="w-6 h-6 text-primary flex-shrink-0" />
-          <h3
-            className="text-lg font-semibold text-text cursor-pointer"
-            onClick={() => handleSelect()}
-          >
-            {denominacion}
-          </h3>
+          <h3 className="text-lg font-semibold text-text cursor-pointer">{denominacion}</h3>
           {esInsumo && (
             <span className="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">Insumo</span>
           )}
@@ -92,7 +84,6 @@ export default function CategoriaCardDesktop({
               key={child.id}
               categoria={child}
               onAddChild={onAddChild}
-              onSelect={onSelect}
               onEdit={onEdit}
               onDelete={onDelete}
             />

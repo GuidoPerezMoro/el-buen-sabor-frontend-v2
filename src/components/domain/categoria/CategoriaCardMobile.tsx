@@ -9,7 +9,6 @@ import {cn} from '@/lib/utils'
 interface CategoriaCardMobileProps {
   categoria: CategoriaNode
   onAddChild?: (id: number, label: string, esInsumo: boolean) => void
-  onSelect?: (id: number) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
 }
@@ -17,23 +16,37 @@ interface CategoriaCardMobileProps {
 export default function CategoriaCardMobile({
   categoria,
   onAddChild,
-  onSelect,
   onEdit,
   onDelete,
 }: CategoriaCardMobileProps) {
-  const [open, setOpen] = useState(false)
-  const hasChildren = categoria.children.length > 0
+  const {denominacion, esInsumo, children} = categoria
+  const [collapsed, setCollapsed] = useState(false)
+  const hasChildren = children.length > 0
+
+  const handleToggle = () => hasChildren && setCollapsed(p => !p)
+  const handleAddChild = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onAddChild?.(categoria.id, denominacion, esInsumo)
+  }
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit?.(categoria.id)
+  }
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete?.(categoria.id)
+  }
 
   return (
     <div className={cn('bg-white rounded-lg shadow-sm', 'p-2 mb-1')}>
-      <div
-        className="flex items-center justify-between cursor-pointer"
-        onClick={() => hasChildren && setOpen(o => !o)}
-      >
+      <div className="flex items-center justify-between cursor-pointer" onClick={handleToggle}>
         <div className="flex items-center gap-1">
           {hasChildren ? (
             <ChevronDown
-              className={cn('w-4 h-4 text-muted transition-transform', open ? 'rotate-180' : '')}
+              className={cn(
+                'w-4 h-4 text-muted transition-transform',
+                collapsed ? '' : 'rotate-180'
+              )}
             />
           ) : (
             <div className="w-4 h-4" />
@@ -41,16 +54,7 @@ export default function CategoriaCardMobile({
 
           <Tag className="w-4 h-4 text-primary flex-shrink-0" />
 
-          <span
-            className="flex-1 font-medium"
-            onClick={e => {
-              e.stopPropagation()
-              onSelect?.(categoria.id)
-              if (hasChildren) setOpen(o => !o)
-            }}
-          >
-            {categoria.denominacion}
-          </span>
+          <span className="flex-1 font-medium">{denominacion}</span>
 
           {categoria.esInsumo && (
             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded whitespace-nowrap">
@@ -64,44 +68,30 @@ export default function CategoriaCardMobile({
             <IconButton
               icon={<Plus size={14} />}
               aria-label="Agregar subcategoría"
-              onClick={e => {
-                e.stopPropagation()
-                onAddChild(categoria.id, categoria.denominacion, categoria.esInsumo)
-              }}
+              onClick={handleAddChild}
             />
           )}
           {onEdit && (
-            <IconButton
-              icon={<Pencil size={14} />}
-              aria-label="Editar"
-              onClick={e => {
-                e.stopPropagation()
-                onEdit(categoria.id)
-              }}
-            />
+            <IconButton icon={<Pencil size={14} />} aria-label="Editar" onClick={handleEdit} />
           )}
           {onDelete && (
             <IconButton
               icon={<Trash size={14} />}
               size="sm"
               aria-label="Eliminar"
-              onClick={e => {
-                e.stopPropagation()
-                onDelete(categoria.id)
-              }}
+              onClick={handleDelete}
             />
           )}
         </div>
       </div>
 
-      {hasChildren && open && (
+      {!collapsed && hasChildren && (
         <div className="mt-2 flex flex-col">
           {categoria.children.map(child => (
             <CategoriaCardMobile
               key={child.id}
               categoria={child}
               onAddChild={onAddChild}
-              onSelect={onSelect}
               onEdit={onEdit}
               onDelete={onDelete}
             />
