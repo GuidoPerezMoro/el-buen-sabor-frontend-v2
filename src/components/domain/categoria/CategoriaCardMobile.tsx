@@ -2,14 +2,13 @@
 
 import React, {useState} from 'react'
 import {CategoriaNode} from '@/services/types/categoria'
-import {ChevronDown, Tag} from 'lucide-react'
+import {ChevronDown, Tag, Plus, Pencil, Trash} from 'lucide-react'
 import IconButton from '@/components/ui/IconButton'
-import {Pencil, Trash} from 'lucide-react'
 import {cn} from '@/lib/utils'
 
 interface CategoriaCardMobileProps {
   categoria: CategoriaNode
-  level?: number
+  onAddChild?: (id: number, label: string, esInsumo: boolean) => void
   onSelect?: (id: number) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
@@ -17,7 +16,7 @@ interface CategoriaCardMobileProps {
 
 export default function CategoriaCardMobile({
   categoria,
-  level = 0,
+  onAddChild,
   onSelect,
   onEdit,
   onDelete,
@@ -61,6 +60,16 @@ export default function CategoriaCardMobile({
         </div>
 
         <div className="flex gap-2">
+          {onAddChild && (
+            <IconButton
+              icon={<Plus size={14} />}
+              aria-label="Agregar subcategoría"
+              onClick={e => {
+                e.stopPropagation()
+                onAddChild(categoria.id, categoria.denominacion, categoria.esInsumo)
+              }}
+            />
+          )}
           {onEdit && (
             <IconButton
               icon={<Pencil size={14} />}
@@ -91,7 +100,7 @@ export default function CategoriaCardMobile({
             <CategoriaCardMobile
               key={child.id}
               categoria={child}
-              level={level + 1}
+              onAddChild={onAddChild}
               onSelect={onSelect}
               onEdit={onEdit}
               onDelete={onDelete}

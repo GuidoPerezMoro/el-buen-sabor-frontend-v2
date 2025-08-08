@@ -2,13 +2,13 @@
 
 import React, {useState} from 'react'
 import {CategoriaNode} from '@/services/types/categoria'
-import {ChevronDown, Tag} from 'lucide-react'
+import {ChevronDown, Tag, Plus, Pencil, Trash} from 'lucide-react'
 import IconButton from '@/components/ui/IconButton'
-import {Pencil, Trash} from 'lucide-react'
 import {cn} from '@/lib/utils'
 
 interface CategoriaCardDesktopProps {
   categoria: CategoriaNode
+  onAddChild?: (id: number, label: string, esInsumo: boolean) => void
   onSelect?: (id: number) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
@@ -16,6 +16,7 @@ interface CategoriaCardDesktopProps {
 
 export default function CategoriaCardDesktop({
   categoria,
+  onAddChild,
   onSelect,
   onEdit,
   onDelete,
@@ -26,6 +27,7 @@ export default function CategoriaCardDesktop({
 
   // Use the real ID here:
   const handleToggle = () => setCollapsed(prev => !prev)
+  const handleAddChild = () => onAddChild?.(categoria.id, denominacion, esInsumo)
   const handleSelect = () => onSelect?.(categoria.id)
   const handleEdit = () => onEdit?.(categoria.id)
   const handleDelete = () => onDelete?.(categoria.id)
@@ -58,6 +60,13 @@ export default function CategoriaCardDesktop({
         </div>
 
         <div className="flex gap-2">
+          {onAddChild && (
+            <IconButton
+              icon={<Plus size={16} />}
+              aria-label="Agregar subcategoría"
+              onClick={handleAddChild}
+            />
+          )}
           {onEdit && (
             <IconButton
               icon={<Pencil size={16} />}
@@ -82,6 +91,7 @@ export default function CategoriaCardDesktop({
             <CategoriaCardDesktop
               key={child.id}
               categoria={child}
+              onAddChild={onAddChild}
               onSelect={onSelect}
               onEdit={onEdit}
               onDelete={onDelete}

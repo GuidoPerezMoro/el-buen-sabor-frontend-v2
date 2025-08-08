@@ -7,8 +7,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import useDialog from '@/hooks/useDialog'
-import {createCategoria, fetchAllCategorias} from '@/services/categoria'
-import {buildCategoriaTree, flattenCategoriaTree} from '@/services/categoria.utils'
+import {createCategoria} from '@/services/categoria'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
@@ -18,6 +17,8 @@ type DDOption = {value: string; label: string}
 interface CategoriaFormProps {
   empresaId: number
   sucursalId: number
+  parentId?: number | null
+  parentEsInsumo?: boolean
   onSuccess?: () => void
   dialogName?: string
 }
@@ -25,6 +26,8 @@ interface CategoriaFormProps {
 export default function CategoriaForm({
   empresaId,
   sucursalId,
+  parentId,
+  parentEsInsumo,
   onSuccess,
   dialogName,
 }: CategoriaFormProps) {
@@ -32,14 +35,17 @@ export default function CategoriaForm({
 
   // ── form state ───────────────────────────────────────────────────────────
   const [denominacion, setDenominacion] = useState('')
-  const [esInsumo, setEsInsumo] = useState(false)
-  const [idCategoriaPadre, setIdCategoriaPadre] = useState<number | null>(null)
+  const [esInsumo, setEsInsumo] = useState(parentId != null ? !!parentEsInsumo : false)
   const [idSucursales, setIdSucursales] = useState<number[]>([sucursalId]) // preselect current
-
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
-  const [parentOptions, setParentOptions] = useState<DDOption[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+
+  // react to parent changes
+  useEffect(() => {
+    if (parentId != null) setEsInsumo(!!parentEsInsumo)
+    else setEsInsumo(false) // default for root
+  }, [parentId, parentEsInsumo])
 
   // Load empresa's sucursales
   useEffect(() => {
@@ -49,32 +55,10 @@ export default function CategoriaForm({
     })()
   }, [empresaId])
 
-  // Build parent options scoped to any chosen sucursal(s)
-  useEffect(() => {
-    ;(async () => {
-      const cats = await fetchAllCategorias()
-      const scoped = cats.filter(c => c.sucursales?.some(s => idSucursales.includes(s.id)))
-      const tree = buildCategoriaTree(scoped)
-      const flat = flattenCategoriaTree(tree)
-      setParentOptions(flat.map(f => ({label: f.label, value: String(f.id)})))
-      // If current parent is no longer valid, clear it
-      if (idCategoriaPadre && !flat.some(f => f.id === idCategoriaPadre)) {
-        setIdCategoriaPadre(null)
-      }
-    })()
-  }, [idSucursales, idCategoriaPadre])
-
   const sucursalOptions = useMemo(
     () => sucursales.map(s => ({label: s.nombre, value: s.id})),
     [sucursales]
   )
-
-  // Compute Dropdown controlled value (expects string-valued option or null)
-  const parentValue: DDOption | null = useMemo(() => {
-    if (idCategoriaPadre == null) return null
-    const found = parentOptions.find(o => Number(o.value) === idCategoriaPadre)
-    return found ? found : {value: String(idCategoriaPadre), label: String(idCategoriaPadre)}
-  }, [idCategoriaPadre, parentOptions])
 
   // ── submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -82,10 +66,12 @@ export default function CategoriaForm({
     setFormErrors({})
     setLoading(true)
 
+    // submit payload: enforce parent’s esInsumo if creating a child
+    const resolvedEsInsumo = parentId != null ? !!parentEsInsumo : esInsumo
     const raw: CategoriaCreateInput = {
       denominacion: denominacion.trim(),
-      esInsumo,
-      idCategoriaPadre: idCategoriaPadre ?? undefined,
+      esInsumo: resolvedEsInsumo,
+      idCategoriaPadre: parentId ?? undefined,
       idSucursales,
     }
 
@@ -103,7 +89,6 @@ export default function CategoriaForm({
       // reset
       setDenominacion('')
       setEsInsumo(false)
-      setIdCategoriaPadre(null)
       setIdSucursales([sucursalId])
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
@@ -125,18 +110,11 @@ export default function CategoriaForm({
         />
         <div className="flex items-end">
           <label className="flex items-center gap-2 text-sm font-medium">
-            <Toggle checked={esInsumo} onChange={setEsInsumo} />
+            <Toggle checked={esInsumo} onChange={setEsInsumo} disabled={!!parentId} />
             Es insumo
           </label>
         </div>
       </div>
-
-      <Dropdown<DDOption>
-        options={parentOptions}
-        value={parentValue}
-        onChange={(opt: DDOption) => setIdCategoriaPadre(Number(opt.value))}
-        placeholder="Categoría padre (opcional)"
-      />
 
       <MultiSelectCheckbox
         label="Sucursales"

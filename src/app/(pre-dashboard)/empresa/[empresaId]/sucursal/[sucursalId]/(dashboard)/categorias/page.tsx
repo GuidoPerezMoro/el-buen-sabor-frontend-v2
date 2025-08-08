@@ -19,6 +19,11 @@ export default function CategoriasPage() {
   const empresaId = Number(eid)
   const sucursalId = Number(sid)
   const {openDialog} = useDialog()
+  const [newParent, setNewParent] = useState<{
+    id: number | null
+    label?: string
+    esInsumo?: boolean
+  }>({id: null})
 
   const loadCategorias = async () => {
     const raw = await fetchAllCategorias()
@@ -43,7 +48,10 @@ export default function CategoriasPage() {
       <SearchAddBar
         value={filter}
         onChange={setFilter}
-        onAdd={() => openDialog('nueva-categoria')}
+        onAdd={() => {
+          setNewParent({id: null})
+          openDialog('nueva-categoria')
+        }}
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
       />
@@ -53,6 +61,10 @@ export default function CategoriasPage() {
           <CategoriaCardMobile
             key={cat.id}
             categoria={cat}
+            onAddChild={(id, label, esInsumo) => {
+              setNewParent({id, label, esInsumo})
+              openDialog('nueva-categoria')
+            }}
             onSelect={id => console.log('Select', id)}
             onEdit={id => console.log('Edit', id)}
             onDelete={id => console.log('Delete', id)}
@@ -66,6 +78,10 @@ export default function CategoriasPage() {
           <CategoriaCardDesktop
             key={cat.id}
             categoria={cat}
+            onAddChild={(id, label, esInsumo) => {
+              setNewParent({id, label, esInsumo})
+              openDialog('nueva-categoria')
+            }}
             onSelect={id => console.log('Select', id)}
             onEdit={id => console.log('Edit', id)}
             onDelete={id => console.log('Delete', id)}
@@ -73,10 +89,15 @@ export default function CategoriasPage() {
         ))}
       </div>
 
-      <Dialog name="nueva-categoria" title="Nueva categoría" fullscreen>
+      <Dialog
+        name="nueva-categoria"
+        title={newParent.id ? `Nueva subcategoría de "${newParent.label}"` : 'Nueva categoría'}
+      >
         <CategoriaForm
           empresaId={empresaId}
           sucursalId={sucursalId}
+          parentId={newParent.id ?? null}
+          parentEsInsumo={newParent.esInsumo}
           dialogName="nueva-categoria"
           onSuccess={loadCategorias}
         />
