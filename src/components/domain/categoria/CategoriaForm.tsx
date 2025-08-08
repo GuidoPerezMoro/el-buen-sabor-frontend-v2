@@ -108,7 +108,7 @@ export default function CategoriaForm({
           onChange={e => setDenominacion(e.target.value)}
           error={formErrors.denominacion}
         />
-        <div className="flex items-end">
+        <div className="flex items-center md:pt-6">
           <label className="flex items-center gap-2 text-sm font-medium">
             <Toggle checked={esInsumo} onChange={setEsInsumo} disabled={!!parentId} />
             Es insumo
