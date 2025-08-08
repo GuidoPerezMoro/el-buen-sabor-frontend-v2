@@ -105,7 +105,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
               </li>
             ))}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-sm text-muted cursor-default">No options</li>
+              <li className="px-3 py-2 text-sm text-muted cursor-default">No disponible</li>
             )}
           </ul>
         )}
@@ -118,7 +118,7 @@ const Dropdown = _Dropdown as DropdownComponent
 export default Dropdown
 
 /* 
-  // Future expansions:
+  // Future posible expansions:
   // - Make it fully generic so extra data flows through `T`
   // - Add render props for custom option layouts
   // - Size / color variants via extra props
