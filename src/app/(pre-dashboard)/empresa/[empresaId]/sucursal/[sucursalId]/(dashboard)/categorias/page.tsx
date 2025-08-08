@@ -65,7 +65,6 @@ export default function CategoriasPage() {
               setNewParent({id, label, esInsumo})
               openDialog('nueva-categoria')
             }}
-            onSelect={id => console.log('Select', id)}
             onEdit={id => console.log('Edit', id)}
             onDelete={id => console.log('Delete', id)}
           />
@@ -82,7 +81,6 @@ export default function CategoriasPage() {
               setNewParent({id, label, esInsumo})
               openDialog('nueva-categoria')
             }}
-            onSelect={id => console.log('Select', id)}
             onEdit={id => console.log('Edit', id)}
             onDelete={id => console.log('Delete', id)}
           />
