@@ -3,7 +3,6 @@
 import {useEffect, useMemo, useState} from 'react'
 import Input from '@/components/ui/Input'
 import Toggle from '@/components/ui/Toggle'
-import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import useDialog from '@/hooks/useDialog'
@@ -19,6 +18,7 @@ interface CategoriaFormProps {
   sucursalId: number
   parentId?: number | null
   parentEsInsumo?: boolean
+  parentSucursalIds?: number[]
   onSuccess?: () => void
   dialogName?: string
 }
@@ -28,6 +28,7 @@ export default function CategoriaForm({
   sucursalId,
   parentId,
   parentEsInsumo,
+  parentSucursalIds,
   onSuccess,
   dialogName,
 }: CategoriaFormProps) {
@@ -36,7 +37,7 @@ export default function CategoriaForm({
   // ── form state ───────────────────────────────────────────────────────────
   const [denominacion, setDenominacion] = useState('')
   const [esInsumo, setEsInsumo] = useState(parentId != null ? !!parentEsInsumo : false)
-  const [idSucursales, setIdSucursales] = useState<number[]>([sucursalId]) // preselect current
+  const [idSucursales, setIdSucursales] = useState<number[]>([sucursalId])
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -55,10 +56,43 @@ export default function CategoriaForm({
     })()
   }, [empresaId])
 
-  const sucursalOptions = useMemo(
-    () => sucursales.map(s => ({label: s.nombre, value: s.id})),
-    [sucursales]
-  )
+  const allowedSucursalIds = useMemo(() => {
+    // If creating a child, only allow parent's sucursales
+    return parentId != null && Array.isArray(parentSucursalIds) ? new Set(parentSucursalIds) : null
+  }, [parentId, parentSucursalIds])
+
+  const sucursalOptions = useMemo(() => {
+    const base = sucursales.map(s => ({label: s.nombre, value: s.id}))
+    return allowedSucursalIds ? base.filter(opt => allowedSucursalIds.has(opt.value)) : base
+  }, [sucursales, allowedSucursalIds])
+
+  // Ensure selection is valid given parent's constraint and prefer current sucursal if allowed
+  useEffect(() => {
+    if (!sucursales.length) return
+    if (allowedSucursalIds) {
+      const filtered = idSucursales.filter(id => allowedSucursalIds.has(id))
+      let next = filtered
+      if (next.length === 0) {
+        // Prefer current sucursal if parent has it; otherwise first allowed
+        if (sucursalId && allowedSucursalIds.has(sucursalId)) next = [sucursalId]
+        else next = sucursalOptions[0] ? [sucursalOptions[0].value] : []
+      }
+      setIdSucursales(next)
+    } else {
+      // Root creation → ensure at least current sucursal selected
+      if (!idSucursales.includes(sucursalId)) setIdSucursales([sucursalId])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowedSucursalIds, sucursales, sucursalId])
+
+  // In the JSX (below MultiSelectCheckbox), optionally add a tiny hint:
+  {
+    parentId != null && (
+      <p className="text-xs text-muted -mt-2">
+        Solo puedes elegir sucursales donde la categoría padre ya está presente.
+      </p>
+    )
+  }
 
   // ── submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e?: React.FormEvent) => {

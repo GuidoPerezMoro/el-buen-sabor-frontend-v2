@@ -23,6 +23,7 @@ export default function CategoriasPage() {
     id: number | null
     label?: string
     esInsumo?: boolean
+    sucursalIds?: number[]
   }>({id: null})
 
   const loadCategorias = async () => {
@@ -61,8 +62,8 @@ export default function CategoriasPage() {
           <CategoriaCardMobile
             key={cat.id}
             categoria={cat}
-            onAddChild={(id, label, esInsumo) => {
-              setNewParent({id, label, esInsumo})
+            onAddChild={(id, label, esInsumo, parentSucursalIds) => {
+              setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
               openDialog('nueva-categoria')
             }}
             onEdit={id => console.log('Edit', id)}
@@ -77,8 +78,8 @@ export default function CategoriasPage() {
           <CategoriaCardDesktop
             key={cat.id}
             categoria={cat}
-            onAddChild={(id, label, esInsumo) => {
-              setNewParent({id, label, esInsumo})
+            onAddChild={(id, label, esInsumo, parentSucursalIds) => {
+              setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
               openDialog('nueva-categoria')
             }}
             onEdit={id => console.log('Edit', id)}
@@ -96,6 +97,7 @@ export default function CategoriasPage() {
           sucursalId={sucursalId}
           parentId={newParent.id ?? null}
           parentEsInsumo={newParent.esInsumo}
+          parentSucursalIds={newParent.sucursalIds}
           dialogName="nueva-categoria"
           onSuccess={loadCategorias}
         />

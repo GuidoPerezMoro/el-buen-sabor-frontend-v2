@@ -8,7 +8,7 @@ import {cn} from '@/lib/utils'
 
 interface CategoriaCardDesktopProps {
   categoria: CategoriaNode
-  onAddChild?: (id: number, label: string, esInsumo: boolean) => void
+  onAddChild?: (id: number, label: string, esInsumo: boolean, parentSucursalIds: number[]) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
 }
@@ -25,7 +25,13 @@ export default function CategoriaCardDesktop({
 
   // Use the real ID here:
   const handleToggle = () => setCollapsed(prev => !prev)
-  const handleAddChild = () => onAddChild?.(categoria.id, denominacion, esInsumo)
+  const handleAddChild = () =>
+    onAddChild?.(
+      categoria.id,
+      denominacion,
+      esInsumo,
+      categoria.sucursales.map(s => s.id)
+    )
   const handleEdit = () => onEdit?.(categoria.id)
   const handleDelete = () => onDelete?.(categoria.id)
 

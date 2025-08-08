@@ -8,7 +8,7 @@ import {cn} from '@/lib/utils'
 
 interface CategoriaCardMobileProps {
   categoria: CategoriaNode
-  onAddChild?: (id: number, label: string, esInsumo: boolean) => void
+  onAddChild?: (id: number, label: string, esInsumo: boolean, parentSucursalIds: number[]) => void
   onEdit?: (id: number) => void
   onDelete?: (id: number) => void
 }
@@ -26,7 +26,12 @@ export default function CategoriaCardMobile({
   const handleToggle = () => hasChildren && setCollapsed(p => !p)
   const handleAddChild = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onAddChild?.(categoria.id, denominacion, esInsumo)
+    onAddChild?.(
+      categoria.id,
+      denominacion,
+      esInsumo,
+      categoria.sucursales.map(s => s.id)
+    )
   }
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
