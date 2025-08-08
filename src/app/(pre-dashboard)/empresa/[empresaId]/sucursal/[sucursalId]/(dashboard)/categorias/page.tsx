@@ -12,6 +12,7 @@ import useDialog from '@/hooks/useDialog'
 import Dialog from '@/components/ui/Dialog'
 import CategoriaForm from '@/components/domain/categoria/CategoriaForm'
 
+// TODO: Use StatusMessage component
 export default function CategoriasPage() {
   const [filter, setFilter] = useState('')
   const [nodes, setNodes] = useState<CategoriaNode[]>([])
@@ -19,12 +20,23 @@ export default function CategoriasPage() {
   const empresaId = Number(eid)
   const sucursalId = Number(sid)
   const {openDialog} = useDialog()
+  const [editingNode, setEditingNode] = useState<CategoriaNode | null>(null)
   const [newParent, setNewParent] = useState<{
     id: number | null
     label?: string
     esInsumo?: boolean
     sucursalIds?: number[]
   }>({id: null})
+
+  const findNodeById = (roots: CategoriaNode[], id: number): CategoriaNode | null => {
+    const stack = [...roots]
+    while (stack.length) {
+      const n = stack.pop()!
+      if (n.id === id) return n
+      n.children && stack.push(...n.children)
+    }
+    return null
+  }
 
   const loadCategorias = async () => {
     const raw = await fetchAllCategorias()
@@ -46,6 +58,7 @@ export default function CategoriasPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Categorías</h1>
 
+      {/* TODO: Fix filter for children */}
       <SearchAddBar
         value={filter}
         onChange={setFilter}
@@ -66,7 +79,10 @@ export default function CategoriasPage() {
               setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
               openDialog('nueva-categoria')
             }}
-            onEdit={id => console.log('Edit', id)}
+            onEdit={id => {
+              setEditingNode(findNodeById(nodes /* or tree, if you switched */, id))
+              openDialog('editar-categoria')
+            }}
             onDelete={id => console.log('Delete', id)}
           />
         ))}
@@ -82,7 +98,10 @@ export default function CategoriasPage() {
               setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
               openDialog('nueva-categoria')
             }}
-            onEdit={id => console.log('Edit', id)}
+            onEdit={id => {
+              setEditingNode(findNodeById(nodes /* or tree */, id))
+              openDialog('editar-categoria')
+            }}
             onDelete={id => console.log('Delete', id)}
           />
         ))}
@@ -101,6 +120,21 @@ export default function CategoriasPage() {
           dialogName="nueva-categoria"
           onSuccess={loadCategorias}
         />
+      </Dialog>
+
+      <Dialog name="editar-categoria" title="Editar categoría" onClose={() => setEditingNode(null)}>
+        {editingNode && (
+          <CategoriaForm
+            empresaId={empresaId}
+            sucursalId={sucursalId}
+            initialData={editingNode}
+            dialogName="editar-categoria"
+            onSuccess={() => {
+              setEditingNode(null)
+              loadCategorias()
+            }}
+          />
+        )}
       </Dialog>
     </div>
   )

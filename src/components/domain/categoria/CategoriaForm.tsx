@@ -6,16 +6,23 @@ import Toggle from '@/components/ui/Toggle'
 import Button from '@/components/ui/Button'
 import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import useDialog from '@/hooks/useDialog'
-import {createCategoria} from '@/services/categoria'
+import {
+  createCategoria,
+  updateCategoria,
+  UpdateCategoriaInput,
+  fetchAllCategorias,
+} from '@/services/categoria'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
+import {CategoriaNode} from '@/services/types/categoria'
 
 type DDOption = {value: string; label: string}
 
 interface CategoriaFormProps {
   empresaId: number
   sucursalId: number
+  initialData?: CategoriaNode
   parentId?: number | null
   parentEsInsumo?: boolean
   parentSucursalIds?: number[]
@@ -26,27 +33,45 @@ interface CategoriaFormProps {
 export default function CategoriaForm({
   empresaId,
   sucursalId,
+  initialData,
   parentId,
   parentEsInsumo,
   parentSucursalIds,
   onSuccess,
   dialogName,
 }: CategoriaFormProps) {
+  const isEdit = !!initialData
   const {closeDialog} = useDialog()
 
   // ── form state ───────────────────────────────────────────────────────────
-  const [denominacion, setDenominacion] = useState('')
-  const [esInsumo, setEsInsumo] = useState(parentId != null ? !!parentEsInsumo : false)
-  const [idSucursales, setIdSucursales] = useState<number[]>([sucursalId])
+  const [denominacion, setDenominacion] = useState(initialData?.denominacion ?? '')
+  const [esInsumo, setEsInsumo] = useState(
+    isEdit ? !!initialData?.esInsumo : parentId != null ? !!parentEsInsumo : false
+  )
+  const [lockEsInsumo, setLockEsInsumo] = useState(false)
+  const lockByParent = isEdit && !!initialData?.categoriaPadre
+  const [idSucursales, setIdSucursales] = useState<number[]>(
+    isEdit ? initialData!.sucursales.map(s => s.id) : [sucursalId]
+  )
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
-  // react to parent changes
+  // Reset when switching record
   useEffect(() => {
+    if (!isEdit) return
+    setDenominacion(initialData?.denominacion ?? '')
+    setEsInsumo(!!initialData?.esInsumo)
+    setIdSucursales(initialData?.sucursales.map(s => s.id) ?? [])
+    setFormErrors({})
+  }, [isEdit, initialData])
+
+  // React to parent changes (CREATE only). Avoid clobbering value in EDIT mode.
+  useEffect(() => {
+    if (isEdit) return
     if (parentId != null) setEsInsumo(!!parentEsInsumo)
     else setEsInsumo(false) // default for root
-  }, [parentId, parentEsInsumo])
+  }, [isEdit, parentId, parentEsInsumo])
 
   // Load empresa's sucursales
   useEffect(() => {
@@ -56,10 +81,26 @@ export default function CategoriaForm({
     })()
   }, [empresaId])
 
+  // Lock "esInsumo" on EDIT iff this category has children anywhere
+  useEffect(() => {
+    if (!isEdit || !initialData?.id) return
+    ;(async () => {
+      try {
+        const all = await fetchAllCategorias()
+        const hasChildren = all.some(c => c.categoriaPadre?.id === initialData.id)
+        setLockEsInsumo(hasChildren)
+      } catch {
+        // fail-open: allow editing if fetch fails
+        setLockEsInsumo(false)
+      }
+    })()
+  }, [isEdit, initialData?.id])
+
+  // Allowed sucursales: only constrain on CREATE with parent
   const allowedSucursalIds = useMemo(() => {
-    // If creating a child, only allow parent's sucursales
+    if (isEdit) return null
     return parentId != null && Array.isArray(parentSucursalIds) ? new Set(parentSucursalIds) : null
-  }, [parentId, parentSucursalIds])
+  }, [isEdit, parentId, parentSucursalIds])
 
   const sucursalOptions = useMemo(() => {
     const base = sucursales.map(s => ({label: s.nombre, value: s.id}))
@@ -69,7 +110,7 @@ export default function CategoriaForm({
   // Ensure selection is valid given parent's constraint and prefer current sucursal if allowed
   useEffect(() => {
     if (!sucursales.length) return
-    if (allowedSucursalIds) {
+    if (!isEdit && allowedSucursalIds) {
       const filtered = idSucursales.filter(id => allowedSucursalIds.has(id))
       let next = filtered
       if (next.length === 0) {
@@ -79,20 +120,11 @@ export default function CategoriaForm({
       }
       setIdSucursales(next)
     } else {
-      // Root creation → ensure at least current sucursal selected
-      if (!idSucursales.includes(sucursalId)) setIdSucursales([sucursalId])
+      // Root creation → ensure at least current sucursal selected (CREATE only)
+      if (!isEdit && !idSucursales.includes(sucursalId)) setIdSucursales([sucursalId])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowedSucursalIds, sucursales, sucursalId])
-
-  // In the JSX (below MultiSelectCheckbox), optionally add a tiny hint:
-  {
-    parentId != null && (
-      <p className="text-xs text-muted -mt-2">
-        Solo puedes elegir sucursales donde la categoría padre ya está presente.
-      </p>
-    )
-  }
+  }, [isEdit, allowedSucursalIds, sucursales, sucursalId])
 
   // ── submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -100,34 +132,39 @@ export default function CategoriaForm({
     setFormErrors({})
     setLoading(true)
 
-    // submit payload: enforce parent’s esInsumo if creating a child
-    const resolvedEsInsumo = parentId != null ? !!parentEsInsumo : esInsumo
-    const raw: CategoriaCreateInput = {
-      denominacion: denominacion.trim(),
-      esInsumo: resolvedEsInsumo,
-      idCategoriaPadre: parentId ?? undefined,
-      idSucursales,
-    }
-
-    const parsed = categoriaCreateSchema.safeParse(raw)
-    if (!parsed.success) {
-      const errs: Record<string, string> = {}
-      parsed.error.errors.forEach(e => (errs[e.path.join('.')] = e.message))
-      setFormErrors(errs)
-      setLoading(false)
-      return
-    }
-
     try {
-      await createCategoria(parsed.data)
-      // reset
-      setDenominacion('')
-      setEsInsumo(false)
-      setIdSucursales([sucursalId])
+      if (isEdit && initialData) {
+        const payload: UpdateCategoriaInput = {
+          denominacion: denominacion.trim(),
+          ...(lockByParent || lockEsInsumo ? {} : {esInsumo}),
+        }
+        await updateCategoria(initialData.id, payload)
+      } else {
+        const resolvedEsInsumo = parentId != null ? !!parentEsInsumo : esInsumo
+        const raw: CategoriaCreateInput = {
+          denominacion: denominacion.trim(),
+          esInsumo: resolvedEsInsumo,
+          idCategoriaPadre: parentId ?? undefined,
+          idSucursales,
+        }
+        const parsed = categoriaCreateSchema.safeParse(raw)
+        if (!parsed.success) {
+          const errs: Record<string, string> = {}
+          parsed.error.errors.forEach(e => (errs[e.path.join('.')] = e.message))
+          setFormErrors(errs)
+          setLoading(false)
+          return
+        }
+        await createCategoria(parsed.data)
+        // reset fields after create
+        setDenominacion('')
+        setEsInsumo(parentId != null ? !!parentEsInsumo : false)
+        setIdSucursales([sucursalId])
+      }
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
     } catch (err: any) {
-      setFormErrors({general: err?.message ?? 'Error al crear la categoría'})
+      setFormErrors({general: err?.message ?? 'Error al guardar la categoría'})
     } finally {
       setLoading(false)
     }
@@ -144,8 +181,20 @@ export default function CategoriaForm({
         />
         <div className="flex items-center md:pt-6">
           <label className="flex items-center gap-2 text-sm font-medium">
-            <Toggle checked={esInsumo} onChange={setEsInsumo} disabled={!!parentId} />
-            Es insumo
+            <Toggle
+              checked={esInsumo}
+              onChange={setEsInsumo}
+              disabled={lockByParent || lockEsInsumo || !!parentId}
+            />
+            <span>Es insumo</span>
+            {lockByParent && (
+              <span className="text-xs text-muted ml-2">(hereda de la categoría padre)</span>
+            )}
+            {!lockByParent && lockEsInsumo && (
+              <span className="text-xs text-muted ml-2">
+                (no se puede cambiar: tiene subcategorías)
+              </span>
+            )}{' '}
           </label>
         </div>
       </div>
@@ -156,7 +205,13 @@ export default function CategoriaForm({
         value={idSucursales}
         onChange={setIdSucursales}
         error={formErrors.idSucursales}
+        disabled={isEdit}
       />
+      {parentId != null && (
+        <p className="text-xs text-muted -mt-2">
+          Solo puedes elegir sucursales donde la categoría padre ya está presente.
+        </p>
+      )}
 
       {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}
 
@@ -169,7 +224,7 @@ export default function CategoriaForm({
           Cancelar
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          Crear categoría
+          {isEdit ? 'Guardar cambios' : 'Crear categoría'}
         </Button>
       </div>
     </form>
