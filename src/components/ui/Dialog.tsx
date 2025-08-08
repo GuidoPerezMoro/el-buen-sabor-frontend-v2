@@ -38,27 +38,35 @@ const Dialog = ({
 }: DialogProps) => {
   const {isDialogOpened, closeDialog} = useDialog()
 
+  const handleClose = useCallback(() => {
+    closeDialog(name)
+    onClose()
+  }, [closeDialog, name, onClose])
+
   const handleTrapClick = useCallback(
     (e: SyntheticEvent<HTMLDivElement>) => {
       e.stopPropagation()
-      closeDialog(name)
-      onClose()
+      handleClose()
     },
-    [closeDialog, name, onClose]
+    [handleClose]
   )
 
-  const handleClose = () => {
-    closeDialog(name)
-    onClose()
-  }
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isOpen = isDialogOpened(name)
+      if (!isOpen) return
 
-      if (!isOpen || !onPrimary) return
+      // Close on ESC anywhere (even if typing)
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleClose()
+        return
+      }
 
-      const tag = (e.target as HTMLElement).tagName
-      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA'
+      if (!onPrimary) return
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable === true
 
       if (isTyping) return
 
@@ -70,7 +78,7 @@ const Dialog = ({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isDialogOpened, name, onPrimary])
+  }, [isDialogOpened, name, onPrimary, handleClose])
 
   return (
     <div className="fixed z-50 top-0 left-0 h-screen w-screen pointer-events-none overflow-hidden">
