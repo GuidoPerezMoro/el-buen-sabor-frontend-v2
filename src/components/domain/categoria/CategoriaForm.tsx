@@ -12,10 +12,10 @@ import {
   UpdateCategoriaInput,
   fetchAllCategorias,
 } from '@/services/categoria'
-import {fetchAllSucursales} from '@/services/sucursal'
-import {Sucursal} from '@/services/types'
-import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
 import {CategoriaNode} from '@/services/types/categoria'
+import {Sucursal} from '@/services/types'
+import {fetchAllSucursales} from '@/services/sucursal'
+import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
 
 type DDOption = {value: string; label: string}
 
@@ -49,6 +49,7 @@ export default function CategoriaForm({
     isEdit ? !!initialData?.esInsumo : parentId != null ? !!parentEsInsumo : false
   )
   const [lockEsInsumo, setLockEsInsumo] = useState(false)
+  const isCreateChild = !isEdit && parentId != null
   const lockByParent = isEdit && !!initialData?.categoriaPadre
   const [idSucursales, setIdSucursales] = useState<number[]>(
     isEdit ? initialData!.sucursales.map(s => s.id) : [sucursalId]
@@ -187,7 +188,7 @@ export default function CategoriaForm({
               disabled={lockByParent || lockEsInsumo || !!parentId}
             />
             <span>Es insumo</span>
-            {lockByParent && (
+            {(isCreateChild || lockByParent) && (
               <span className="text-xs text-muted ml-2">(hereda de la categoría padre)</span>
             )}
             {!lockByParent && lockEsInsumo && (
@@ -209,7 +210,7 @@ export default function CategoriaForm({
       />
       {parentId != null && (
         <p className="text-xs text-muted -mt-2">
-          Solo puedes elegir sucursales donde la categoría padre ya está presente.
+          Solo puedes elegir sucursales donde la categoría padre ya existe.
         </p>
       )}
 
