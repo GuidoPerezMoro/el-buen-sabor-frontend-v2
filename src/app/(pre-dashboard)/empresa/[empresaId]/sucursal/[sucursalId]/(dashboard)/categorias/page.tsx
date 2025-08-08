@@ -8,25 +8,28 @@ import {CategoriaNode} from '@/services/types/categoria'
 import CategoriaCardMobile from '@/components/domain/categoria/CategoriaCardMobile'
 import {fetchAllCategorias} from '@/services/categoria'
 import {buildCategoriaTree, filterCategoriasBySucursalId} from '@/services/categoria.utils'
+import useDialog from '@/hooks/useDialog'
+import Dialog from '@/components/ui/Dialog'
+import CategoriaForm from '@/components/domain/categoria/CategoriaForm'
 
 export default function CategoriasPage() {
   const [filter, setFilter] = useState('')
   const [nodes, setNodes] = useState<CategoriaNode[]>([])
-  const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const {empresaId: eid, sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const empresaId = Number(eid)
   const sucursalId = Number(sid)
+  const {openDialog} = useDialog()
 
-  // Real data
+  const loadCategorias = async () => {
+    const raw = await fetchAllCategorias()
+    const scoped = filterCategoriasBySucursalId(raw, sucursalId)
+    const roots = buildCategoriaTree(scoped)
+    setNodes(roots)
+  }
+
   useEffect(() => {
-    let active = true
-    ;(async () => {
-      const raw = await fetchAllCategorias()
-      const scoped = filterCategoriasBySucursalId(raw, sucursalId) // frontend filter
-      const roots = buildCategoriaTree(scoped)
-      if (active) setNodes(roots)
-    })()
-    return () => {
-      active = false
-    }
+    loadCategorias()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sucursalId])
 
   const filteredRoots = nodes.filter(n =>
@@ -40,7 +43,7 @@ export default function CategoriasPage() {
       <SearchAddBar
         value={filter}
         onChange={setFilter}
-        onAdd={() => console.log('Open create categoria dialog')}
+        onAdd={() => openDialog('nueva-categoria')}
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
       />
@@ -69,6 +72,15 @@ export default function CategoriasPage() {
           />
         ))}
       </div>
+
+      <Dialog name="nueva-categoria" title="Nueva categoría" fullscreen>
+        <CategoriaForm
+          empresaId={empresaId}
+          sucursalId={sucursalId}
+          dialogName="nueva-categoria"
+          onSuccess={loadCategorias}
+        />
+      </Dialog>
     </div>
   )
 }
