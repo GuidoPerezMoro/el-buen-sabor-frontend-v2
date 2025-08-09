@@ -3,6 +3,7 @@
 import {useState, useEffect, useMemo} from 'react'
 import {useParams} from 'next/navigation'
 import SearchAddBar from '@/components/ui/SearchAddBar'
+import StatusMessage from '@/components/ui/StatusMessage'
 import CategoriaCardDesktop from '@/components/domain/categoria/CategoriaCardDesktop'
 import {CategoriaNode} from '@/services/types/categoria'
 import CategoriaCardMobile from '@/components/domain/categoria/CategoriaCardMobile'
@@ -18,10 +19,11 @@ import useDialog from '@/hooks/useDialog'
 import Dialog from '@/components/ui/Dialog'
 import CategoriaForm from '@/components/domain/categoria/CategoriaForm'
 
-// TODO: Use StatusMessage component
 export default function CategoriasPage() {
   const [filter, setFilter] = useState('')
   const [nodes, setNodes] = useState<CategoriaNode[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const {empresaId: eid, sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
   const empresaId = Number(eid)
   const sucursalId = Number(sid)
@@ -57,10 +59,18 @@ export default function CategoriasPage() {
   }
 
   const loadCategorias = async () => {
-    const raw = await fetchAllCategorias()
-    const scoped = filterCategoriasBySucursalId(raw, sucursalId)
-    const roots = buildCategoriaTree(scoped)
-    setNodes(roots)
+    try {
+      setLoading(true)
+      setError(null)
+      const raw = await fetchAllCategorias()
+      const scoped = filterCategoriasBySucursalId(raw, sucursalId)
+      const roots = buildCategoriaTree(scoped)
+      setNodes(roots)
+    } catch (e: any) {
+      setError(e?.message ?? 'Error desconocido')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -72,12 +82,15 @@ export default function CategoriasPage() {
     const byType = filterCategoriaTreeByEsInsumo(nodes, typeFilter)
     return filterCategoriaTreeByText(byType, filter)
   }, [nodes, typeFilter, filter])
+  const hasActiveFilters = filter.trim() !== '' || typeFilter !== 'all'
+
+  if (loading) return <StatusMessage type="loading" title="Cargando categorías..." />
+  if (error) return <StatusMessage type="error" message="Error al cargar las categorías." />
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Categorías</h1>
 
-      {/* TODO: Fix filter for children */}
       <SearchAddBar
         value={filter}
         onChange={setFilter}
@@ -97,43 +110,57 @@ export default function CategoriasPage() {
         filterSearchable={false}
         filterLabel="Tipo"
       />
-      {/* Mobile */}
-      <div className="md:hidden space-y-2">
-        {filteredRoots.map(cat => (
-          <CategoriaCardMobile
-            key={cat.id}
-            categoria={cat}
-            onAddChild={(id, label, esInsumo, parentSucursalIds) => {
-              setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
-              openDialog('nueva-categoria')
-            }}
-            onEdit={id => {
-              setEditingNode(findNodeById(nodes /* or tree, if you switched */, id))
-              openDialog('editar-categoria')
-            }}
-            onDelete={id => console.log('Delete', id)}
-          />
-        ))}
-      </div>
 
-      {/* Desktop */}
-      <div className="hidden md:flex md:flex-col gap-6">
-        {filteredRoots.map(cat => (
-          <CategoriaCardDesktop
-            key={cat.id}
-            categoria={cat}
-            onAddChild={(id, label, esInsumo, parentSucursalIds) => {
-              setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
-              openDialog('nueva-categoria')
-            }}
-            onEdit={id => {
-              setEditingNode(findNodeById(nodes /* or tree */, id))
-              openDialog('editar-categoria')
-            }}
-            onDelete={id => console.log('Delete', id)}
-          />
-        ))}
-      </div>
+      {filteredRoots.length === 0 ? (
+        <StatusMessage
+          type="empty"
+          message={
+            hasActiveFilters
+              ? 'No se encontraron categorías con los filtros aplicados.'
+              : 'Aún no hay categorías en esta sucursal.'
+          }
+        />
+      ) : (
+        <>
+          {/* Mobile */}
+          <div className="md:hidden space-y-2">
+            {filteredRoots.map(cat => (
+              <CategoriaCardMobile
+                key={cat.id}
+                categoria={cat}
+                onAddChild={(id, label, esInsumo, parentSucursalIds) => {
+                  setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
+                  openDialog('nueva-categoria')
+                }}
+                onEdit={id => {
+                  setEditingNode(findNodeById(nodes /* or tree, if you switched */, id))
+                  openDialog('editar-categoria')
+                }}
+                onDelete={id => console.log('Delete', id)}
+              />
+            ))}
+          </div>
+
+          {/* Desktop */}
+          <div className="hidden md:flex md:flex-col gap-6">
+            {filteredRoots.map(cat => (
+              <CategoriaCardDesktop
+                key={cat.id}
+                categoria={cat}
+                onAddChild={(id, label, esInsumo, parentSucursalIds) => {
+                  setNewParent({id, label, esInsumo, sucursalIds: parentSucursalIds})
+                  openDialog('nueva-categoria')
+                }}
+                onEdit={id => {
+                  setEditingNode(findNodeById(nodes /* or tree */, id))
+                  openDialog('editar-categoria')
+                }}
+                onDelete={id => console.log('Delete', id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       <Dialog
         name="nueva-categoria"
