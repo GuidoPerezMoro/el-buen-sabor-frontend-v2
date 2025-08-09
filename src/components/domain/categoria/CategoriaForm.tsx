@@ -17,15 +17,13 @@ import {Sucursal} from '@/services/types'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
 
-type DDOption = {value: string; label: string}
-
 interface CategoriaFormProps {
   empresaId: number
   sucursalId: number
   initialData?: CategoriaNode
   parentId?: number | null
   parentEsInsumo?: boolean
-  parentSucursalIds?: number[]
+  parentSucursalIds?: ReadonlyArray<number>
   onSuccess?: () => void
   dialogName?: string
 }
@@ -51,6 +49,7 @@ export default function CategoriaForm({
   const [lockEsInsumo, setLockEsInsumo] = useState(false)
   const isCreateChild = !isEdit && parentId != null
   const lockByParent = isEdit && !!initialData?.categoriaPadre
+  const disableInsumoToggle = lockByParent || lockEsInsumo || !!parentId
   const [idSucursales, setIdSucursales] = useState<number[]>(
     isEdit ? initialData!.sucursales.map(s => s.id) : [sucursalId]
   )
@@ -76,25 +75,34 @@ export default function CategoriaForm({
 
   // Load empresa's sucursales
   useEffect(() => {
+    let active = true
     ;(async () => {
       const all = await fetchAllSucursales()
+      if (!active) return
       setSucursales(all.filter(s => s.empresa.id === empresaId))
     })()
+    return () => {
+      active = false
+    }
   }, [empresaId])
 
   // Lock "esInsumo" on EDIT iff this category has children anywhere
   useEffect(() => {
     if (!isEdit || !initialData?.id) return
+    let active = true
     ;(async () => {
       try {
         const all = await fetchAllCategorias()
+        if (!active) return
         const hasChildren = all.some(c => c.categoriaPadre?.id === initialData.id)
         setLockEsInsumo(hasChildren)
       } catch {
-        // fail-open: allow editing if fetch fails
-        setLockEsInsumo(false)
+        if (active) setLockEsInsumo(false) // fail-open
       }
     })()
+    return () => {
+      active = false
+    }
   }, [isEdit, initialData?.id])
 
   // Allowed sucursales: only constrain on CREATE with parent
@@ -104,7 +112,9 @@ export default function CategoriaForm({
   }, [isEdit, parentId, parentSucursalIds])
 
   const sucursalOptions = useMemo(() => {
-    const base = sucursales.map(s => ({label: s.nombre, value: s.id}))
+    const base = sucursales
+      .map(s => ({label: s.nombre, value: s.id}))
+      .sort((a, b) => a.label.localeCompare(b.label))
     return allowedSucursalIds ? base.filter(opt => allowedSucursalIds.has(opt.value)) : base
   }, [sucursales, allowedSucursalIds])
 
@@ -127,7 +137,6 @@ export default function CategoriaForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, allowedSucursalIds, sucursales, sucursalId])
 
-  // ── submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setFormErrors({})
@@ -137,7 +146,7 @@ export default function CategoriaForm({
       if (isEdit && initialData) {
         const payload: UpdateCategoriaInput = {
           denominacion: denominacion.trim(),
-          ...(lockByParent || lockEsInsumo ? {} : {esInsumo}),
+          ...(disableInsumoToggle ? {} : {esInsumo}),
         }
         await updateCategoria(initialData.id, payload)
       } else {
@@ -153,7 +162,6 @@ export default function CategoriaForm({
           const errs: Record<string, string> = {}
           parsed.error.errors.forEach(e => (errs[e.path.join('.')] = e.message))
           setFormErrors(errs)
-          setLoading(false)
           return
         }
         await createCategoria(parsed.data)
@@ -182,20 +190,18 @@ export default function CategoriaForm({
         />
         <div className="flex items-center md:pt-6">
           <label className="flex items-center gap-2 text-sm font-medium">
-            <Toggle
-              checked={esInsumo}
-              onChange={setEsInsumo}
-              disabled={lockByParent || lockEsInsumo || !!parentId}
-            />
+            <Toggle checked={esInsumo} onChange={setEsInsumo} disabled={disableInsumoToggle} />
             <span>Es insumo</span>
             {(isCreateChild || lockByParent) && (
-              <span className="text-xs text-muted ml-2">(hereda de la categoría padre)</span>
+              <span className="text-xs text-muted ml-2 whitespace-nowrap">
+                (hereda de la categoría padre)
+              </span>
             )}
             {!lockByParent && lockEsInsumo && (
-              <span className="text-xs text-muted ml-2">
+              <span className="text-xs text-muted ml-2 whitespace-nowrap">
                 (no se puede cambiar: tiene subcategorías)
               </span>
-            )}{' '}
+            )}
           </label>
         </div>
       </div>

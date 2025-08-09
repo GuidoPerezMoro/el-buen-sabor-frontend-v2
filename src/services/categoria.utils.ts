@@ -103,3 +103,13 @@ export function filterCategoriaTreeByEsInsumo(
   }
   return roots.map(visit).filter(Boolean) as CategoriaNode[]
 }
+
+export function findCategoriaNodeById(roots: CategoriaNode[], id: number): CategoriaNode | null {
+  const stack = [...roots]
+  while (stack.length) {
+    const n = stack.pop()!
+    if (n.id === id) return n
+    if (n.children?.length) stack.push(...n.children)
+  }
+  return null
+}

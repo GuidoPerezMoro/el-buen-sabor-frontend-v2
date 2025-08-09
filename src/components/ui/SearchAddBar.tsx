@@ -11,7 +11,7 @@ export interface SearchAddBarProps
   onAdd: () => void
   addLabel?: string
   showFilter?: boolean
-  filterOptions?: Array<string | {value: string; label: string}>
+  filterOptions?: ReadonlyArray<string | {value: string; label: string}>
   filterValue?: string | {value: string; label: string} | null
   onFilterChange?: (val: string | {value: string; label: string}) => void
   filterPlaceholder?: string
@@ -31,7 +31,6 @@ export default function SearchAddBar({
   onFilterChange,
   filterPlaceholder = 'Filtro',
   filterSearchable,
-  filterLabel,
 }: SearchAddBarProps) {
   const isMdUp = useIsMdUp()
 

@@ -6,7 +6,7 @@ import {cn} from '@/lib/utils'
 type Opt = string | {value: string; label: string}
 
 interface FilterDropdownProps {
-  options: Opt[]
+  options: ReadonlyArray<Opt>
   value: Opt | null
   onChange: (val: Opt) => void
   placeholder?: string
@@ -40,7 +40,7 @@ export default function FilterDropdown({
       )}
 
       <Dropdown
-        options={options}
+        options={[...options]}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
