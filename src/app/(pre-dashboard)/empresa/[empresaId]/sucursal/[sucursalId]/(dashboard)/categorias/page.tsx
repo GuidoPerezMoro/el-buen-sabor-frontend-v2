@@ -1,13 +1,17 @@
 'use client'
 
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo} from 'react'
 import {useParams} from 'next/navigation'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import CategoriaCardDesktop from '@/components/domain/categoria/CategoriaCardDesktop'
 import {CategoriaNode} from '@/services/types/categoria'
 import CategoriaCardMobile from '@/components/domain/categoria/CategoriaCardMobile'
 import {fetchAllCategorias} from '@/services/categoria'
-import {buildCategoriaTree, filterCategoriasBySucursalId} from '@/services/categoria.utils'
+import {
+  buildCategoriaTree,
+  filterCategoriasBySucursalId,
+  filterCategoriaTreeByText,
+} from '@/services/categoria.utils'
 import useDialog from '@/hooks/useDialog'
 import Dialog from '@/components/ui/Dialog'
 import CategoriaForm from '@/components/domain/categoria/CategoriaForm'
@@ -50,9 +54,7 @@ export default function CategoriasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sucursalId])
 
-  const filteredRoots = nodes.filter(n =>
-    n.denominacion.toLowerCase().includes(filter.toLowerCase())
-  )
+  const filteredRoots = useMemo(() => filterCategoriaTreeByText(nodes, filter), [nodes, filter])
 
   return (
     <div>

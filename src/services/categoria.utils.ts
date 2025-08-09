@@ -54,3 +54,34 @@ export function flattenCategoriaTree(roots: CategoriaNode[]) {
   roots.forEach(root => walk(root, [], []))
   return out
 }
+
+/** Case/accents-insensitive tree filter by denominación.
+ *  Keeps a node if it matches OR any descendant matches.
+ *  Returns a pruned copy of the tree (original array untouched).
+ */
+export function filterCategoriaTreeByText(roots: CategoriaNode[], query: string): CategoriaNode[] {
+  const q = query.trim()
+  if (!q) return roots
+
+  const fold = (s: string) =>
+    s
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+  const term = fold(q)
+
+  const visit = (node: CategoriaNode): CategoriaNode | null => {
+    const selfMatch = fold(node.denominacion).includes(term)
+    const filteredChildren: CategoriaNode[] = []
+    for (const child of node.children) {
+      const next = visit(child)
+      if (next) filteredChildren.push(next)
+    }
+    if (selfMatch || filteredChildren.length) {
+      return {...node, children: filteredChildren}
+    }
+    return null
+  }
+
+  return roots.map(n => visit(n)).filter(Boolean) as CategoriaNode[]
+}
