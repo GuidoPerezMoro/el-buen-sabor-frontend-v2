@@ -69,7 +69,6 @@ export default function SucursalForm({
     setFormErrors({})
   }, [initialData])
 
-  // ── submit handler ──────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setFormErrors({})
     setLoading(true)
@@ -155,9 +154,10 @@ export default function SucursalForm({
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.log('[SucursalForm] Error →', err)
-      setFormErrors({general: err.message})
+      const message = err instanceof Error ? err.message : 'Error al guardar la sucursal'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }

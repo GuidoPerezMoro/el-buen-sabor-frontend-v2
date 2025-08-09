@@ -12,7 +12,7 @@ import {
   updateEmpresaWithImage,
 } from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
-import {empresaSchema, EmpresaInput} from '@/schemas/empresaSchema'
+import {empresaSchema, type EmpresaInput} from '@/schemas/empresaSchema'
 
 interface EmpresaFormProps {
   initialData?: Empresa
@@ -60,7 +60,7 @@ export default function EmpresaForm({
     }
 
     try {
-      const payload = {
+      const payload: EmpresaInput = {
         nombre: result.data.nombre.trim(),
         razonSocial: result.data.razonSocial.trim(),
         cuil: result.data.cuil,
@@ -91,8 +91,9 @@ export default function EmpresaForm({
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
-      setFormErrors({general: err.message || 'Error al guardar la empresa'})
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al guardar la empresa'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }

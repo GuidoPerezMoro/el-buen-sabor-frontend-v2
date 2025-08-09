@@ -21,6 +21,12 @@ import Dialog from '@/components/ui/Dialog'
 import CategoriaForm from '@/components/domain/categoria/CategoriaForm'
 import useIsMdUp from '@/hooks/useIsMdUp'
 
+const TYPE_OPTIONS: ReadonlyArray<{value: EsInsumoFilter; label: string}> = [
+  {value: 'all', label: 'Todo'},
+  {value: 'insumo', label: 'Insumo'},
+  {value: 'noinsumo', label: 'No insumo'},
+]
+
 export default function CategoriasPage() {
   const isMdUp = useIsMdUp()
   const [filter, setFilter] = useState('')
@@ -40,14 +46,8 @@ export default function CategoriasPage() {
   }>({id: null})
 
   const [typeFilter, setTypeFilter] = useState<EsInsumoFilter>('all')
-  const typeOptions: ReadonlyArray<{value: EsInsumoFilter; label: string}> = [
-    {value: 'all', label: 'Todo'},
-    {value: 'insumo', label: 'Insumo'},
-    {value: 'noinsumo', label: 'No insumo'},
-  ]
-
   const currentTypeOption = useMemo(
-    () => typeOptions.find(o => o.value === typeFilter) ?? typeOptions[0],
+    () => TYPE_OPTIONS.find(o => o.value === typeFilter) ?? TYPE_OPTIONS[0],
     [typeFilter]
   )
 
@@ -80,8 +80,9 @@ export default function CategoriasPage() {
       const scoped = filterCategoriasBySucursalId(raw, sucursalId)
       const roots = buildCategoriaTree(scoped)
       setNodes(roots)
-    } catch (e: any) {
-      setError(e?.message ?? 'Error desconocido')
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Error desconocido'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -111,7 +112,7 @@ export default function CategoriasPage() {
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
         showFilter
-        filterOptions={typeOptions}
+        filterOptions={TYPE_OPTIONS}
         filterValue={currentTypeOption}
         onFilterChange={opt =>
           setTypeFilter((typeof opt === 'string' ? opt : opt.value) as EsInsumoFilter)

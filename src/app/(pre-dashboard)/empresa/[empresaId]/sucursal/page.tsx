@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useCallback} from 'react'
 import {useParams, useRouter} from 'next/navigation'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -20,7 +20,9 @@ export default function SucursalPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  const loadSucursales = async () => {
+  const loadSucursales = useCallback(async () => {
+    setLoading(true)
+    setError(false)
     try {
       const data = await fetchAllSucursales()
       const empresaIdNum = Number(empresaId)
@@ -31,7 +33,7 @@ export default function SucursalPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [empresaId])
 
   const handleSelectSucursal = (sucursalId: number) => {
     router.push(`/empresa/${empresaId}/sucursal/${sucursalId}`)
@@ -49,7 +51,7 @@ export default function SucursalPage() {
 
   useEffect(() => {
     loadSucursales()
-  }, [])
+  }, [loadSucursales])
 
   if (loading) return <StatusMessage type="loading" message="Cargando sucursales..." />
   if (error)

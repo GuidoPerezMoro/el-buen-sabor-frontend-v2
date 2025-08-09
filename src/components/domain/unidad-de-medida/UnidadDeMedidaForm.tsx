@@ -59,8 +59,9 @@ export default function UnidadDeMedidaForm({
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
-      setFormErrors({general: err.message || 'Error al guardar unidad'})
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al guardar unidad'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }

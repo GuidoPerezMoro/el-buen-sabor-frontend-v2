@@ -1,6 +1,7 @@
 'use client'
 
 import {ChangeEvent, useCallback, useRef, useState} from 'react'
+import Image from 'next/image'
 import {cn} from '@/lib/utils'
 
 interface ImageDropzoneProps {
@@ -9,7 +10,7 @@ interface ImageDropzoneProps {
   className?: string
 }
 
-export default function ImageDropzone({onFileAccepted, previewUrl, className}: ImageDropzoneProps) {
+export default function ImageDropzone({onFileAccepted, className}: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -59,11 +60,14 @@ export default function ImageDropzone({onFileAccepted, previewUrl, className}: I
       onDrop={handleDrop}
     >
       {preview ? (
-        <div className="flex items-center justify-center w-full h-full">
-          <img
+        <div className="relative w-full h-full">
+          <Image
             src={preview}
             alt="Preview de imagen"
-            className="object-contain max-w-full max-h-full"
+            fill
+            className="object-contain"
+            unoptimized
+            priority
           />
         </div>
       ) : (

@@ -30,13 +30,7 @@ export function useCategoriasTree(sucursalId: number) {
   }, [sucursalId])
 
   useEffect(() => {
-    let active = true
-    ;(async () => {
-      await load()
-    })()
-    return () => {
-      active = false
-    }
+    load()
   }, [load])
 
   const flat = useMemo(() => flattenCategoriaTree(tree /* any node selectable */), [tree])

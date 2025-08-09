@@ -60,7 +60,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
 
     const hasRightContent = !!iconRight || (isPassword && showPasswordToggle)
 
-    const {type: _ignoredType, ...restProps} = props as InputHTMLAttributes<HTMLInputElement>
+    const inputProps = props as InputHTMLAttributes<HTMLInputElement>
 
     return (
       <div className="w-full">
@@ -77,8 +77,8 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
             {iconLeft && <span className="absolute left-2">{iconLeft}</span>}
             <input
               ref={ref as React.Ref<HTMLInputElement>}
+              {...inputProps}
               type={inputType}
-              {...restProps}
               className={cn(
                 inputClasses,
                 !!iconLeft ? 'pl-8' : undefined,

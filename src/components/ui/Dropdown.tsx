@@ -42,7 +42,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
     // Reset filter when selection or open state changes
     useEffect(() => {
       if (!isOpen) setFilter(searchable ? selectedLabel : '')
-    }, [selectedLabel, isOpen])
+    }, [selectedLabel, isOpen, searchable])
 
     const filtered = searchable
       ? normalized.filter(o => o.label.toLowerCase().includes(filter.toLowerCase()))
@@ -97,7 +97,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
                 className="px-3 py-2 text-sm text-text hover:bg-surfaceHover cursor-pointer"
                 onMouseDown={e => {
                   e.preventDefault()
-                  onChange(o.original as BaseOption as any)
+                  onChange(o.original)
                   setIsOpen(false)
                 }}
               >
@@ -113,6 +113,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
     )
   }
 )
+_Dropdown.displayName = 'Dropdown'
 
 const Dropdown = _Dropdown as DropdownComponent
 export default Dropdown

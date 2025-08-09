@@ -2,16 +2,15 @@
 
 import Link from 'next/link'
 import {cn} from '@/lib/utils'
+import type {LucideIcon} from 'lucide-react'
+import {Box} from 'lucide-react'
 
 interface SidenavItemProps {
   href: string
   label: string
-  icon?: ComponentType<any>
+  icon?: LucideIcon
   selected?: boolean
 }
-
-import {Box} from 'lucide-react' // fallback icon
-import {ComponentType} from 'react'
 
 export default function SidenavItem({
   href,

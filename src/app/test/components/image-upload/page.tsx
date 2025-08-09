@@ -1,6 +1,7 @@
 'use client'
 
 import {useState} from 'react'
+import Image from 'next/image'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 
 export default function TestImageUploadPage() {
@@ -25,10 +26,14 @@ export default function TestImageUploadPage() {
       {previewUrl && (
         <div className="mt-4">
           <h2 className="text-lg font-semibold mb-2">Vista previa:</h2>
-          <img
+          <Image
             src={previewUrl}
-            alt="Preview"
+            alt="Vista previa"
+            width={800}
+            height={600}
             className="w-full max-h-80 object-contain rounded shadow"
+            unoptimized
+            priority
           />
         </div>
       )}

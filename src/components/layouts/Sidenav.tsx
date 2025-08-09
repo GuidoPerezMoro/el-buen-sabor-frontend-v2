@@ -3,6 +3,7 @@
 import {useParams, usePathname} from 'next/navigation'
 import Divider from '@/components/ui/Divider'
 import SidenavItem from '@/components/ui/SidenavItem'
+import type {LucideIcon} from 'lucide-react'
 import {Home, ChefHat, Tags, Ruler, Settings} from 'lucide-react'
 
 export default function Sidenav() {
@@ -13,7 +14,7 @@ export default function Sidenav() {
 
   // Define a mixed array: either a nav item or a divider marker
   const navElements: Array<
-    {type: 'item'; href: string; label: string; icon: React.ComponentType<any>} | {type: 'divider'}
+    {type: 'item'; href: string; label: string; icon: LucideIcon} | {type: 'divider'}
   > = [
     {type: 'item', href: base, label: 'Dashboard', icon: Home},
     {type: 'divider'},
