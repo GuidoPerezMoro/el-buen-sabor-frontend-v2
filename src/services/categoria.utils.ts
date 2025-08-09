@@ -85,3 +85,21 @@ export function filterCategoriaTreeByText(roots: CategoriaNode[], query: string)
 
   return roots.map(n => visit(n)).filter(Boolean) as CategoriaNode[]
 }
+
+export type EsInsumoFilter = 'all' | 'insumo' | 'noinsumo'
+
+/** Prunes the tree by esInsumo. Keeps a node if it matches OR any descendant matches. */
+export function filterCategoriaTreeByEsInsumo(
+  roots: CategoriaNode[],
+  mode: EsInsumoFilter
+): CategoriaNode[] {
+  if (mode === 'all') return roots
+  const want = mode === 'insumo'
+  const visit = (node: CategoriaNode): CategoriaNode | null => {
+    const kids = node.children.map(visit).filter(Boolean) as CategoriaNode[]
+    const selfOk = node.esInsumo === want
+    if (selfOk || kids.length) return {...node, children: kids}
+    return null
+  }
+  return roots.map(visit).filter(Boolean) as CategoriaNode[]
+}

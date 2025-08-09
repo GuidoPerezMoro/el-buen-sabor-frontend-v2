@@ -11,6 +11,8 @@ import {
   buildCategoriaTree,
   filterCategoriasBySucursalId,
   filterCategoriaTreeByText,
+  filterCategoriaTreeByEsInsumo,
+  EsInsumoFilter,
 } from '@/services/categoria.utils'
 import useDialog from '@/hooks/useDialog'
 import Dialog from '@/components/ui/Dialog'
@@ -31,6 +33,18 @@ export default function CategoriasPage() {
     esInsumo?: boolean
     sucursalIds?: number[]
   }>({id: null})
+
+  const [typeFilter, setTypeFilter] = useState<EsInsumoFilter>('all')
+  const typeOptions = [
+    {value: 'all', label: 'Todo'},
+    {value: 'insumo', label: 'Insumo'},
+    {value: 'noinsumo', label: 'No insumo'},
+  ] as const
+
+  const currentTypeOption = useMemo(
+    () => typeOptions.find(o => o.value === typeFilter) ?? typeOptions[0],
+    [typeFilter]
+  )
 
   const findNodeById = (roots: CategoriaNode[], id: number): CategoriaNode | null => {
     const stack = [...roots]
@@ -54,7 +68,10 @@ export default function CategoriasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sucursalId])
 
-  const filteredRoots = useMemo(() => filterCategoriaTreeByText(nodes, filter), [nodes, filter])
+  const filteredRoots = useMemo(() => {
+    const byType = filterCategoriaTreeByEsInsumo(nodes, typeFilter)
+    return filterCategoriaTreeByText(byType, filter)
+  }, [nodes, typeFilter, filter])
 
   return (
     <div>
@@ -70,6 +87,15 @@ export default function CategoriasPage() {
         }}
         addLabel="Nueva categoría"
         placeholder="Buscar categoría"
+        showFilter
+        filterOptions={typeOptions as any}
+        filterValue={currentTypeOption as any}
+        onFilterChange={opt =>
+          setTypeFilter((typeof opt === 'string' ? opt : opt.value) as EsInsumoFilter)
+        }
+        filterPlaceholder="Tipo"
+        filterSearchable={false}
+        filterLabel="Tipo"
       />
       {/* Mobile */}
       <div className="md:hidden space-y-2">

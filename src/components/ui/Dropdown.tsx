@@ -62,7 +62,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
         <input
           type="text"
           className={cn(
-            'w-full px-3 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2',
+            'w-full px-3 pr-4 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2',
             disabled
               ? 'border-muted focus:ring-muted cursor-not-allowed'
               : 'border-muted focus:ring-primary'
