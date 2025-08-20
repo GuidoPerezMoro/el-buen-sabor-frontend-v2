@@ -143,8 +143,8 @@ export default function ArticulosInsumoPage() {
             columns={columns}
             data={filtered}
             alignLastColumnEnd
-            // size="sm"
             className="text-sm"
+            getRowKey={row => row.id}
           />
         </div>
       )}

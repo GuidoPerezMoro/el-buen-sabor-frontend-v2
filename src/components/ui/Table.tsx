@@ -20,7 +20,7 @@ interface TableProps<T> {
   headerClassName?: string
   cellClassName?: string
   size?: 'sm' | 'md' | 'lg'
-  // getRowKey?: (row: T, index: number) => React.Key
+  getRowKey?: (row: T, index: number) => React.Key
 }
 
 export default function Table<T>({
@@ -31,7 +31,7 @@ export default function Table<T>({
   headerClassName,
   cellClassName,
   size = 'md',
-  // getRowKey,
+  getRowKey,
 }: TableProps<T>) {
   // Size
   const sizeMap = {
@@ -91,6 +91,7 @@ export default function Table<T>({
                   alignLastColumnEnd ? (isLast ? 'text-right' : 'text-left') : 'text-left',
                   headerClassName
                 )}
+                scope="col"
               >
                 <div className="inline-flex items-center gap-1">
                   {col.header}
@@ -110,7 +111,10 @@ export default function Table<T>({
       </thead>
       <tbody>
         {sortedData.map((row, ri) => (
-          <tr key={ri} className="border-t hover:bg-primary/10 transition-colors">
+          <tr
+            key={getRowKey ? getRowKey(row, ri) : ri}
+            className="border-t hover:bg-primary/10 transition-colors"
+          >
             {columns.map((col, ci) => (
               <td
                 key={ci}
