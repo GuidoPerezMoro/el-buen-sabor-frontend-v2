@@ -113,3 +113,8 @@ export function findCategoriaNodeById(roots: CategoriaNode[], id: number): Categ
   }
   return null
 }
+
+/** True if any categoria in the full list has `categoriaPadre.id === id`. */
+export function hasChildrenInList(list: Categoria[], id: number): boolean {
+  return list.some(c => c.categoriaPadre?.id === id)
+}

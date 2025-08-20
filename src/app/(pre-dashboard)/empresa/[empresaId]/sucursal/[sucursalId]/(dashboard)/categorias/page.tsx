@@ -7,7 +7,7 @@ import StatusMessage from '@/components/ui/StatusMessage'
 import CategoriaCardDesktop from '@/components/domain/categoria/CategoriaCardDesktop'
 import {CategoriaNode} from '@/services/types/categoria'
 import CategoriaCardMobile from '@/components/domain/categoria/CategoriaCardMobile'
-import {fetchAllCategorias} from '@/services/categoria'
+import {fetchAllCategorias, deleteCategoria} from '@/services/categoria'
 import {
   buildCategoriaTree,
   filterCategoriasBySucursalId,
@@ -15,6 +15,8 @@ import {
   filterCategoriaTreeByEsInsumo,
   EsInsumoFilter,
   findCategoriaNodeById,
+  hasChildrenInList,
+  flattenCategoriaTree,
 } from '@/services/categoria.utils'
 import useDialog from '@/hooks/useDialog'
 import Dialog from '@/components/ui/Dialog'
@@ -36,7 +38,7 @@ export default function CategoriasPage() {
   const {empresaId: eid, sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
   const empresaId = Number(eid)
   const sucursalId = Number(sid)
-  const {openDialog} = useDialog()
+  const {openDialog, closeDialog} = useDialog()
   const [editingNode, setEditingNode] = useState<CategoriaNode | null>(null)
   const [newParent, setNewParent] = useState<{
     id: number | null
@@ -98,6 +100,59 @@ export default function CategoriasPage() {
   }, [nodes, typeFilter, filter])
   const hasActiveFilters = filter.trim() !== '' || typeFilter !== 'all'
 
+  // Delete
+  const [deleteTarget, setDeleteTarget] = useState<{id: number; label: string} | null>(null)
+  const [deleteBlockedReason, setDeleteBlockedReason] = useState<string | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const flatIndex = useMemo(() => {
+    const flat = flattenCategoriaTree(nodes)
+    return new Map(flat.map(f => [f.id, f.label]))
+  }, [nodes])
+
+  const handleRequestDelete = useCallback(
+    async (id: number) => {
+      const label = flatIndex.get(id) ?? 'Categoría'
+      setDeleteTarget({id, label})
+      setDeleteError(null)
+      setDeleteBlockedReason(null)
+      try {
+        const all = await fetchAllCategorias()
+        if (hasChildrenInList(all, id)) {
+          setDeleteBlockedReason('No se puede eliminar porque la categoría tiene subcategorías.')
+        }
+
+        // TODO: también bloquear si la categoría tiene artículos (aunque sea hoja).
+        // Cuando exista el servicio de artículos, consultar algo como:
+        //   const hasArticulos = await hasArticulosForCategoria(id)
+        //   if (hasArticulos) setDeleteBlockedReason('No se puede eliminar porque tiene artículos asociados.')
+      } catch (e: any) {
+        setDeleteError(e?.message ?? 'No se pudo verificar dependencias.')
+      } finally {
+        openDialog('eliminar-categoria')
+      }
+    },
+    [flatIndex, openDialog]
+  )
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    try {
+      await deleteCategoria(deleteTarget.id)
+      setDeleteTarget(null)
+      closeDialog('eliminar-categoria')
+      await loadCategorias()
+    } catch (e: any) {
+      setDeleteError(e?.message ?? 'Error al eliminar la categoría.')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }, [deleteTarget, closeDialog, loadCategorias])
+
+  // Loading | Error state
   if (loading) return <StatusMessage type="loading" title="Cargando categorías..." />
   if (error) return <StatusMessage type="error" message="Error al cargar las categorías." />
 
@@ -142,7 +197,7 @@ export default function CategoriasPage() {
                 handleOpenCreateChild(id, label, esInsumo, parentSucursalIds)
               }
               onEdit={handleOpenEdit}
-              onDelete={id => console.log('Delete', id)}
+              onDelete={handleRequestDelete}
             />
           ))}
         </div>
@@ -157,7 +212,7 @@ export default function CategoriasPage() {
                 handleOpenCreateChild(id, label, esInsumo, parentSucursalIds)
               }
               onEdit={handleOpenEdit}
-              onDelete={id => console.log('Delete', id)}
+              onDelete={handleRequestDelete}
             />
           ))}
         </div>
@@ -190,6 +245,35 @@ export default function CategoriasPage() {
               loadCategorias()
             }}
           />
+        )}
+      </Dialog>
+
+      <Dialog
+        name="eliminar-categoria"
+        title="Eliminar categoría"
+        onClose={() => {
+          setDeleteTarget(null)
+          setDeleteBlockedReason(null)
+          setDeleteError(null)
+        }}
+        message={
+          deleteTarget
+            ? deleteBlockedReason
+              ? `No puedes eliminar "${deleteTarget.label}" porque tiene subcategorías.`
+              : `¿Confirmas eliminar "${deleteTarget.label}"? Esta acción no se puede deshacer.`
+            : undefined
+        }
+        onSecondary={deleteBlockedReason ? undefined : () => closeDialog('eliminar-categoria')}
+        secondaryLabel={deleteBlockedReason ? undefined : 'Cancelar'}
+        onPrimary={
+          deleteBlockedReason ? () => closeDialog('eliminar-categoria') : handleConfirmDelete
+        }
+        primaryLabel={deleteBlockedReason ? 'Entendido' : 'Eliminar'}
+        isLoading={!deleteBlockedReason && deleteLoading}
+      >
+        {/* TODO: Permitir eliminar solo la sucursal actual (Update). O todas (Delete). */}
+        {!deleteBlockedReason && deleteError && (
+          <p className="text-sm text-danger">{deleteError}</p>
         )}
       </Dialog>
     </div>
