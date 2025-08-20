@@ -5,6 +5,8 @@ import {useParams} from 'next/navigation'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
 import Table, {Column} from '@/components/ui/Table'
+import IconButton from '@/components/ui/IconButton'
+import {Pencil, Trash} from 'lucide-react'
 import {ArticuloInsumo} from '@/services/types/articulo'
 import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
 import {
@@ -53,8 +55,18 @@ export default function ArticulosInsumoPage() {
       sortKey: 'denominacion',
     },
     {
-      header: 'U. Medida',
-      accessor: a => a.unidadDeMedida?.denominacion ?? '—',
+      header: 'Compra',
+      accessor: a =>
+        (a.precioCompra ?? 0).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'}),
+      sortable: true,
+      sortKey: 'precioCompra',
+    },
+    {
+      header: 'Venta',
+      accessor: a =>
+        (a.precioVenta ?? 0).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'}),
+      sortable: true,
+      sortKey: 'precioVenta',
     },
     {
       header: 'Stock',
@@ -68,34 +80,32 @@ export default function ArticulosInsumoPage() {
       sortKey: 'stockActual',
     },
     {
-      header: 'Venta',
-      accessor: a =>
-        (a.precioVenta ?? 0).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'}),
-      sortable: true,
-      sortKey: 'precioVenta',
+      header: 'U. Medida',
+      accessor: a => a.unidadDeMedida?.denominacion ?? '—',
     },
     {
-      header: 'Para elaborar',
+      header: 'P/ elaborar',
       accessor: a => (a.esParaElaborar ? 'Sí' : 'No'),
     },
     {
       header: '',
       accessor: a => (
-        <div className="flex justify-end gap-2">
-          <button
-            className="text-primary hover:underline text-sm"
-            onClick={() => console.log('Editar', a.id)}
+        <div className="flex justify-end gap-1.5">
+          <IconButton
+            icon={<Pencil size={16} />}
             aria-label={`Editar ${a.denominacion}`}
-          >
-            Editar
-          </button>
-          <button
-            className="text-danger hover:underline text-sm"
-            onClick={() => console.log('Eliminar', a.id)}
+            title="Editar"
+            size="sm"
+            onClick={() => console.log('Editar', a.id)}
+          />
+          <IconButton
+            icon={<Trash size={16} />}
             aria-label={`Eliminar ${a.denominacion}`}
-          >
-            Eliminar
-          </button>
+            title="Eliminar"
+            size="sm"
+            onClick={() => console.log('Eliminar', a.id)}
+            className="text-danger"
+          />
         </div>
       ),
     },
@@ -105,7 +115,7 @@ export default function ArticulosInsumoPage() {
   if (error) return <StatusMessage type="error" message="Error al cargar artículos." />
 
   return (
-    <main className="p-6">
+    <main>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Insumos</h1>
       </div>
@@ -129,7 +139,13 @@ export default function ArticulosInsumoPage() {
         />
       ) : (
         <div className="bg-white rounded-md border">
-          <Table columns={columns} data={filtered} alignLastColumnEnd />
+          <Table
+            columns={columns}
+            data={filtered}
+            alignLastColumnEnd
+            // size="sm"
+            className="text-sm"
+          />
         </div>
       )}
     </main>

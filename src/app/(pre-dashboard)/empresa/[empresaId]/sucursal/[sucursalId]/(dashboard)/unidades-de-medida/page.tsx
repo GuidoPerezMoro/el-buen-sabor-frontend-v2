@@ -82,6 +82,7 @@ export default function UnidadDeMedidaPage() {
             icon={<Trash size={16} />}
             aria-label="Eliminar"
             onClick={() => handleDelete(u)}
+            className="text-danger"
           />
         </div>
       ),

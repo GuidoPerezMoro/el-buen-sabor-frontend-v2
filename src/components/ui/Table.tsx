@@ -16,9 +16,33 @@ interface TableProps<T> {
   columns: Column<T>[]
   data: T[]
   alignLastColumnEnd?: boolean
+  className?: string
+  headerClassName?: string
+  cellClassName?: string
+  size?: 'sm' | 'md' | 'lg'
+  // getRowKey?: (row: T, index: number) => React.Key
 }
 
-export default function Table<T>({columns, data, alignLastColumnEnd = false}: TableProps<T>) {
+export default function Table<T>({
+  columns,
+  data,
+  alignLastColumnEnd = false,
+  className,
+  headerClassName,
+  cellClassName,
+  size = 'md',
+  // getRowKey,
+}: TableProps<T>) {
+  // Size
+  const sizeMap = {
+    sm: {th: 'px-3 py-1', td: 'px-3 py-1', icon: 12},
+    md: {th: 'px-4 py-2', td: 'px-4 py-2', icon: 14},
+    lg: {th: 'px-5 py-3', td: 'px-5 py-3', icon: 16},
+  } as const
+
+  const sz = sizeMap[size ?? 'md']
+
+  // Sort
   const [sortConfig, setSortConfig] = useState<{key: keyof T; direction: 'asc' | 'desc'} | null>(
     null
   )
@@ -51,7 +75,7 @@ export default function Table<T>({columns, data, alignLastColumnEnd = false}: Ta
   }
 
   return (
-    <table className="w-full border-collapse">
+    <table className={cn('w-full border-collapse', className)}>
       <thead>
         <tr>
           {columns.map((col, idx) => {
@@ -61,10 +85,11 @@ export default function Table<T>({columns, data, alignLastColumnEnd = false}: Ta
                 key={idx}
                 onClick={() => handleSort(col)}
                 className={cn(
-                  'px-4 py-2 font-medium',
+                  sz.th,
                   col.sortable && 'cursor-pointer',
                   // right‐align header if last column and prop is true
-                  alignLastColumnEnd ? (isLast ? 'text-right' : 'text-left') : 'text-left'
+                  alignLastColumnEnd ? (isLast ? 'text-right' : 'text-left') : 'text-left',
+                  headerClassName
                 )}
               >
                 <div className="inline-flex items-center gap-1">
@@ -73,9 +98,9 @@ export default function Table<T>({columns, data, alignLastColumnEnd = false}: Ta
                     sortConfig &&
                     sortConfig.key === col.sortKey &&
                     (sortConfig.direction === 'asc' ? (
-                      <ArrowUp size={14} />
+                      <ArrowUp size={sz.icon} />
                     ) : (
-                      <ArrowDown size={14} />
+                      <ArrowDown size={sz.icon} />
                     ))}
                 </div>
               </th>
@@ -90,8 +115,9 @@ export default function Table<T>({columns, data, alignLastColumnEnd = false}: Ta
               <td
                 key={ci}
                 className={cn(
-                  'px-4 py-2',
-                  alignLastColumnEnd && ci === columns.length - 1 && 'text-right'
+                  sz.td,
+                  alignLastColumnEnd && ci === columns.length - 1 && 'text-right',
+                  cellClassName
                 )}
               >
                 {col.accessor(row)}
