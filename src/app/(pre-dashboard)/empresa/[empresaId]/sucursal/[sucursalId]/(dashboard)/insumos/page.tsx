@@ -2,6 +2,8 @@
 
 import {useEffect, useMemo, useState, useCallback} from 'react'
 import {useParams} from 'next/navigation'
+import {cn} from '@/lib/utils'
+import {formatARS} from '@/lib/format'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
 import Table, {Column} from '@/components/ui/Table'
@@ -56,15 +58,13 @@ export default function ArticulosInsumoPage() {
     },
     {
       header: 'Compra',
-      accessor: a =>
-        (a.precioCompra ?? 0).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'}),
+      accessor: a => formatARS(a.precioCompra ?? 0),
       sortable: true,
       sortKey: 'precioCompra',
     },
     {
       header: 'Venta',
-      accessor: a =>
-        (a.precioVenta ?? 0).toLocaleString('es-AR', {style: 'currency', currency: 'ARS'}),
+      accessor: a => formatARS(a.precioVenta ?? 0),
       sortable: true,
       sortKey: 'precioVenta',
     },
@@ -72,7 +72,9 @@ export default function ArticulosInsumoPage() {
       header: 'Stock',
       accessor: a => (
         <div>
-          <span className="font-mono">{a.stockActual}</span>
+          <span className={cn('font-mono', a.stockActual < a.stockMinimo && 'text-danger')}>
+            {a.stockActual}
+          </span>
           <span className="text-xs text-muted"> / {a.stockMaximo}</span>
         </div>
       ),
