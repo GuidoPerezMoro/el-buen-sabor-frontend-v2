@@ -271,7 +271,7 @@ export default function CategoriasPage() {
         primaryLabel={deleteBlockedReason ? 'Entendido' : 'Eliminar'}
         isLoading={!deleteBlockedReason && deleteLoading}
       >
-        {/* TODO: Permitir eliminar solo la sucursal actual (Update). O todas (Delete). */}
+        {/* TODO: Permitir eliminar solo la sucursal actual (Update, si se arregla la API). O todas (Delete). */}
         {!deleteBlockedReason && deleteError && (
           <p className="text-sm text-danger">{deleteError}</p>
         )}
