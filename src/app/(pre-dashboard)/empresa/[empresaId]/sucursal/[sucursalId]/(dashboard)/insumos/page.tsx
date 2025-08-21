@@ -200,7 +200,11 @@ export default function ArticulosInsumoPage() {
         <ArticuloInsumoForm sucursalId={sucursalId} dialogName="nuevo-insumo" onSuccess={load} />
       </Dialog>
 
-      <Dialog name="editar-insumo" title="Editar insumo" onClose={() => setEditing(null)}>
+      <Dialog
+        name="editar-insumo"
+        title={editing ? `Editar “${editing.denominacion}”` : undefined}
+        onClose={() => setEditing(null)}
+      >
         {editing && (
           <ArticuloInsumoForm
             sucursalId={sucursalId}
@@ -216,7 +220,7 @@ export default function ArticulosInsumoPage() {
 
       <Dialog
         name="confirm-delete-insumo"
-        title="¿Eliminar insumo?"
+        title={deleting ? `¿Eliminar “${deleting.denominacion}”?` : undefined}
         message={
           deleting
             ? `Esto eliminará permanentemente el insumo “${deleting.denominacion}”.`
