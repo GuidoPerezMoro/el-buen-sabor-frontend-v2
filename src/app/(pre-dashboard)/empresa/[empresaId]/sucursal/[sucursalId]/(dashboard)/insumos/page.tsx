@@ -2,23 +2,28 @@
 
 import {useEffect, useMemo, useState, useCallback} from 'react'
 import {useParams} from 'next/navigation'
+import useDialog from '@/hooks/useDialog'
 import {cn} from '@/lib/utils'
 import {formatARS} from '@/lib/format'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
 import Table, {Column} from '@/components/ui/Table'
 import IconButton from '@/components/ui/IconButton'
-import {Pencil, Trash} from 'lucide-react'
+import Dialog from '@/components/ui/Dialog'
+import {Pencil, Trash, TriangleAlert} from 'lucide-react'
 import {ArticuloInsumo} from '@/services/types/articulo'
-import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
+import {fetchAllArticuloInsumos, deleteArticuloInsumo} from '@/services/articuloInsumo'
 import {
   filterArticuloInsumosBySucursalId,
   filterArticuloInsumosByText,
 } from '@/services/articuloInsumo.utils'
+import ArticuloInsumoForm from '@/components/domain/insumo/ArticuloInsumoForm'
 
 export default function ArticulosInsumoPage() {
   const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
   const sucursalId = Number(sid)
+
+  const {openDialog, closeDialog} = useDialog()
 
   const [items, setItems] = useState<ArticuloInsumo[]>([])
   const [filter, setFilter] = useState('')
@@ -27,7 +32,6 @@ export default function ArticulosInsumoPage() {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true)
       setError(null)
       const all = await fetchAllArticuloInsumos()
       setItems(filterArticuloInsumosBySucursalId(all, sucursalId))
@@ -44,6 +48,41 @@ export default function ArticulosInsumoPage() {
 
   const filtered = useMemo(() => filterArticuloInsumosByText(items, filter), [items, filter])
 
+  // Edit
+  const [editing, setEditing] = useState<ArticuloInsumo | null>(null)
+
+  const handleEdit = useCallback(
+    (item: ArticuloInsumo) => {
+      setEditing(item)
+      openDialog('editar-insumo')
+    },
+    [openDialog]
+  )
+
+  // Delete
+  const [deleting, setDeleting] = useState<ArticuloInsumo | null>(null)
+  const [deletingLoading, setDeletingLoading] = useState(false)
+
+  const handleDelete = (item: ArticuloInsumo) => {
+    setDeleting(item)
+    openDialog('confirm-delete-insumo')
+  }
+
+  // TODO(articulos): When manufacturados are implemented, block deletion if this insumo
+  // is referenced by any manufacturado detalle. Show a helpful message in that case.
+  const confirmDelete = async () => {
+    if (!deleting) return
+    try {
+      setDeletingLoading(true)
+      await deleteArticuloInsumo(deleting.id)
+      await load()
+    } finally {
+      setDeletingLoading(false)
+      setDeleting(null)
+      closeDialog('confirm-delete-insumo')
+    }
+  }
+
   const columns: Column<ArticuloInsumo>[] = [
     {
       header: 'Artículo',
@@ -58,14 +97,19 @@ export default function ArticulosInsumoPage() {
     },
     {
       header: 'Compra',
-      accessor: a => formatARS(a.precioCompra ?? 0),
+      accessor: a => {
+        const c = a.precioCompra ?? 0
+        return c === 0 ? '-' : formatARS(c)
+      },
       sortable: true,
       sortKey: 'precioCompra',
     },
     {
       header: 'Venta',
-      // TODO: Usar '-' si el precio de venta es 0
-      accessor: a => formatARS(a.precioVenta ?? 0),
+      accessor: a => {
+        const v = a.precioVenta ?? 0
+        return v === 0 ? '-' : formatARS(v)
+      },
       sortable: true,
       sortKey: 'precioVenta',
     },
@@ -99,14 +143,14 @@ export default function ArticulosInsumoPage() {
             aria-label={`Editar ${a.denominacion}`}
             title="Editar"
             size="sm"
-            onClick={() => console.log('Editar', a.id)}
+            onClick={() => handleEdit(a)}
           />
           <IconButton
             icon={<Trash size={16} />}
             aria-label={`Eliminar ${a.denominacion}`}
             title="Eliminar"
             size="sm"
-            onClick={() => console.log('Eliminar', a.id)}
+            onClick={() => handleDelete(a)}
             className="text-danger"
           />
         </div>
@@ -114,8 +158,8 @@ export default function ArticulosInsumoPage() {
     },
   ]
 
-  if (loading) return <StatusMessage type="loading" title="Cargando artículos..." />
-  if (error) return <StatusMessage type="error" message="Error al cargar artículos." />
+  if (loading) return <StatusMessage type="loading" title="Cargando insumos..." />
+  if (error) return <StatusMessage type="error" message="Error al cargar insumos." />
 
   return (
     <main>
@@ -127,7 +171,7 @@ export default function ArticulosInsumoPage() {
         value={filter}
         onChange={setFilter}
         placeholder="Buscar por artículo o categoría"
-        onAdd={() => console.log('Abrir diálogo: nuevo artículo (insumo)')}
+        onAdd={() => openDialog('nuevo-insumo')}
         addLabel="Nuevo artículo"
       />
 
@@ -151,6 +195,46 @@ export default function ArticulosInsumoPage() {
           />
         </div>
       )}
+
+      <Dialog name="nuevo-insumo" title="Nuevo insumo">
+        <ArticuloInsumoForm sucursalId={sucursalId} dialogName="nuevo-insumo" onSuccess={load} />
+      </Dialog>
+
+      <Dialog name="editar-insumo" title="Editar insumo" onClose={() => setEditing(null)}>
+        {editing && (
+          <ArticuloInsumoForm
+            sucursalId={sucursalId}
+            initialData={editing}
+            dialogName="editar-insumo"
+            onSuccess={() => {
+              setEditing(null)
+              load()
+            }}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        name="confirm-delete-insumo"
+        title="¿Eliminar insumo?"
+        message={
+          deleting
+            ? `Esto eliminará permanentemente el insumo “${deleting.denominacion}”.`
+            : undefined
+        }
+        icon={TriangleAlert}
+        iconColor="text-danger"
+        onSecondary={() => {
+          setDeleting(null)
+          closeDialog('confirm-delete-insumo')
+        }}
+        secondaryLabel="Cancelar"
+        onPrimary={confirmDelete}
+        primaryLabel="Eliminar"
+        isLoading={deletingLoading}
+      >
+        <p className="text-sm text-muted">Esta acción no se puede deshacer.</p>
+      </Dialog>
     </main>
   )
 }
