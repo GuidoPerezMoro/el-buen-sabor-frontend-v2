@@ -21,6 +21,8 @@ interface DropdownProps<T extends BaseOption> {
   value: T | null
   onChange: (val: T) => void
   placeholder?: string
+  label?: string
+  error?: string
   disabled?: boolean
   searchable?: boolean
   className?: string
@@ -32,7 +34,17 @@ type DropdownComponent = <T extends BaseOption>(
 
 const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
   (
-    {options, value, onChange, placeholder = '', disabled = false, searchable = true, className},
+    {
+      options,
+      value,
+      onChange,
+      placeholder = '',
+      label,
+      error,
+      disabled = false,
+      searchable = true,
+      className,
+    },
     ref
   ) => {
     // Normalize to {value, label, original}
@@ -120,83 +132,81 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
     }, [isOpen])
 
     return (
-      <div
-        ref={wrapperRef}
-        className={cn('relative inline-block w-full', className)}
-        // keep the wrapper focusable for accessibility if you later add keyboard nav
-        tabIndex={-1}
-      >
-        <input
-          type="text"
-          className={cn(
-            'w-full px-3 pr-8 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2',
-            disabled
-              ? 'border-muted focus:ring-muted cursor-not-allowed'
-              : 'border-muted focus:ring-primary'
-          )}
-          placeholder={placeholder}
-          value={searchable ? filter : selectedLabel}
-          disabled={disabled}
-          onFocus={() => !disabled && setIsOpen(true)}
-          onClick={() => !disabled && setIsOpen(true)}
-          onChange={e => {
-            if (!searchable) return
-            setFilter(e.target.value)
-            setIsOpen(true)
-          }}
-          readOnly={!searchable}
-        />
-
-        {/* Arrow icon */}
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-          <ChevronDownIcon
-            className={cn('w-4 h-4 transition-transform duration-200', {'rotate-180': isOpen})}
+      <div className={cn('w-full', className)}>
+        {label && <label className="block mb-1 text-sm font-medium text-text">{label}</label>}
+        <div ref={wrapperRef} className="relative inline-block w-full" tabIndex={-1}>
+          <input
+            type="text"
+            className={cn(
+              'w-full px-3 pr-8 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2 disabled:opacity-50',
+              error ? 'border-danger focus:ring-danger' : 'border-muted focus:ring-primary',
+              disabled && 'cursor-not-allowed'
+            )}
+            placeholder={placeholder}
+            value={searchable ? filter : selectedLabel}
+            disabled={disabled}
+            onFocus={() => !disabled && setIsOpen(true)}
+            onClick={() => !disabled && setIsOpen(true)}
+            onChange={e => {
+              if (!searchable) return
+              setFilter(e.target.value)
+              setIsOpen(true)
+            }}
+            readOnly={!searchable}
           />
-        </span>
 
-        {/* Portal menu */}
-        {isOpen &&
-          !disabled &&
-          menuStyle &&
-          createPortal(
-            <ul
-              ref={menuRef}
-              role="listbox"
-              style={{
-                position: 'fixed',
-                top: menuStyle.top,
-                left: menuStyle.left,
-                width: menuStyle.width,
-                maxHeight: menuStyle.maxHeight,
-              }}
-              className={cn(
-                'z-[60] overflow-auto rounded-md bg-background border border-muted shadow-lg',
-                'overscroll-contain'
-              )}
-              // keep focus on input so onBlur doesn’t instantly close
-              onMouseDown={e => e.preventDefault()}
-              onWheel={e => e.stopPropagation()}
-              onTouchMove={e => e.stopPropagation()}
-            >
-              {filtered.length === 0 && (
-                <li className="px-3 py-2 text-sm text-muted cursor-default">No disponible</li>
-              )}
-              {filtered.map(o => (
-                <li
-                  key={o.value}
-                  className="px-3 py-2 text-sm text-text hover:bg-surfaceHover cursor-pointer"
-                  onMouseDown={e => {
-                    e.preventDefault()
-                    onChange(o.original)
-                    setIsOpen(false)
-                  }}
-                >
-                  {o.label}
-                </li>
-              ))}
-            </ul>,
-            document.body
-          )}
+          {/* Arrow icon */}
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+            <ChevronDownIcon
+              className={cn('w-4 h-4 transition-transform duration-200', {'rotate-180': isOpen})}
+            />
+          </span>
+
+          {/* Portal menu */}
+          {isOpen &&
+            !disabled &&
+            menuStyle &&
+            createPortal(
+              <ul
+                ref={menuRef}
+                role="listbox"
+                style={{
+                  position: 'fixed',
+                  top: menuStyle.top,
+                  left: menuStyle.left,
+                  width: menuStyle.width,
+                  maxHeight: menuStyle.maxHeight,
+                }}
+                className={cn(
+                  'z-[60] overflow-auto rounded-md bg-background border border-muted shadow-lg',
+                  'overscroll-contain'
+                )}
+                // keep focus on input so onBlur doesn’t instantly close
+                onMouseDown={e => e.preventDefault()}
+                onWheel={e => e.stopPropagation()}
+                onTouchMove={e => e.stopPropagation()}
+              >
+                {filtered.length === 0 && (
+                  <li className="px-3 py-2 text-sm text-muted cursor-default">No disponible</li>
+                )}
+                {filtered.map(o => (
+                  <li
+                    key={o.value}
+                    className="px-3 py-2 text-sm text-text hover:bg-surfaceHover cursor-pointer"
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      onChange(o.original)
+                      setIsOpen(false)
+                    }}
+                  >
+                    {o.label}
+                  </li>
+                ))}
+              </ul>,
+              document.body
+            )}
+        </div>
+        {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       </div>
     )
   }
