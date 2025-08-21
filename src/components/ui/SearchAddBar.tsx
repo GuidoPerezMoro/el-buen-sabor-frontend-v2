@@ -1,7 +1,7 @@
 'use client'
 
 import SearchBar, {SearchBarProps} from '@/components/ui/SearchBar'
-import FilterDropdown from '@/components/ui/FilterDropdown'
+import Filter from '@/components/ui/Filter'
 import Button from '@/components/ui/Button'
 import {Plus} from 'lucide-react'
 import useIsMdUp from '@/hooks/useIsMdUp'
@@ -38,7 +38,7 @@ export default function SearchAddBar({
     <div className="flex items-stretch gap-2 h-9 mb-4 md:h-auto">
       <SearchBar value={value} onChange={onChange} placeholder={placeholder} />
       {showFilter && filterOptions && onFilterChange && (
-        <FilterDropdown
+        <Filter
           options={filterOptions}
           value={filterValue}
           onChange={onFilterChange}

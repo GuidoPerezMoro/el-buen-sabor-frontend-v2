@@ -5,7 +5,7 @@ import {cn} from '@/lib/utils'
 
 type Opt = string | {value: string; label: string}
 
-interface FilterDropdownProps {
+interface FilterProps {
   options: ReadonlyArray<Opt>
   value: Opt | null
   onChange: (val: Opt) => void
@@ -16,7 +16,7 @@ interface FilterDropdownProps {
   showLabelOnMobile?: boolean // default false (label hidden < md)
 }
 
-export default function FilterDropdown({
+export default function Filter({
   options,
   value,
   onChange,
@@ -25,7 +25,7 @@ export default function FilterDropdown({
   label,
   className,
   showLabelOnMobile = false,
-}: FilterDropdownProps) {
+}: FilterProps) {
   return (
     <div className="flex items-center gap-2">
       {label && (
