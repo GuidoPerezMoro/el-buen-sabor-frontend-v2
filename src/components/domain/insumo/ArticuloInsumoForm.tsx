@@ -203,20 +203,20 @@ export default function ArticuloInsumoForm({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
-          label="Precio venta"
-          type="number"
-          inputMode="decimal"
-          value={precioVenta}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
-          error={formErrors.precioVenta}
-        />
-        <Input
           label="Precio compra"
           type="number"
           inputMode="decimal"
           value={precioCompra}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioCompra(e.target.value)}
           error={formErrors.precioCompra}
+        />
+        <Input
+          label="Precio venta"
+          type="number"
+          inputMode="decimal"
+          value={precioVenta}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
+          error={formErrors.precioVenta}
         />
         <Dropdown
           label="Unidad de medida"
@@ -240,16 +240,6 @@ export default function ArticuloInsumoForm({
           error={formErrors.stockActual}
         />
         <Input
-          label="Stock máximo"
-          type="number"
-          inputMode="numeric"
-          value={stockMaximo === '' ? '' : String(stockMaximo)}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setStockMaximo(e.target.value === '' ? '' : e.target.valueAsNumber)
-          }
-          error={formErrors.stockMaximo}
-        />
-        <Input
           label="Stock mínimo"
           type="number"
           inputMode="numeric"
@@ -258,6 +248,16 @@ export default function ArticuloInsumoForm({
             setStockMinimo(e.target.value === '' ? '' : e.target.valueAsNumber)
           }
           error={formErrors.stockMinimo}
+        />
+        <Input
+          label="Stock máximo"
+          type="number"
+          inputMode="numeric"
+          value={stockMaximo === '' ? '' : String(stockMaximo)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setStockMaximo(e.target.value === '' ? '' : e.target.valueAsNumber)
+          }
+          error={formErrors.stockMaximo}
         />
       </div>
 
