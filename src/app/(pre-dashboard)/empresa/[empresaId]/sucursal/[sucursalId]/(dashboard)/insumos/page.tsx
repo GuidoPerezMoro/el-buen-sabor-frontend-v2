@@ -64,6 +64,7 @@ export default function ArticulosInsumoPage() {
     },
     {
       header: 'Venta',
+      // TODO: Usar '-' si el precio de venta es 0
       accessor: a => formatARS(a.precioVenta ?? 0),
       sortable: true,
       sortKey: 'precioVenta',
