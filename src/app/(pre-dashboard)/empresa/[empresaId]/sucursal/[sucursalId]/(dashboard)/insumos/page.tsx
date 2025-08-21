@@ -3,14 +3,10 @@
 import {useEffect, useMemo, useState, useCallback} from 'react'
 import {useParams} from 'next/navigation'
 import useDialog from '@/hooks/useDialog'
-import {cn} from '@/lib/utils'
-import {formatARS} from '@/lib/format'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
-import Table, {Column} from '@/components/ui/Table'
-import IconButton from '@/components/ui/IconButton'
 import Dialog from '@/components/ui/Dialog'
-import {Pencil, Trash, TriangleAlert} from 'lucide-react'
+import {TriangleAlert} from 'lucide-react'
 import {ArticuloInsumo} from '@/services/types/articulo'
 import {fetchAllArticuloInsumos, deleteArticuloInsumo} from '@/services/articuloInsumo'
 import {
@@ -18,6 +14,7 @@ import {
   filterArticuloInsumosByText,
 } from '@/services/articuloInsumo.utils'
 import ArticuloInsumoForm from '@/components/domain/insumo/ArticuloInsumoForm'
+import InsumosTable from '@/components/domain/insumo/InsumosTable'
 
 export default function ArticulosInsumoPage() {
   const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
@@ -83,81 +80,6 @@ export default function ArticulosInsumoPage() {
     }
   }
 
-  const columns: Column<ArticuloInsumo>[] = [
-    {
-      header: 'Artículo',
-      accessor: a => (
-        <div className="flex flex-col">
-          <span className="font-medium">{a.denominacion}</span>
-          <span className="text-xs text-muted">{a.categoria?.denominacion ?? '—'}</span>
-        </div>
-      ),
-      sortable: true,
-      sortKey: 'denominacion',
-    },
-    {
-      header: 'Compra',
-      accessor: a => {
-        const c = a.precioCompra ?? 0
-        return c === 0 ? '-' : formatARS(c)
-      },
-      sortable: true,
-      sortKey: 'precioCompra',
-    },
-    {
-      header: 'Venta',
-      accessor: a => {
-        const v = a.precioVenta ?? 0
-        return v === 0 ? '-' : formatARS(v)
-      },
-      sortable: true,
-      sortKey: 'precioVenta',
-    },
-    {
-      header: 'Stock',
-      accessor: a => (
-        <div>
-          <span className={cn('font-mono', a.stockActual < a.stockMinimo && 'text-danger')}>
-            {a.stockActual}
-          </span>
-          <span className="text-xs text-muted"> / {a.stockMaximo}</span>
-        </div>
-      ),
-      sortable: true,
-      sortKey: 'stockActual',
-    },
-    {
-      header: 'U. Medida',
-      accessor: a => a.unidadDeMedida?.denominacion ?? '—',
-    },
-    {
-      header: 'P/ elaborar',
-      accessor: a => (a.esParaElaborar ? 'Sí' : 'No'),
-    },
-    {
-      header: '',
-      accessor: a => (
-        <div className="flex justify-end gap-1.5">
-          <IconButton
-            icon={<Pencil size={16} />}
-            aria-label={`Editar ${a.denominacion}`}
-            title="Editar"
-            size="sm"
-            onClick={() => handleEdit(a)}
-          />
-          <IconButton
-            icon={<Trash size={16} />}
-            aria-label={`Eliminar ${a.denominacion}`}
-            title="Eliminar"
-            size="sm"
-            onClick={() => handleDelete(a)}
-            className="text-danger"
-          />
-        </div>
-      ),
-    },
-  ]
-
   if (loading) return <StatusMessage type="loading" title="Cargando insumos..." />
   if (error) return <StatusMessage type="error" message="Error al cargar insumos." />
 
@@ -186,13 +108,7 @@ export default function ArticulosInsumoPage() {
         />
       ) : (
         <div className="bg-white rounded-md border">
-          <Table
-            columns={columns}
-            data={filtered}
-            alignLastColumnEnd
-            className="text-sm"
-            getRowKey={row => row.id}
-          />
+          <InsumosTable items={filtered} onEdit={handleEdit} onDelete={handleDelete} />
         </div>
       )}
 
