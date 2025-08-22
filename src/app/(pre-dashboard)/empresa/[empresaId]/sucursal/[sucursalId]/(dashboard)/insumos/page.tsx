@@ -153,7 +153,7 @@ export default function ArticulosInsumoPage() {
         primaryLabel="Eliminar"
         isLoading={deletingLoading}
       >
-        <p className="text-sm text-muted">Esta acción no se puede deshacer.</p>
+        <p className="text-sm text-text">Esta acción no se puede deshacer.</p>
       </Dialog>
     </main>
   )
