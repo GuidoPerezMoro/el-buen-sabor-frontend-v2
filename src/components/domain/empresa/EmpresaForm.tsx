@@ -113,7 +113,7 @@ export default function EmpresaForm({
         {/* Imagen */}
         <div className="w-full md:w-1/2">
           <label className="block text-sm font-medium text-gray-700 mb-2">Logo de la empresa</label>
-          <ImageDropzone onFileAccepted={setImagen} />
+          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
         </div>
 
         {/* Campos del formulario */}

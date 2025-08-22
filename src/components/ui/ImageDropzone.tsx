@@ -1,6 +1,6 @@
 'use client'
 
-import {ChangeEvent, useCallback, useRef, useState} from 'react'
+import {ChangeEvent, useCallback, useEffect, useRef, useState} from 'react'
 import Image from 'next/image'
 import {cn} from '@/lib/utils'
 
@@ -10,10 +10,11 @@ interface ImageDropzoneProps {
   className?: string
 }
 
-export default function ImageDropzone({onFileAccepted, className}: ImageDropzoneProps) {
+export default function ImageDropzone({onFileAccepted, previewUrl, className}: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [localUrl, setLocalUrl] = useState<string | null>(null) // track object URL to revoke
 
   const handleClick = () => inputRef.current?.click()
 
@@ -21,7 +22,12 @@ export default function ImageDropzone({onFileAccepted, className}: ImageDropzone
     (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] || null
       if (file) {
-        setPreview(URL.createObjectURL(file))
+        const url = URL.createObjectURL(file)
+        setPreview(url)
+        setLocalUrl(prev => {
+          if (prev) URL.revokeObjectURL(prev)
+          return url
+        })
         onFileAccepted?.(file)
       }
     },
@@ -35,12 +41,31 @@ export default function ImageDropzone({onFileAccepted, className}: ImageDropzone
       e.stopPropagation()
       const file = e.dataTransfer.files?.[0] || null
       if (file) {
-        setPreview(URL.createObjectURL(file))
+        const url = URL.createObjectURL(file)
+        setPreview(url)
+        setLocalUrl(prev => {
+          if (prev) URL.revokeObjectURL(prev)
+          return url
+        })
         onFileAccepted?.(file)
       }
     },
     [onFileAccepted]
   )
+
+  // Sync external preview when no local file was chosen
+  useEffect(() => {
+    if (!localUrl) {
+      setPreview(previewUrl ?? null)
+    }
+  }, [previewUrl, localUrl])
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (localUrl) URL.revokeObjectURL(localUrl)
+    }
+  }, [localUrl])
 
   return (
     <div

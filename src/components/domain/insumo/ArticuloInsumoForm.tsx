@@ -201,18 +201,17 @@ export default function ArticuloInsumoForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      {/* Imagen + campos en dos columnas (md+) */}
       <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6">
-        {/* Columna imagen: tamaño reducido */}
+        {/* Imagen */}
         <div className="w-40 mx-auto md:w-25 md:mx-0">
           <label className="block text-sm font-medium mb-2">Imagen del insumo</label>
-          <ImageDropzone onFileAccepted={setImagen} />
+          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
           <p className="text-xs text-muted mt-2">
             Formatos comunes soportados (SVG, JPG, PNG, etc.).
           </p>
         </div>
 
-        {/* Columna derecha: campos */}
+        {/* Campos */}
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
             <Input
