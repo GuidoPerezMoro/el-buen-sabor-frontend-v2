@@ -1,11 +1,12 @@
 'use client'
 
 import {useMemo} from 'react'
+import Image from 'next/image'
 import {cn} from '@/lib/utils'
 import {formatARS} from '@/lib/format'
 import Table, {Column} from '@/components/ui/Table'
 import IconButton from '@/components/ui/IconButton'
-import {Pencil, Trash} from 'lucide-react'
+import {Wheat, Pencil, Trash} from 'lucide-react'
 import {ArticuloInsumo} from '@/services/types/articulo'
 
 type Props = {
@@ -14,11 +15,30 @@ type Props = {
   onDelete: (item: ArticuloInsumo) => void
 }
 
+function InsumoImage({src, alt}: {src: string | null; alt: string}) {
+  return (
+    <div className="w-10 h-10 overflow-hidden rounded-md border flex items-center justify-center">
+      {src ? (
+        <Image src={src} alt="" width={40} height={40} className="h-10 w-10 object-cover" />
+      ) : (
+        <>
+          <Wheat className="h-5 w-5 text-muted" aria-hidden="true" />
+          <span className="sr-only">{alt}</span>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function InsumosTable({items, onEdit, onDelete}: Props) {
   const columns = useMemo<Column<ArticuloInsumo>[]>(
     () => [
       {
-        header: 'Artículo',
+        header: '',
+        accessor: a => <InsumoImage src={a.imagenUrl} alt={a.denominacion} />,
+      },
+      {
+        header: 'Insumo',
         accessor: a => (
           <div className="flex flex-col">
             <span className="font-medium">{a.denominacion}</span>
@@ -64,7 +84,7 @@ export default function InsumosTable({items, onEdit, onDelete}: Props) {
         accessor: a => a.unidadDeMedida?.denominacion ?? '—',
       },
       {
-        header: 'P/ elaborar',
+        header: 'P/ elab.',
         accessor: a => (a.esParaElaborar ? 'Sí' : 'No'),
       },
       {

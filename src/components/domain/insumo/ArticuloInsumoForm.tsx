@@ -5,9 +5,15 @@ import Input from '@/components/ui/Input'
 import Toggle from '@/components/ui/Toggle'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
 import {ArticuloInsumo} from '@/services/types/articulo'
-import {createArticuloInsumo, updateArticuloInsumo} from '@/services/articuloInsumo'
+import {
+  createArticuloInsumo,
+  createArticuloInsumoWithImage,
+  updateArticuloInsumo,
+  updateArticuloInsumoWithImage,
+} from '@/services/articuloInsumo'
 import {fetchAllUnidades} from '@/services/unidadDeMedida'
 import {fetchAllCategorias} from '@/services/categoria'
 import {
@@ -72,6 +78,7 @@ export default function ArticuloInsumoForm({
   const [categoriaOptions, setCategoriaOptions] = useState<DDOpt[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [imagen, setImagen] = useState<File | null>(null)
 
   // Load unidades & categorias (only insumo categories present in this sucursal)
   useEffect(() => {
@@ -140,7 +147,11 @@ export default function ArticuloInsumoForm({
           setLoading(false)
           return
         }
-        await updateArticuloInsumo(initialData.id, parsed.data)
+        if (imagen) {
+          await updateArticuloInsumoWithImage(initialData.id, parsed.data, imagen)
+        } else {
+          await updateArticuloInsumo(initialData.id, parsed.data)
+        }
       } else {
         const raw = {
           denominacion: denominacion.trim(),
@@ -162,7 +173,11 @@ export default function ArticuloInsumoForm({
           setLoading(false)
           return
         }
-        await createArticuloInsumo(parsed.data)
+        if (imagen) {
+          await createArticuloInsumoWithImage(parsed.data, imagen)
+        } else {
+          await createArticuloInsumo(parsed.data)
+        }
         // Reset (optional)
         setDenominacion('')
         setPrecioVenta('')
@@ -186,93 +201,110 @@ export default function ArticuloInsumoForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
-        <Input
-          label="Denominación"
-          value={denominacion}
-          onChange={e => setDenominacion(e.target.value)}
-          error={formErrors.denominacion}
-        />
-        <div className="flex items-center md:self-start md:mt-7">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <Toggle checked={esParaElaborar} onChange={setEsParaElaborar} />
-            <span>Para elaborar</span>
-          </label>
+      {/* Imagen + campos en dos columnas (md+) */}
+      <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6">
+        {/* Columna imagen: tamaño reducido */}
+        <div className="w-40 mx-auto md:w-25 md:mx-0">
+          <label className="block text-sm font-medium mb-2">Imagen del insumo</label>
+          <ImageDropzone onFileAccepted={setImagen} />
+          <p className="text-xs text-muted mt-2">
+            Formatos comunes soportados (SVG, JPG, PNG, etc.).
+          </p>
+        </div>
+
+        {/* Columna derecha: campos */}
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
+            <Input
+              label="Denominación"
+              value={denominacion}
+              onChange={e => setDenominacion(e.target.value)}
+              error={formErrors.denominacion}
+            />
+            <div className="flex items-center md:self-start md:mt-7">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Toggle checked={esParaElaborar} onChange={setEsParaElaborar} />
+                <span>Para elaborar</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Precio compra"
+              type="number"
+              inputMode="decimal"
+              value={precioCompra}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioCompra(e.target.value)}
+              error={formErrors.precioCompra}
+            />
+            <Input
+              label="Precio venta"
+              type="number"
+              inputMode="decimal"
+              value={precioVenta}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
+              error={formErrors.precioVenta}
+            />
+            <Dropdown
+              label="Unidad de medida"
+              options={unidadOptions}
+              value={unidadOpt}
+              onChange={val => setUnidadOpt(val as DDOpt)}
+              placeholder="Selecciona"
+              error={formErrors.idUnidadDeMedida}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Stock actual"
+              type="number"
+              inputMode="numeric"
+              value={stockActual === '' ? '' : String(stockActual)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setStockActual(e.target.value === '' ? '' : e.target.valueAsNumber)
+              }
+              error={formErrors.stockActual}
+            />
+            <Input
+              label="Stock mínimo"
+              type="number"
+              inputMode="numeric"
+              value={stockMinimo === '' ? '' : String(stockMinimo)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setStockMinimo(e.target.value === '' ? '' : e.target.valueAsNumber)
+              }
+              error={formErrors.stockMinimo}
+            />
+            <Input
+              label="Stock máximo"
+              type="number"
+              inputMode="numeric"
+              value={stockMaximo === '' ? '' : String(stockMaximo)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setStockMaximo(e.target.value === '' ? '' : e.target.valueAsNumber)
+              }
+              error={formErrors.stockMaximo}
+            />
+          </div>
+
+          <div>
+            <Dropdown
+              label="Categoría"
+              options={categoriaOptions}
+              value={categoriaOpt}
+              onChange={val => setCategoriaOpt(val as DDOpt)}
+              placeholder="Selecciona"
+              error={formErrors.idCategoria}
+            />
+            <p className="text-xs text-muted mt-2">
+              Solo se muestran categorías de tipo <strong>insumo</strong> disponibles en esta
+              sucursal.
+            </p>
+          </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Precio compra"
-          type="number"
-          inputMode="decimal"
-          value={precioCompra}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioCompra(e.target.value)}
-          error={formErrors.precioCompra}
-        />
-        <Input
-          label="Precio venta"
-          type="number"
-          inputMode="decimal"
-          value={precioVenta}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
-          error={formErrors.precioVenta}
-        />
-        <Dropdown
-          label="Unidad de medida"
-          options={unidadOptions}
-          value={unidadOpt}
-          onChange={val => setUnidadOpt(val as DDOpt)}
-          placeholder="Selecciona"
-          error={formErrors.idUnidadDeMedida}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Stock actual"
-          type="number"
-          inputMode="numeric"
-          value={stockActual === '' ? '' : String(stockActual)}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setStockActual(e.target.value === '' ? '' : e.target.valueAsNumber)
-          }
-          error={formErrors.stockActual}
-        />
-        <Input
-          label="Stock mínimo"
-          type="number"
-          inputMode="numeric"
-          value={stockMinimo === '' ? '' : String(stockMinimo)}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setStockMinimo(e.target.value === '' ? '' : e.target.valueAsNumber)
-          }
-          error={formErrors.stockMinimo}
-        />
-        <Input
-          label="Stock máximo"
-          type="number"
-          inputMode="numeric"
-          value={stockMaximo === '' ? '' : String(stockMaximo)}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setStockMaximo(e.target.value === '' ? '' : e.target.valueAsNumber)
-          }
-          error={formErrors.stockMaximo}
-        />
-      </div>
-
-      <Dropdown
-        label="Categoría"
-        options={categoriaOptions}
-        value={categoriaOpt}
-        onChange={val => setCategoriaOpt(val as DDOpt)}
-        placeholder="Selecciona"
-        error={formErrors.idCategoria}
-      />
-      <p className="text-xs text-muted -mt-2">
-        Solo se muestran categorías de tipo <strong>insumo</strong> disponibles en esta sucursal.
-      </p>
-
       {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}
 
       <div className="flex justify-end gap-2">

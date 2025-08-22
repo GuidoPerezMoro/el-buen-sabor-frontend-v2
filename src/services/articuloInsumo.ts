@@ -5,7 +5,7 @@ import {
   ArticuloInsumoUpdateInput,
 } from './types/articulo'
 
-const BASE = '/articuloInsumo' // TODO(back): cuando migre a kebab-case, actualizar a '/articulo-insumo'
+const BASE = '/articuloInsumo' // TODO: cuando migre a kebab-case, actualizar a '/articulo-insumo'
 
 export async function fetchAllArticuloInsumos(): Promise<ArticuloInsumo[]> {
   const res = await api.get<ArticuloInsumo[]>(BASE)
@@ -24,11 +24,38 @@ export async function createArticuloInsumo(
   return res.data
 }
 
+/** Crear artículo insumo con imagen (multipart: { data: JSON, file: Binary }) */
+export async function createArticuloInsumoWithImage(
+  data: ArticuloInsumoCreateInput,
+  image: File
+): Promise<ArticuloInsumo> {
+  const dataBlob = new Blob([JSON.stringify(data)], {type: 'application/json'})
+  const form = new FormData()
+  form.append('data', dataBlob)
+  form.append('file', image)
+  const res = await api.post<ArticuloInsumo>(`${BASE}/create-with-image`, form)
+  return res.data
+}
+
 export async function updateArticuloInsumo(
   id: number,
   data: ArticuloInsumoUpdateInput
 ): Promise<ArticuloInsumo> {
   const res = await api.put<ArticuloInsumo>(`${BASE}/${id}`, data)
+  return res.data
+}
+
+/** Actualizar artículo insumo + subir imagen nueva en una sola request */
+export async function updateArticuloInsumoWithImage(
+  id: number,
+  data: ArticuloInsumoUpdateInput,
+  image: File
+): Promise<ArticuloInsumo> {
+  const dataBlob = new Blob([JSON.stringify(data)], {type: 'application/json'})
+  const form = new FormData()
+  form.append('data', dataBlob)
+  form.append('file', image)
+  const res = await api.put<ArticuloInsumo>(`${BASE}/update-with-image/${id}`, form)
   return res.data
 }
 
