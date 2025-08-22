@@ -33,7 +33,8 @@ export default function UnidadDeMedidaForm({
     setFormErrors({})
   }, [initialData])
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setFormErrors({})
     setLoading(true)
 

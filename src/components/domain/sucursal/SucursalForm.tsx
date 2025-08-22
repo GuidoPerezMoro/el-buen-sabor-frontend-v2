@@ -69,7 +69,8 @@ export default function SucursalForm({
     setFormErrors({})
   }, [initialData])
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setFormErrors({})
     setLoading(true)
 
