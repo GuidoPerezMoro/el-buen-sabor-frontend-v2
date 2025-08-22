@@ -1,4 +1,4 @@
-import {createContext, ReactNode, useState, useEffect} from 'react'
+import {createContext, ReactNode, useState} from 'react'
 
 interface IDialogContext {
   isDialogOpened: (name: string) => boolean
@@ -25,29 +25,6 @@ export function DialogProvider({children}: DialogProviderProps) {
   }
 
   const isDialogOpened = (name: string) => visibleDialogs.includes(name)
-
-  // Lock body scroll while any dialog is open
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const body = document.body
-    const prevOverflow = body.style.overflow
-    const prevPaddingRight = body.style.paddingRight
-
-    if (visibleDialogs.length > 0) {
-      const scrollBarW = window.innerWidth - document.documentElement.clientWidth
-      body.style.overflow = 'hidden'
-      if (scrollBarW > 0) body.style.paddingRight = `${scrollBarW}px`
-    } else {
-      body.style.overflow = prevOverflow
-      body.style.paddingRight = prevPaddingRight
-    }
-
-    // Cleanup on unmount
-    return () => {
-      body.style.overflow = prevOverflow
-      body.style.paddingRight = prevPaddingRight
-    }
-  }, [visibleDialogs.length])
 
   return (
     <DialogContext.Provider value={{isDialogOpened, openDialog, closeDialog}}>

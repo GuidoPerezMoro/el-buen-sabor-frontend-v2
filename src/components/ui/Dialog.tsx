@@ -81,30 +81,22 @@ const Dialog = ({
   }, [isDialogOpened, name, onPrimary, handleClose])
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+    <div className="fixed z-50 top-0 left-0 h-screen w-screen pointer-events-none overflow-hidden">
       <div
         className={cn(
-          'absolute inset-0 bg-black/10 backdrop-blur-sm transition pointer-events-auto',
+          'h-screen w-screen bg-black/10 backdrop-blur-sm transition duration-400 pointer-events-auto',
           {'opacity-0 !pointer-events-none': !isDialogOpened(name)}
         )}
         onClick={handleTrapClick}
-        onWheel={e => e.preventDefault()} // ⬅️ extra safety: don’t scroll the page through dimmer
-        onTouchMove={e => e.preventDefault()} // ⬅️ mobile
       />
-
       <div
-        role="dialog"
-        aria-modal="true"
         className={cn(
-          'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-          'bg-background drop-shadow-lg rounded-md border border-muted',
-          'pointer-events-auto scale-100 transition duration-200 overflow-hidden',
-          'flex flex-col', // ⬅️ make panel a flex column
+          'absolute mx-auto my-auto bg-background drop-shadow-lg rounded-md border border-muted top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto scale-100 transition duration-200 overflow-hidden',
           {
             'opacity-0 !pointer-events-none !scale-50': !isDialogOpened(name),
-            'h-screen w-screen p-4': fullscreen,
+            'h-screen w-screen': fullscreen,
           },
-          fullscreen ? 'w-screen h-screen p-4' : 'w-[calc(100vw-2rem)] md:w-auto md:max-w-[80vw]'
+          fullscreen ? 'w-screen h-screen p-4' : 'w-screen md:w-auto md:max-w-[80vw] md:h-auto'
         )}
       >
         <div
@@ -115,9 +107,7 @@ const Dialog = ({
         </div>
 
         {(Icon || title || message) && (
-          <div className="p-4 pb-0 shrink-0">
-            {' '}
-            {/* ⬅️ header doesn’t scroll */}
+          <div className="p-4 pb-0">
             {title && (
               <h2 className="text-lg font-semibold flex items-center gap-2 text-text">
                 {Icon && <Icon className={`w-6 h-6 ${iconColor}`} />}
@@ -128,20 +118,11 @@ const Dialog = ({
           </div>
         )}
 
-        {/* ⬇️ Scrollable content area */}
-        <div
-          className={cn(
-            'p-4 overscroll-contain overflow-y-auto',
-            fullscreen
-              ? 'flex-1' // fill and scroll inside in fullscreen
-              : 'max-h-[70vh]' // cap height in regular mode
-          )}
-        >
-          {children}
-        </div>
+        {/* Main content */}
+        <div className="p-4">{children}</div>
 
         {(onPrimary || onSecondary) && (
-          <div className="flex justify-end gap-2 px-4 pb-4 pt-0 shrink-0">
+          <div className="flex justify-end gap-2 px-4 pb-4">
             {onSecondary && (
               <Button variant="secondary" onClick={onSecondary}>
                 {secondaryLabel || 'Cancelar'}
