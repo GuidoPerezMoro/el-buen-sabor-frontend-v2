@@ -1,43 +1,36 @@
 import {z} from 'zod'
 
-// detail row
 const detalleSchema = z.object({
-  cantidad: z.number().positive('La cantidad debe ser > 0'),
-  idArticuloInsumo: z.number().int().positive('Selecciona un insumo'),
+  cantidad: z.number().positive('Cantidad > 0'),
+  idArticuloInsumo: z.number().int().positive('Insumo requerido'),
 })
 
-// base (create)
-export const articuloManufacturadoCreateSchema = z.object({
+const base = z.object({
   denominacion: z.string().min(1, 'La denominación es obligatoria'),
   precioVenta: z.number().nonnegative('Debe ser ≥ 0'),
-
-  descripcion: z.string().max(2000).nullish(),
+  descripcion: z.string().max(2000).nullable().optional(),
   tiempoEstimadoMinutos: z.number().int().nonnegative('Debe ser ≥ 0'),
-  preparacion: z.string().max(10000).nullish(),
-
-  idSucursal: z.number().int().positive('Sucursal requerida'),
-  idUnidadDeMedida: z.number().int().positive('Unidad requerida'),
-  idCategoria: z.number().int().positive('Categoría requerida'),
-
-  detalles: z
-    .array(detalleSchema)
-    .min(1, 'Agrega al menos un insumo')
-    .refine(
-      rows => {
-        const ids = rows.map(r => r.idArticuloInsumo)
-        return new Set(ids).size === ids.length
-      },
-      {message: 'No repitas el mismo insumo', path: ['detalles']}
-    ),
+  preparacion: z.string().max(4000).nullable().optional(),
+  idUnidadDeMedida: z.number().int().positive('Unidad requerida').optional(), // edit may omit
+  idCategoria: z.number().int().positive('Categoría requerida').optional(), // edit may omit
+  // idSucursal: only on create
 })
 
-// update = partial(base), but detalles (if present) must still be valid
-export const articuloManufacturadoUpdateSchema = articuloManufacturadoCreateSchema
-  .omit({idSucursal: true, detalles: true})
-  .partial()
+export const articuloManufacturadoCreateSchema = base
   .extend({
-    detalles: z.array(detalleSchema).min(1, 'Agrega al menos un insumo').optional(),
+    idSucursal: z.number().int().positive('Sucursal requerida'),
+    idUnidadDeMedida: z.number().int().positive('Unidad requerida'),
+    idCategoria: z.number().int().positive('Categoría requerida'),
+    detalles: z.array(detalleSchema).min(1, 'Agrega al menos un insumo'),
   })
+  .refine(d => d.detalles.length > 0, {
+    message: 'Agrega al menos un insumo',
+    path: ['detalles'],
+  })
+
+export const articuloManufacturadoUpdateSchema = base.partial().extend({
+  detalles: z.array(detalleSchema).optional(),
+})
 
 export type ArticuloManufacturadoCreatePayload = z.infer<typeof articuloManufacturadoCreateSchema>
 export type ArticuloManufacturadoUpdatePayload = z.infer<typeof articuloManufacturadoUpdateSchema>
