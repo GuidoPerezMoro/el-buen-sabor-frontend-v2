@@ -65,8 +65,8 @@ export default function ArticulosInsumoPage() {
     openDialog('confirm-delete-insumo')
   }
 
-  // TODO(articulos): When manufacturados are implemented, block deletion if this insumo
-  // is referenced by any manufacturado detalle. Show a helpful message in that case.
+  // TODO: When manufacturados are implemented, block deletion if this insumo.
+  // If referenced by any manufacturado detalle. Show a helpful message in that case.
   const confirmDelete = async () => {
     if (!deleting) return
     try {
