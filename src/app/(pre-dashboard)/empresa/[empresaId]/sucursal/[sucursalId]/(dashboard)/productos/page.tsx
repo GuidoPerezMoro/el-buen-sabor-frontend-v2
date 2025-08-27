@@ -17,6 +17,7 @@ import {
   filterManufacturadosByText,
 } from '@/services/articuloManufacturado.utils'
 import ManufacturadosTable from '@/components/domain/producto/ManufacturadosTable'
+import ManufacturadoDetails from '@/components/domain/producto/ManufacturadoDetails'
 import ArticuloManufacturadoForm from '@/components/domain/producto/ArticuloManufacturadoForm'
 
 export default function ProductosPage() {
@@ -46,6 +47,13 @@ export default function ProductosPage() {
   }, [load])
 
   const filtered = useMemo(() => filterManufacturadosByText(items, filter), [items, filter])
+
+  // View Details
+  const [viewing, setViewing] = useState<ArticuloManufacturado | null>(null)
+  const handleView = (item: ArticuloManufacturado) => {
+    setViewing(item)
+    openDialog('ver-producto')
+  }
 
   // Edit
   const [editing, setEditing] = useState<ArticuloManufacturado | null>(null)
@@ -105,7 +113,12 @@ export default function ProductosPage() {
         />
       ) : (
         <div className="bg-white rounded-md border">
-          <ManufacturadosTable items={filtered} onEdit={handleEdit} onDelete={handleDelete} />
+          <ManufacturadosTable
+            items={filtered}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
       )}
 
@@ -115,6 +128,14 @@ export default function ProductosPage() {
           dialogName="nuevo-producto"
           onSuccess={load}
         />
+      </Dialog>
+
+      <Dialog
+        name="ver-producto"
+        title={viewing ? viewing.denominacion : undefined}
+        onClose={() => setViewing(null)}
+      >
+        {viewing && <ManufacturadoDetails item={viewing} />}
       </Dialog>
 
       <Dialog

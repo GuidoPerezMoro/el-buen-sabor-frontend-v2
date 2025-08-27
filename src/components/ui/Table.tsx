@@ -19,7 +19,7 @@ interface TableProps<T> {
   className?: string
   headerClassName?: string
   cellClassName?: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   getRowKey?: (row: T, index: number) => React.Key
 }
 
@@ -38,6 +38,7 @@ export default function Table<T>({
     sm: {th: 'px-3 py-1', td: 'px-3 py-1', icon: 12},
     md: {th: 'px-4 py-2', td: 'px-4 py-2', icon: 14},
     lg: {th: 'px-5 py-3', td: 'px-5 py-3', icon: 16},
+    xl: {th: 'px-6 py-3', td: 'px-6 py-6', icon: 18},
   } as const
 
   const sz = sizeMap[size ?? 'md']

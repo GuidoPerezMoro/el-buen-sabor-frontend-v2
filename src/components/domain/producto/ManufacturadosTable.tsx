@@ -1,7 +1,7 @@
 'use client'
 
 import {useMemo} from 'react'
-import {Pencil, Trash, Sandwich} from 'lucide-react'
+import {Pencil, Trash, Sandwich, Eye} from 'lucide-react'
 import Image from 'next/image'
 import {cn} from '@/lib/utils'
 import {formatARS} from '@/lib/format'
@@ -11,18 +11,20 @@ import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
 
 type Props = {
   items: ArticuloManufacturado[]
+  onView?: (item: ArticuloManufacturado) => void
   onEdit: (item: ArticuloManufacturado) => void
   onDelete: (item: ArticuloManufacturado) => void
 }
 
 function ProdImage({src, alt}: {src: string | null; alt: string}) {
   return (
-    <div className="w-10 h-10 overflow-hidden rounded-md border flex items-center justify-center">
+    <div className="w-20 h-20 overflow-hidden rounded-md border border-muted flex items-center justify-center">
       {src ? (
-        <Image src={src} alt="" width={40} height={40} className="h-10 w-10 object-cover" />
+        <Image src={src} alt="" width={80} height={80} className="h-20 w-20 object-cover" />
       ) : (
         <>
-          <Sandwich className="h-5 w-5 text-muted" aria-hidden="true" />
+          {/* fallback glyph stays centered */}
+          <Sandwich className="h-8 w-8 text-muted" aria-hidden="true" />
           <span className="sr-only">{alt}</span>
         </>
       )}
@@ -30,7 +32,7 @@ function ProdImage({src, alt}: {src: string | null; alt: string}) {
   )
 }
 
-export default function ManufacturadosTable({items, onEdit, onDelete}: Props) {
+export default function ManufacturadosTable({items, onView, onEdit, onDelete}: Props) {
   const columns = useMemo<Column<ArticuloManufacturado>[]>(
     () => [
       {header: '', accessor: p => <ProdImage src={p.imagenUrl} alt={p.denominacion} />},
@@ -64,6 +66,19 @@ export default function ManufacturadosTable({items, onEdit, onDelete}: Props) {
         sortKey: 'detalles' as any, // no-op; UI sort will treat undefined as 0
       },
       {
+        header: 'Detalles',
+        accessor: p => (
+          <div className="flex justify-center md:justify-start">
+            <IconButton
+              icon={<Eye size={16} />}
+              aria-label={`Ver detalles de ${p.denominacion}`}
+              title="Ver detalles"
+              onClick={() => onView?.(p)}
+            />
+          </div>
+        ),
+      },
+      {
         header: '',
         accessor: p => (
           <div className="flex justify-end gap-1.5">
@@ -71,14 +86,12 @@ export default function ManufacturadosTable({items, onEdit, onDelete}: Props) {
               icon={<Pencil size={16} />}
               aria-label={`Editar ${p.denominacion}`}
               title="Editar"
-              size="sm"
               onClick={() => onEdit(p)}
             />
             <IconButton
               icon={<Trash size={16} />}
               aria-label={`Eliminar ${p.denominacion}`}
               title="Eliminar"
-              size="sm"
               onClick={() => onDelete(p)}
               className="text-danger"
             />
@@ -96,6 +109,7 @@ export default function ManufacturadosTable({items, onEdit, onDelete}: Props) {
       alignLastColumnEnd
       className="text-sm"
       getRowKey={p => p.id}
+      size="xl"
     />
   )
 }
