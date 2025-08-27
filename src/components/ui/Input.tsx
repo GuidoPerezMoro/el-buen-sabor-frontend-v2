@@ -1,3 +1,4 @@
+// src/components/ui/Input.tsx
 'use client'
 
 import {forwardRef, InputHTMLAttributes, TextareaHTMLAttributes, useState} from 'react'
@@ -10,17 +11,15 @@ type BaseProps = {
   error?: string
   iconLeft?: React.ReactNode
   iconRight?: React.ReactNode
+  prefix?: React.ReactNode // NEW
+  suffix?: React.ReactNode // NEW
   multiline?: boolean
   showPasswordToggle?: boolean
 }
 
 type InputProps =
-  | (BaseProps & {
-      multiline?: false
-    } & InputHTMLAttributes<HTMLInputElement>)
-  | (BaseProps & {
-      multiline: true
-    } & TextareaHTMLAttributes<HTMLTextAreaElement>)
+  | (BaseProps & {multiline?: false} & InputHTMLAttributes<HTMLInputElement>)
+  | (BaseProps & {multiline: true} & TextareaHTMLAttributes<HTMLTextAreaElement>)
 
 const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
   (
@@ -29,6 +28,8 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
       error,
       iconLeft,
       iconRight,
+      prefix,
+      suffix,
       showPasswordToggle = false,
       multiline = false,
       className,
@@ -58,7 +59,8 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
 
     const inputClasses = cn(baseClasses, borderClasses, className)
 
-    const hasRightContent = !!iconRight || (isPassword && showPasswordToggle)
+    const hasLeftAffix = !!iconLeft || !!prefix
+    const hasRightAffix = !!iconRight || !!suffix || (isPassword && showPasswordToggle)
 
     const inputProps = props as InputHTMLAttributes<HTMLInputElement>
 
@@ -74,32 +76,44 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
           />
         ) : (
           <div className="relative w-full flex items-center">
-            {iconLeft && <span className="absolute left-2">{iconLeft}</span>}
+            {(iconLeft || prefix) && (
+              <span className="absolute left-2 flex items-center gap-2 text-sm text-muted-foreground">
+                {iconLeft}
+                {prefix}
+              </span>
+            )}
+
             <input
               ref={ref as React.Ref<HTMLInputElement>}
               {...inputProps}
               type={inputType}
               className={cn(
                 inputClasses,
-                !!iconLeft ? 'pl-8' : undefined,
-                hasRightContent ? 'pr-8' : undefined
+                hasLeftAffix ? 'pl-16' : undefined, // roomy enough for tokens/icons
+                hasRightAffix ? 'pr-16' : undefined
               )}
             />
-            {isPassword && showPasswordToggle && (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 bg-transparent z-10 hover:bg-gray-200 rounded-full"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="w-4 h-4 text-gray-700" />
-                ) : (
-                  <EyeIcon className="w-4 h-4 text-gray-700" />
-                )}
-              </button>
-            )}
-            {!isPassword && iconRight && <span className="absolute right-2">{iconRight}</span>}
+
+            {/* Right affix area (suffix + optional icon/password) */}
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+              {isPassword && showPasswordToggle ? (
+                <button
+                  type="button"
+                  className="flex items-center justify-center w-8 h-8 bg-transparent hover:bg-gray-200 rounded-full"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="w-4 h-4 text-gray-700" />
+                  ) : (
+                    <EyeIcon className="w-4 h-4 text-gray-700" />
+                  )}
+                </button>
+              ) : (
+                iconRight
+              )}
+            </span>
           </div>
         )}
 
