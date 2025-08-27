@@ -1,4 +1,3 @@
-// src/components/domain/producto/ManufacturadoDetails.tsx
 'use client'
 
 import Image from 'next/image'

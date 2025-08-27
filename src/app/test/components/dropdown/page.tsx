@@ -1,4 +1,3 @@
-// src/app/test/components/dropdown/page.tsx
 'use client'
 
 import {useState} from 'react'

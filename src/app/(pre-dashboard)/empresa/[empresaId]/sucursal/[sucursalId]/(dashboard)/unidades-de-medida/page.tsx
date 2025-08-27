@@ -1,4 +1,3 @@
-// File: src/app/(pre-dashboard)/empresa/[empresaId]/sucursal/[sucursalId]/unidad-de-medida/page.tsx
 'use client'
 
 import {useState, useEffect} from 'react'
