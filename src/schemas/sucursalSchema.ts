@@ -10,4 +10,4 @@ export const sucursalSchema = z.object({
   idEmpresa: z.number({invalid_type_error: 'El ID de empresa debe ser un número'}),
 })
 
-export type SucursalInput = z.infer<typeof sucursalSchema>
+export type SucursalPayload = z.infer<typeof sucursalSchema>

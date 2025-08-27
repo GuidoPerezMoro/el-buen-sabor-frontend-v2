@@ -1,13 +1,13 @@
 import api from './baseService'
 import {Categoria} from '@/services/types/categoria'
 
-export interface CreateCategoriaInput {
+export interface CreateCategoriaPayload {
   denominacion: string
   idSucursales: number[]
   idCategoriaPadre?: number | null
   esInsumo?: boolean
 }
-export interface UpdateCategoriaInput {
+export interface UpdateCategoriaPayload {
   denominacion?: string
   esInsumo?: boolean
   idSucursales?: number[]
@@ -25,11 +25,14 @@ export async function fetchCategoriaById(id: number): Promise<Categoria> {
   const res = await api.get<Categoria>(`${BASE}/${id}`)
   return res.data
 }
-export async function createCategoria(data: CreateCategoriaInput): Promise<Categoria> {
+export async function createCategoria(data: CreateCategoriaPayload): Promise<Categoria> {
   const res = await api.post<Categoria>(BASE, data)
   return res.data
 }
-export async function updateCategoria(id: number, data: UpdateCategoriaInput): Promise<Categoria> {
+export async function updateCategoria(
+  id: number,
+  data: UpdateCategoriaPayload
+): Promise<Categoria> {
   const res = await api.put<Categoria>(`${BASE}/${id}`, data)
   return res.data
 }

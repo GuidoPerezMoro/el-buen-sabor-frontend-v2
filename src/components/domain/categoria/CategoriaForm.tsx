@@ -9,13 +9,13 @@ import useDialog from '@/hooks/useDialog'
 import {
   createCategoria,
   updateCategoria,
-  UpdateCategoriaInput,
+  UpdateCategoriaPayload,
   fetchAllCategorias,
 } from '@/services/categoria'
 import {CategoriaNode} from '@/services/types/categoria'
 import {Sucursal} from '@/services/types'
 import {fetchAllSucursales} from '@/services/sucursal'
-import {categoriaCreateSchema, CategoriaCreateInput} from '@/schemas/categoriaSchema'
+import {categoriaCreateSchema, CategoriaCreatePayload} from '@/schemas/categoriaSchema'
 
 interface CategoriaFormProps {
   empresaId: number
@@ -144,14 +144,14 @@ export default function CategoriaForm({
 
     try {
       if (isEdit && initialData) {
-        const payload: UpdateCategoriaInput = {
+        const payload: UpdateCategoriaPayload = {
           denominacion: denominacion.trim(),
           ...(disableInsumoToggle ? {} : {esInsumo}),
         }
         await updateCategoria(initialData.id, payload)
       } else {
         const resolvedEsInsumo = parentId != null ? !!parentEsInsumo : esInsumo
-        const raw: CategoriaCreateInput = {
+        const raw: CategoriaCreatePayload = {
           denominacion: denominacion.trim(),
           esInsumo: resolvedEsInsumo,
           idCategoriaPadre: parentId ?? undefined,

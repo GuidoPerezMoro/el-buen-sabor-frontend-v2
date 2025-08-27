@@ -41,5 +41,5 @@ export const articuloInsumoUpdateSchema = partialBase.refine(
   {message: 'El mínimo no puede superar el máximo', path: ['stockMinimo']}
 )
 
-export type ArticuloInsumoCreateInput = z.infer<typeof articuloInsumoCreateSchema>
-export type ArticuloInsumoUpdateInput = z.infer<typeof articuloInsumoUpdateSchema>
+export type ArticuloInsumoCreatePayload = z.infer<typeof articuloInsumoCreateSchema>
+export type ArticuloInsumoUpdatePayload = z.infer<typeof articuloInsumoUpdateSchema>

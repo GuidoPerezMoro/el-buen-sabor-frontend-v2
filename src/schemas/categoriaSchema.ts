@@ -7,4 +7,4 @@ export const categoriaCreateSchema = z.object({
   idSucursales: z.array(z.number().int().positive()).min(1, 'Selecciona al menos una sucursal'),
 })
 
-export type CategoriaCreateInput = z.infer<typeof categoriaCreateSchema>
+export type CategoriaCreatePayload = z.infer<typeof categoriaCreateSchema>

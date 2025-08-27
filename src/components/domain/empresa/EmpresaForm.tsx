@@ -12,7 +12,7 @@ import {
   updateEmpresaWithImage,
 } from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
-import {empresaSchema, type EmpresaInput} from '@/schemas/empresaSchema'
+import {empresaSchema, type EmpresaPayload} from '@/schemas/empresaSchema'
 
 interface EmpresaFormProps {
   initialData?: Empresa
@@ -60,7 +60,7 @@ export default function EmpresaForm({
     }
 
     try {
-      const payload: EmpresaInput = {
+      const payload: EmpresaPayload = {
         nombre: result.data.nombre.trim(),
         razonSocial: result.data.razonSocial.trim(),
         cuil: result.data.cuil,

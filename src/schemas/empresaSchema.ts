@@ -10,4 +10,4 @@ export const empresaSchema = z.object({
     .transform(val => parseInt(val)),
 })
 
-export type EmpresaInput = z.infer<typeof empresaSchema>
+export type EmpresaPayload = z.infer<typeof empresaSchema>

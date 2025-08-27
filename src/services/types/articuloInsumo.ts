@@ -9,8 +9,8 @@ export interface ArticuloInsumo extends Articulo {
   esParaElaborar: boolean
 }
 
-/** Inputs — tal como espera la API */
-export interface ArticuloInsumoCreateInput {
+/** Payload — tal como espera la API */
+export interface ArticuloInsumoCreatePayload {
   denominacion: string
   precioVenta: number
   precioCompra: number
@@ -23,7 +23,7 @@ export interface ArticuloInsumoCreateInput {
   idCategoria: number
 }
 
-export interface ArticuloInsumoUpdateInput {
+export interface ArticuloInsumoUpdatePayload {
   denominacion?: string
   precioVenta?: number
   precioCompra?: number
@@ -31,8 +31,9 @@ export interface ArticuloInsumoUpdateInput {
   stockMaximo?: number
   stockMinimo?: number
   esParaElaborar?: boolean
-  // Relaciones (confirmar con backend si son editables)
-  idUnidadDeMedida?: number
-  idCategoria?: number
-  idSucursal?: number // probablemente inmutable
+
+  // Relaciones (probablemente inmutables)
+  //   idUnidadDeMedida?: number
+  //   idCategoria?: number
+  //   idSucursal?: number
 }

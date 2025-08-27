@@ -9,7 +9,7 @@ import Toggle from '@/components/ui/Toggle'
 import useDialog from '@/hooks/useDialog'
 import {createSucursal, updateSucursal} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
-import {sucursalSchema, SucursalInput} from '@/schemas/sucursalSchema'
+import {sucursalSchema, SucursalPayload} from '@/schemas/sucursalSchema'
 
 interface SucursalFormProps {
   initialData?: Sucursal
@@ -92,7 +92,7 @@ export default function SucursalForm({
     // TEMP. TODO: Delete
     console.log('[SucursalForm] Submitting payload →', raw)
 
-    const result = sucursalSchema.safeParse(raw as SucursalInput)
+    const result = sucursalSchema.safeParse(raw as SucursalPayload)
     if (!result.success) {
       const errs: Record<string, string> = {}
       result.error.errors.forEach(e => {

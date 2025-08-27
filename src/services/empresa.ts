@@ -1,6 +1,6 @@
 import api from './baseService'
 import {Empresa} from './types'
-import {EmpresaInput} from '@/schemas/empresaSchema'
+import {EmpresaPayload} from '@/schemas/empresaSchema'
 
 // TODO: Use BASE
 const BASE = '/empresas'
@@ -18,14 +18,14 @@ export async function fetchEmpresaById(id: number): Promise<Empresa> {
 }
 
 // Crear nueva empresa
-export async function createEmpresa(data: EmpresaInput): Promise<Empresa> {
+export async function createEmpresa(data: EmpresaPayload): Promise<Empresa> {
   const response = await api.post<Empresa>('/empresas', data)
   // imagen? No. El Nico va a agregarlo al constructor
   return response.data
 }
 
 // Crear nueva empresa con imagen
-export async function createEmpresaWithImage(data: EmpresaInput, image: File): Promise<Empresa> {
+export async function createEmpresaWithImage(data: EmpresaPayload, image: File): Promise<Empresa> {
   // prepare JSON payload as a Blob so Spring can bind @RequestPart("data")
   const payload = {
     nombre: data.nombre.trim(),
@@ -58,7 +58,7 @@ export async function updateEmpresa(id: number, data: Partial<Empresa>): Promise
 /** Update empresa and upload a new logo in one request */
 export async function updateEmpresaWithImage(
   id: number,
-  data: EmpresaInput,
+  data: EmpresaPayload,
   image: File
 ): Promise<Empresa> {
   // prepare JSON part

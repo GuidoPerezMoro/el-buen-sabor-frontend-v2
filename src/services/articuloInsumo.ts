@@ -1,9 +1,9 @@
 import api from './baseService'
 import {
   ArticuloInsumo,
-  ArticuloInsumoCreateInput,
-  ArticuloInsumoUpdateInput,
-} from './types/articulo'
+  ArticuloInsumoCreatePayload,
+  ArticuloInsumoUpdatePayload,
+} from './types/articuloInsumo'
 
 const BASE = '/articuloInsumo' // TODO: cuando migre a kebab-case, actualizar a '/articulo-insumo'
 
@@ -18,7 +18,7 @@ export async function fetchArticuloInsumoById(id: number): Promise<ArticuloInsum
 }
 
 export async function createArticuloInsumo(
-  data: ArticuloInsumoCreateInput
+  data: ArticuloInsumoCreatePayload
 ): Promise<ArticuloInsumo> {
   const res = await api.post<ArticuloInsumo>(BASE, data)
   return res.data
@@ -26,7 +26,7 @@ export async function createArticuloInsumo(
 
 /** Crear artículo insumo con imagen (multipart: { data: JSON, file: Binary }) */
 export async function createArticuloInsumoWithImage(
-  data: ArticuloInsumoCreateInput,
+  data: ArticuloInsumoCreatePayload,
   image: File
 ): Promise<ArticuloInsumo> {
   const dataBlob = new Blob([JSON.stringify(data)], {type: 'application/json'})
@@ -39,7 +39,7 @@ export async function createArticuloInsumoWithImage(
 
 export async function updateArticuloInsumo(
   id: number,
-  data: ArticuloInsumoUpdateInput
+  data: ArticuloInsumoUpdatePayload
 ): Promise<ArticuloInsumo> {
   const res = await api.put<ArticuloInsumo>(`${BASE}/${id}`, data)
   return res.data
@@ -48,7 +48,7 @@ export async function updateArticuloInsumo(
 /** Actualizar artículo insumo + subir imagen nueva en una sola request */
 export async function updateArticuloInsumoWithImage(
   id: number,
-  data: ArticuloInsumoUpdateInput,
+  data: ArticuloInsumoUpdatePayload,
   image: File
 ): Promise<ArticuloInsumo> {
   const dataBlob = new Blob([JSON.stringify(data)], {type: 'application/json'})

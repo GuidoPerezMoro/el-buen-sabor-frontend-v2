@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import useDialog from '@/hooks/useDialog'
 import {createUnidad, updateUnidad} from '@/services/unidadDeMedida'
 import {UnidadDeMedida} from '@/services/types/unidadDeMedida'
-import {unidadDeMedidaSchema, UnidadDeMedidaInput} from '@/schemas/unidadDeMedidaSchema'
+import {unidadDeMedidaSchema, UnidadDeMedidaPayload} from '@/schemas/unidadDeMedidaSchema'
 
 interface UnidadDeMedidaFormProps {
   initialData?: UnidadDeMedida
@@ -52,7 +52,7 @@ export default function UnidadDeMedidaForm({
     try {
       if (isEdit && initialData) {
         console.log('[Unidad] Updating id:', initialData.id, 'payload:', result.data)
-        await updateUnidad(initialData.id, result.data as Partial<UnidadDeMedidaInput>)
+        await updateUnidad(initialData.id, result.data as Partial<UnidadDeMedidaPayload>)
       } else {
         console.log('[Unidad] Creating payload:', result.data)
         await createUnidad(result.data)
