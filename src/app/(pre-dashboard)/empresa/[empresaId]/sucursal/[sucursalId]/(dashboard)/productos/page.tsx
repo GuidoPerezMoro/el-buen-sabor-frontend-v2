@@ -18,7 +18,7 @@ import {
 } from '@/services/articuloManufacturado.utils'
 import ManufacturadosTable from '@/components/domain/producto/ManufacturadosTable'
 import ManufacturadoDetails from '@/components/domain/producto/ManufacturadoDetails'
-import ArticuloManufacturadoForm from '@/components/domain/producto/ArticuloManufacturadoForm'
+import ManufacturadoForm from '@/components/domain/producto/ManufacturadoForm'
 
 export default function ProductosPage() {
   const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
@@ -123,11 +123,7 @@ export default function ProductosPage() {
       )}
 
       <Dialog name="nuevo-producto" title="Nuevo producto">
-        <ArticuloManufacturadoForm
-          sucursalId={sucursalId}
-          dialogName="nuevo-producto"
-          onSuccess={load}
-        />
+        <ManufacturadoForm sucursalId={sucursalId} dialogName="nuevo-producto" onSuccess={load} />
       </Dialog>
 
       <Dialog
@@ -144,7 +140,7 @@ export default function ProductosPage() {
         onClose={() => setEditing(null)}
       >
         {editing && (
-          <ArticuloManufacturadoForm
+          <ManufacturadoForm
             sucursalId={sucursalId}
             initialData={editing}
             dialogName="editar-producto"
