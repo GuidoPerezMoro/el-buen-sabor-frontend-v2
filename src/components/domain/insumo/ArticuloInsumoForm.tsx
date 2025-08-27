@@ -7,7 +7,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
-import {ArticuloInsumo} from '@/services/types/articulo'
+import {ArticuloInsumo} from '@/services/types/articuloInsumo'
 import {
   createArticuloInsumo,
   createArticuloInsumoWithImage,

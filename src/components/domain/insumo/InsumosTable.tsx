@@ -7,7 +7,7 @@ import {formatARS} from '@/lib/format'
 import Table, {Column} from '@/components/ui/Table'
 import IconButton from '@/components/ui/IconButton'
 import {Wheat, Pencil, Trash} from 'lucide-react'
-import {ArticuloInsumo} from '@/services/types/articulo'
+import {ArticuloInsumo} from '@/services/types/articuloInsumo'
 
 type Props = {
   items: ArticuloInsumo[]

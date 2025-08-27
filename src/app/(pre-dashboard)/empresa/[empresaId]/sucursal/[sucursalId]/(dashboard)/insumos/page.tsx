@@ -7,7 +7,7 @@ import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
 import Dialog from '@/components/ui/Dialog'
 import {TriangleAlert} from 'lucide-react'
-import {ArticuloInsumo} from '@/services/types/articulo'
+import {ArticuloInsumo} from '@/services/types/articuloInsumo'
 import {fetchAllArticuloInsumos, deleteArticuloInsumo} from '@/services/articuloInsumo'
 import {
   filterArticuloInsumosBySucursalId,
