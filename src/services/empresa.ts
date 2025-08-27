@@ -2,6 +2,9 @@ import api from './baseService'
 import {Empresa} from './types'
 import {EmpresaInput} from '@/schemas/empresaSchema'
 
+// TODO: Use BASE
+const BASE = '/empresas'
+
 // Obtener todas las empresas
 export async function fetchAllEmpresas(): Promise<Empresa[]> {
   const response = await api.get<Empresa[]>('/empresas')

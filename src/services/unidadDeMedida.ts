@@ -1,6 +1,9 @@
 import api from './baseService'
 import {UnidadDeMedida, UnidadDeMedidaPayload} from './types/unidadDeMedida'
 
+// TODO: Use BASE
+const BASE = '/unidad-de-medida'
+
 // GET all
 export async function fetchAllUnidades(): Promise<UnidadDeMedida[]> {
   const res = await api.get<UnidadDeMedida[]>('/unidad-de-medida')
