@@ -194,12 +194,10 @@ export default function CategoriaForm({
             <Toggle checked={esInsumo} onChange={setEsInsumo} disabled={disableInsumoToggle} />
             <span>Es insumo</span>
             {(isCreateChild || lockByParent) && (
-              <span className="text-xs text-muted ml-2 whitespace-nowrap">
-                (hereda de la categoría padre)
-              </span>
+              <span className="text-xs text-muted ml-2">(hereda de la categoría padre)</span>
             )}
             {!lockByParent && lockEsInsumo && (
-              <span className="text-xs text-muted ml-2 whitespace-nowrap">
+              <span className="text-xs text-muted ml-2">
                 (no se puede cambiar: tiene subcategorías)
               </span>
             )}
