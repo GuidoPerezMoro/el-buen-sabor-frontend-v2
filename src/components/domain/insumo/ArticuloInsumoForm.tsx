@@ -206,9 +206,17 @@ export default function ArticuloInsumoForm({
         <div className="w-40 mx-auto md:w-25 md:mx-0">
           <label className="block text-sm font-medium mb-2">Imagen del insumo</label>
           <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
-          <p className="text-xs text-muted mt-2">
+          <p className="text-xs text-muted my-2">
             Formatos comunes soportados (SVG, JPG, PNG, etc.).
           </p>
+          <Dropdown
+            label="Unidad de medida"
+            options={unidadOptions}
+            value={unidadOpt}
+            onChange={val => setUnidadOpt(val as DDOpt | null)}
+            placeholder="Selecciona"
+            error={formErrors.idUnidadDeMedida}
+          />
         </div>
 
         {/* Campos */}
@@ -228,7 +236,7 @@ export default function ArticuloInsumoForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Precio compra"
               type="number"
@@ -244,14 +252,6 @@ export default function ArticuloInsumoForm({
               value={precioVenta}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
               error={formErrors.precioVenta}
-            />
-            <Dropdown
-              label="Unidad de medida"
-              options={unidadOptions}
-              value={unidadOpt}
-              onChange={val => setUnidadOpt(val as DDOpt)}
-              placeholder="Selecciona"
-              error={formErrors.idUnidadDeMedida}
             />
           </div>
 
@@ -293,7 +293,7 @@ export default function ArticuloInsumoForm({
               label="Categoría"
               options={categoriaOptions}
               value={categoriaOpt}
-              onChange={val => setCategoriaOpt(val as DDOpt)}
+              onChange={val => setCategoriaOpt(val as DDOpt | null)}
               placeholder="Selecciona"
               error={formErrors.idCategoria}
             />

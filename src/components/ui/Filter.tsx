@@ -8,12 +8,13 @@ type Opt = string | {value: string; label: string}
 interface FilterProps {
   options: ReadonlyArray<Opt>
   value: Opt | null
-  onChange: (val: Opt) => void
+  onChange: (val: Opt | null) => void
   placeholder?: string
   searchable?: boolean
+  clearable?: boolean
   label?: string // e.g., "Tipo"
-  className?: string // extra width overrides if needed
-  showLabelOnMobile?: boolean // default false (label hidden < md)
+  className?: string
+  showLabelOnMobile?: boolean
 }
 
 export default function Filter({
@@ -21,7 +22,8 @@ export default function Filter({
   value,
   onChange,
   placeholder = 'Filtro',
-  searchable = true,
+  searchable = false,
+  clearable = false,
   label,
   className,
   showLabelOnMobile = false,
@@ -45,6 +47,7 @@ export default function Filter({
         onChange={onChange}
         placeholder={placeholder}
         searchable={searchable}
+        clearable={clearable}
         className={cn('w-[118px] sm:w-[150px]', className)}
       />
     </div>

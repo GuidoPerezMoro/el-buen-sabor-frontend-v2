@@ -170,10 +170,11 @@ export default function CategoriasPage() {
         filterOptions={TYPE_OPTIONS}
         filterValue={currentTypeOption}
         onFilterChange={opt =>
-          setTypeFilter((typeof opt === 'string' ? opt : opt.value) as EsInsumoFilter)
+          setTypeFilter(
+            opt == null ? 'all' : ((typeof opt === 'string' ? opt : opt.value) as EsInsumoFilter)
+          )
         }
         filterPlaceholder="Tipo"
-        filterSearchable={false}
         filterLabel="Tipo"
       />
 

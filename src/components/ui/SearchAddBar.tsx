@@ -8,21 +8,23 @@ import useIsMdUp from '@/hooks/useIsMdUp'
 
 export interface SearchAddBarProps
   extends Pick<SearchBarProps, 'value' | 'onChange' | 'placeholder'> {
+  filterLabel?: string
   onAdd: () => void
   addLabel?: string
   showFilter?: boolean
   filterOptions?: ReadonlyArray<string | {value: string; label: string}>
   filterValue?: string | {value: string; label: string} | null
-  onFilterChange?: (val: string | {value: string; label: string}) => void
+  onFilterChange?: (val: string | {value: string; label: string} | null) => void
   filterPlaceholder?: string
   filterSearchable?: boolean
-  filterLabel?: string // e.g. "Tipo"
+  filterClearable?: boolean
 }
 
 export default function SearchAddBar({
   value,
   onChange,
   placeholder,
+  filterLabel,
   onAdd,
   addLabel = 'Nuevo',
   showFilter = false,
@@ -31,6 +33,7 @@ export default function SearchAddBar({
   onFilterChange,
   filterPlaceholder = 'Filtro',
   filterSearchable,
+  filterClearable = false,
 }: SearchAddBarProps) {
   const isMdUp = useIsMdUp()
 
@@ -39,11 +42,13 @@ export default function SearchAddBar({
       <SearchBar value={value} onChange={onChange} placeholder={placeholder} />
       {showFilter && filterOptions && onFilterChange && (
         <Filter
+          label={filterLabel}
           options={filterOptions}
           value={filterValue}
           onChange={onFilterChange}
           placeholder={filterPlaceholder}
           searchable={filterSearchable}
+          clearable={filterClearable}
         />
       )}
       <Button

@@ -9,22 +9,26 @@ import React, {
   useRef,
   useImperativeHandle,
   useCallback,
+  useId,
 } from 'react'
 import {createPortal} from 'react-dom'
 import {cn} from '@/lib/utils'
 import ChevronDownIcon from '@/assets/icons/chevron-down.svg'
+import {XIcon} from 'lucide-react'
 
 type BaseOption = string | {value: string; label: string}
 
 interface DropdownProps<T extends BaseOption> {
   options: T[]
   value: T | null
-  onChange: (val: T) => void
+  onChange: (val: T | null) => void
   placeholder?: string
   label?: string
   error?: string
   disabled?: boolean
   searchable?: boolean
+  clearable?: boolean
+  emptyLabel?: string
   className?: string
 }
 
@@ -43,6 +47,8 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
       error,
       disabled = false,
       searchable = true,
+      clearable = true,
+      emptyLabel = 'Sin selección',
       className,
     },
     ref
@@ -64,9 +70,12 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
     // Wrapper/input ref
     const wrapperRef = useRef<HTMLDivElement>(null)
     useImperativeHandle(ref, () => wrapperRef.current!)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     // DOM ref for menu (in portal)
     const menuRef = useRef<HTMLUListElement>(null)
+    const inputId = useId()
+    const listboxId = useId()
 
     // Reset filter when closing / when selection changes
     useEffect(() => {
@@ -133,18 +142,30 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
 
     return (
       <div className={cn('w-full', className)}>
-        {label && <label className="block mb-1 text-sm font-medium text-text">{label}</label>}
+        {label && (
+          <label htmlFor={inputId} className="block mb-1 text-sm font-medium text-text">
+            {label}
+          </label>
+        )}
         <div ref={wrapperRef} className="relative inline-block w-full" tabIndex={-1}>
           <input
+            id={inputId}
+            ref={inputRef}
             type="text"
             className={cn(
-              'w-full px-3 pr-8 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2 disabled:opacity-50',
+              'w-full px-3 py-2 border rounded-md text-sm transition focus:outline-none focus:ring-2 disabled:opacity-50',
               error ? 'border-danger focus:ring-danger' : 'border-muted focus:ring-primary',
-              disabled && 'cursor-not-allowed'
+              disabled && 'cursor-not-allowed',
+              clearable && (value !== null || (searchable && filter)) ? 'pr-16' : 'pr-8'
             )}
             placeholder={placeholder}
             value={searchable ? filter : selectedLabel}
             disabled={disabled}
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-controls={isOpen ? listboxId : undefined}
+            aria-autocomplete={searchable ? 'list' : 'none'}
             onFocus={() => !disabled && setIsOpen(true)}
             onClick={() => !disabled && setIsOpen(true)}
             onChange={e => {
@@ -152,11 +173,41 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
               setFilter(e.target.value)
               setIsOpen(true)
             }}
+            onBlur={() => {
+              // if user cleared the text, propagate empty selection
+              if (searchable && filter.trim() === '') {
+                onChange(null)
+              }
+            }}
             readOnly={!searchable}
           />
 
+          {/* Clear button (opt-in) */}
+          {clearable && !disabled && (value !== null || (searchable && filter)) && (
+            <button
+              type="button"
+              aria-label="Limpiar selección"
+              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-surfaceHover focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                setFilter('')
+                onChange(null)
+                setIsOpen(false)
+                inputRef.current?.focus()
+              }}
+            >
+              <XIcon className="w-4 h-4 text-muted" />
+            </button>
+          )}
+
           {/* Arrow icon */}
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+          <span
+            className={cn(
+              'absolute top-1/2 -translate-y-1/2 pointer-events-none',
+              clearable ? 'right-2' : 'right-2'
+            )}
+          >
             <ChevronDownIcon
               className={cn('w-4 h-4 transition-transform duration-200', {'rotate-180': isOpen})}
             />
@@ -169,6 +220,7 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
             createPortal(
               <ul
                 ref={menuRef}
+                id={listboxId}
                 role="listbox"
                 style={{
                   position: 'fixed',
@@ -186,6 +238,21 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
                 onWheel={e => e.stopPropagation()}
                 onTouchMove={e => e.stopPropagation()}
               >
+                {/* Non-searchable can expose an explicit empty option when clearable */}
+                {!searchable && clearable && (
+                  <li
+                    key="__empty__"
+                    className="px-3 py-2 text-sm text-muted hover:bg-surfaceHover cursor-pointer italic"
+                    onMouseDown={e => {
+                      e.preventDefault()
+                      onChange(null)
+                      setIsOpen(false)
+                      setFilter('') // keep input visually empty
+                    }}
+                  >
+                    {emptyLabel}
+                  </li>
+                )}
                 {filtered.length === 0 && (
                   <li className="px-3 py-2 text-sm text-muted cursor-default">No disponible</li>
                 )}
