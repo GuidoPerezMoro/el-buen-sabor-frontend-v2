@@ -58,14 +58,6 @@ export default function ArticuloManufacturadoForm({
   const [preparacion, setPreparacion] = useState<string>(initialData?.preparacion ?? '')
   const [imagen, setImagen] = useState<File | null>(null)
 
-  const [unidadOpt, setUnidadOpt] = useState<DDOpt | null>(
-    initialData
-      ? {
-          value: String(initialData.unidadDeMedida.id),
-          label: initialData.unidadDeMedida.denominacion ?? '—',
-        }
-      : null
-  )
   const [categoriaOpt, setCategoriaOpt] = useState<DDOpt | null>(
     initialData
       ? {value: String(initialData.categoria.id), label: initialData.categoria.denominacion}
@@ -128,25 +120,15 @@ export default function ArticuloManufacturadoForm({
       idArticuloInsumo: d.articuloInsumo?.id ?? 0,
     })) ?? []
   )
-  const [newInsumoOpt, setNewInsumoOpt] = useState<DDOpt | null>(null)
   const [newCantidad, setNewCantidad] = useState<number | ''>('')
 
   // ── options data ─────────────────────────────────────────────────────────
-  const [unidadOptions, setUnidadOptions] = useState<DDOpt[]>([])
   const [categoriaOptions, setCategoriaOptions] = useState<DDOpt[]>([]) // para el producto (NO insumo)
   const [insumoCategoriaOptions, setInsumoCategoriaOptions] = useState<DDOpt[]>([]) // para ingredientes (SÍ insumo)
 
   useEffect(() => {
     ;(async () => {
-      const [unidades, categorias, insumos] = await Promise.all([
-        fetchAllUnidades(),
-        fetchAllCategorias(),
-        fetchAllArticuloInsumos(),
-      ])
-
-      setUnidadOptions(
-        unidades.map(u => ({value: String(u.id), label: u.denominacion ?? `Unidad ${u.id}`}))
-      )
+      const categorias = await fetchAllCategorias()
 
       // Producto: solo categorías NO insumo
       const scopedProd = filterCategoriasBySucursalId(categorias, sucursalId).filter(
@@ -174,14 +156,6 @@ export default function ArticuloManufacturadoForm({
     setDescripcion(initialData?.descripcion ?? '')
     setTiempoMin(initialData?.tiempoEstimadoMinutos ?? '')
     setPreparacion(initialData?.preparacion ?? '')
-    setUnidadOpt(
-      initialData
-        ? {
-            value: String(initialData.unidadDeMedida.id),
-            label: initialData.unidadDeMedida.denominacion ?? '—',
-          }
-        : null
-    )
     setCategoriaOpt(
       initialData
         ? {value: String(initialData.categoria.id), label: initialData.categoria.denominacion}
@@ -296,15 +270,15 @@ export default function ArticuloManufacturadoForm({
         setDescripcion('')
         setTiempoMin('')
         setPreparacion('')
-        setUnidadOpt(null)
         setCategoriaOpt(null)
         setDetalles([])
       }
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
-      setFormErrors({general: err?.message ?? 'Error al guardar el producto'})
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al guardar el producto'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }
@@ -354,7 +328,7 @@ export default function ArticuloManufacturadoForm({
             label="Categoría"
             options={categoriaOptions}
             value={categoriaOpt}
-            onChange={val => setCategoriaOpt(val as DDOpt)}
+            onChange={val => setCategoriaOpt(val as DDOpt | null)}
             placeholder="Selecciona"
             error={formErrors.idCategoria}
             searchable
@@ -441,7 +415,14 @@ export default function ArticuloManufacturadoForm({
               placeholder="Selecciona"
               options={insumoCategoriaOptions}
               value={addCatOpt}
-              onChange={v => setAddCatOpt(v as DDOpt)}
+              onChange={v => {
+                const next = v as DDOpt | null
+                setAddCatOpt(next)
+                // 1) Clearing either clears both
+                if (next == null) {
+                  setAddInsumoOpt(null)
+                }
+              }}
               searchable
             />
           </div>
@@ -452,7 +433,14 @@ export default function ArticuloManufacturadoForm({
               placeholder="Selecciona"
               options={addInsumoOptions}
               value={addInsumoOpt}
-              onChange={v => setAddInsumoOpt(v as DDOpt)}
+              onChange={v => {
+                const next = v as DDOpt | null
+                setAddInsumoOpt(next)
+                // 1) Clearing either clears both
+                if (next == null) {
+                  setAddCatOpt(null)
+                }
+              }}
               searchable
             />
           </div>
