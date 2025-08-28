@@ -10,8 +10,8 @@ type BaseProps = {
   error?: string
   iconLeft?: React.ReactNode
   iconRight?: React.ReactNode
-  prefix?: React.ReactNode // NEW
-  suffix?: React.ReactNode // NEW
+  prefix?: React.ReactNode
+  suffix?: React.ReactNode
   multiline?: boolean
   showPasswordToggle?: boolean
 }
@@ -56,10 +56,16 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
       ? 'border-danger focus:ring-danger'
       : 'border-muted focus:ring-primary'
 
-    const inputClasses = cn(baseClasses, borderClasses, className)
+    const hasLeftAdornment = !!iconLeft || !!prefix
+    const hasRightAdornment = !!iconRight || !!suffix || (isPassword && showPasswordToggle)
 
-    const hasLeftAffix = !!iconLeft || !!prefix
-    const hasRightAffix = !!iconRight || !!suffix || (isPassword && showPasswordToggle)
+    const inputClasses = cn(
+      baseClasses,
+      borderClasses,
+      hasLeftAdornment && 'pl-7',
+      hasRightAdornment && 'pr-7',
+      className
+    )
 
     const inputProps = props as InputHTMLAttributes<HTMLInputElement>
 
@@ -75,44 +81,34 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
           />
         ) : (
           <div className="relative w-full flex items-center">
-            {(iconLeft || prefix) && (
-              <span className="absolute left-2 flex items-center gap-2 text-sm text-muted">
-                {iconLeft}
-                {prefix}
-              </span>
-            )}
+            {iconLeft && <span className="absolute left-2">{iconLeft}</span>}
+            {prefix && <span className="absolute left-2 text-muted text-sm">{prefix}</span>}
 
             <input
               ref={ref as React.Ref<HTMLInputElement>}
               {...inputProps}
               type={inputType}
-              className={cn(
-                inputClasses,
-                hasLeftAffix ? 'pl-8' : undefined, // roomy enough for tokens/icons
-                hasRightAffix ? 'pr-8' : undefined
-              )}
+              className={inputClasses}
             />
 
-            {/* Right affix area (suffix + optional icon/password) */}
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {suffix && <span className="text-sm text-muted">{suffix}</span>}
-              {isPassword && showPasswordToggle ? (
-                <button
-                  type="button"
-                  className="flex items-center justify-center w-8 h-8 bg-transparent hover:bg-gray-200 rounded-full"
-                  onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="w-4 h-4 text-muted" />
-                  ) : (
-                    <EyeIcon className="w-4 h-4 text-muted" />
-                  )}
-                </button>
-              ) : (
-                iconRight
-              )}
-            </span>
+            {suffix && <span className="absolute right-2 text-muted text-sm">{suffix}</span>}
+
+            {isPassword && showPasswordToggle && (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 bg-transparent z-10 hover:bg-gray-200 rounded-full"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="w-4 h-4 text-muted" />
+                ) : (
+                  <EyeIcon className="w-4 h-4 text-muted" />
+                )}
+              </button>
+            )}
+
+            {!isPassword && iconRight && <span className="absolute right-2">{iconRight}</span>}
           </div>
         )}
 
