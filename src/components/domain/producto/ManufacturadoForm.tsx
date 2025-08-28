@@ -3,7 +3,6 @@
 import {useEffect, useMemo, useState} from 'react'
 import Input from '@/components/ui/Input'
 import Dropdown from '@/components/ui/Dropdown'
-import Toggle from '@/components/ui/Toggle'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
@@ -73,6 +72,55 @@ export default function ArticuloManufacturadoForm({
       : null
   )
 
+  // For the add row
+  const [addCatOpt, setAddCatOpt] = useState<DDOpt | null>(null)
+  const [addInsumoOpt, setAddInsumoOpt] = useState<DDOpt | null>(null)
+
+  // Build a little index from your existing list of insumos for this sucursal,
+  // so we can know unidad and categoría of each insumo.
+  const [insumos, setInsumos] = useState<ArticuloInsumo[]>([])
+
+  useEffect(() => {
+    ;(async () => {
+      const all = await fetchAllArticuloInsumos()
+      setInsumos(filterArticuloInsumosBySucursalId(all, sucursalId))
+    })()
+  }, [sucursalId])
+
+  const insumoMetaById = useMemo(() => {
+    const m: Record<number, {categoriaId: number; categoriaLabel: string; unidadLabel: string}> = {}
+    for (const it of insumos) {
+      m[it.id] = {
+        categoriaId: it.categoria.id,
+        categoriaLabel: it.categoria.denominacion,
+        unidadLabel: it.unidadDeMedida?.denominacion ?? '—',
+      }
+    }
+    return m
+  }, [insumos])
+
+  // Options for insumo selector (full list)
+  const allInsumoOptions: DDOpt[] = useMemo(
+    () => insumos.map(i => ({value: String(i.id), label: i.denominacion})),
+    [insumos]
+  )
+
+  // When category is chosen, filter insumos by that category.
+  // If user picks the insumo first, auto‐select its category.
+  const addInsumoOptions = useMemo(() => {
+    if (!addCatOpt) return allInsumoOptions
+    const catId = Number(addCatOpt.value)
+    return allInsumoOptions.filter(o => insumoMetaById[Number(o.value)]?.categoriaId === catId)
+  }, [addCatOpt, allInsumoOptions, insumoMetaById])
+
+  useEffect(() => {
+    if (!addInsumoOpt) return
+    const meta = insumoMetaById[Number(addInsumoOpt.value)]
+    if (meta && (!addCatOpt || Number(addCatOpt.value) !== meta.categoriaId)) {
+      setAddCatOpt({value: String(meta.categoriaId), label: meta.categoriaLabel})
+    }
+  }, [addInsumoOpt, addCatOpt, insumoMetaById])
+
   // detalles editor state
   const [detalles, setDetalles] = useState<DetalleRow[]>(
     initialData?.detalles?.map(d => ({
@@ -85,8 +133,8 @@ export default function ArticuloManufacturadoForm({
 
   // ── options data ─────────────────────────────────────────────────────────
   const [unidadOptions, setUnidadOptions] = useState<DDOpt[]>([])
-  const [categoriaOptions, setCategoriaOptions] = useState<DDOpt[]>([])
-  const [insumoOptions, setInsumoOptions] = useState<DDOpt[]>([])
+  const [categoriaOptions, setCategoriaOptions] = useState<DDOpt[]>([]) // para el producto (NO insumo)
+  const [insumoCategoriaOptions, setInsumoCategoriaOptions] = useState<DDOpt[]>([]) // para ingredientes (SÍ insumo)
 
   useEffect(() => {
     ;(async () => {
@@ -100,19 +148,21 @@ export default function ArticuloManufacturadoForm({
         unidades.map(u => ({value: String(u.id), label: u.denominacion ?? `Unidad ${u.id}`}))
       )
 
-      // Only non-insumo categories present in this sucursal
-      const scoped = filterCategoriasBySucursalId(categorias, sucursalId).filter(c => !c.esInsumo)
-      const tree = buildCategoriaTree(scoped)
-      const flat = flattenCategoriaTree(tree)
-      setCategoriaOptions(flat.map(f => ({value: String(f.id), label: f.label})))
-
-      const insumosSucursal = filterArticuloInsumosBySucursalId(insumos, sucursalId)
-      setInsumoOptions(
-        insumosSucursal.map(i => ({
-          value: String(i.id),
-          label: `${i.denominacion} — ${i.unidadDeMedida?.denominacion ?? '—'}`,
-        }))
+      // Producto: solo categorías NO insumo
+      const scopedProd = filterCategoriasBySucursalId(categorias, sucursalId).filter(
+        c => !c.esInsumo
       )
+      const treeProd = buildCategoriaTree(scopedProd)
+      const flatProd = flattenCategoriaTree(treeProd)
+      setCategoriaOptions(flatProd.map(f => ({value: String(f.id), label: f.label})))
+
+      // Ingredientes: solo categorías SÍ insumo
+      const scopedInsumo = filterCategoriasBySucursalId(categorias, sucursalId).filter(
+        c => c.esInsumo
+      )
+      const treeInsumo = buildCategoriaTree(scopedInsumo)
+      const flatInsumo = flattenCategoriaTree(treeInsumo)
+      setInsumoCategoriaOptions(flatInsumo.map(f => ({value: String(f.id), label: f.label})))
     })()
   }, [sucursalId])
 
@@ -147,17 +197,13 @@ export default function ArticuloManufacturadoForm({
 
   // ── detalles editor helpers ──────────────────────────────────────────────
   const alreadyChosen = useMemo(() => new Set(detalles.map(d => d.idArticuloInsumo)), [detalles])
-  const addableOptions = useMemo(
-    () => insumoOptions.filter(o => !alreadyChosen.has(Number(o.value))),
-    [insumoOptions, alreadyChosen]
-  )
 
   const addDetalle = () => {
-    const id = Number(newInsumoOpt?.value)
+    const id = Number(addInsumoOpt?.value)
     const qty = Number(newCantidad)
     if (!id || !qty || qty <= 0) return
     setDetalles(prev => [...prev, {idArticuloInsumo: id, cantidad: qty}])
-    setNewInsumoOpt(null)
+    setAddInsumoOpt(null)
     setNewCantidad('')
   }
 
@@ -175,6 +221,8 @@ export default function ArticuloManufacturadoForm({
   const [loading, setLoading] = useState(false)
 
   // ── submit ───────────────────────────────────────────────────────────────
+  // TODO: el producto no usa unidad. La API la exige.
+  // Se fija temporalmente a "Unidades" (id 7) hasta definir un modelo mejor.
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setFormErrors({})
@@ -188,7 +236,8 @@ export default function ArticuloManufacturadoForm({
           descripcion,
           tiempoEstimadoMinutos: tiempoMin === '' ? undefined : Number(tiempoMin),
           preparacion,
-          idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
+          idUnidadDeMedida: 7, // TODO: ver nota arriba
+          // idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
           idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
           detalles: detalles.length
             ? detalles.map(d => ({
@@ -218,7 +267,8 @@ export default function ArticuloManufacturadoForm({
           tiempoEstimadoMinutos: Number(tiempoMin || 0),
           preparacion,
           idSucursal: sucursalId,
-          idUnidadDeMedida: Number(unidadOpt?.value),
+          idUnidadDeMedida: 7, // TODO: ver nota arriba
+          // idUnidadDeMedida: Number(unidadOpt?.value),
           idCategoria: Number(categoriaOpt?.value),
           detalles: detalles.map(d => ({
             cantidad: Number(d.cantidad),
@@ -262,62 +312,44 @@ export default function ArticuloManufacturadoForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6">
-        {/* Imagen */}
-        <div className="w-40 mx-auto md:w-25 md:mx-0">
-          <label className="block text-sm font-medium mb-2">Imagen del producto</label>
+      {/* Header: image + key fields */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Imagen (compact) */}
+        <div className="md:w-40 space-y-4">
+          <label className="block text-sm font-medium mb-2">Imagen</label>
           <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
           <p className="text-xs text-muted mt-2">Formatos comunes soportados (SVG, JPG, PNG...).</p>
+
+          <Input
+            label="Tiempo de preparación estimado"
+            type="number"
+            inputMode="numeric"
+            value={tiempoMin === '' ? '' : String(tiempoMin)}
+            onChange={e =>
+              setTiempoMin(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
+            }
+            error={formErrors.tiempoEstimadoMinutos}
+            suffix="min"
+          />
         </div>
 
-        {/* Campos */}
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
-            <Input
-              label="Denominación"
-              value={denominacion}
-              onChange={e => setDenominacion(e.target.value)}
-              error={formErrors.denominacion}
-            />
-            {/* quick publish/flag placeholder if you ever need */}
-            <div className="flex items-center md:self-start md:mt-7">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <Toggle checked={true} onChange={() => {}} disabled />
-                <span>Habilitado</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="Precio venta"
-              type="number"
-              inputMode="decimal"
-              value={precioVenta}
-              onChange={e => setPrecioVenta(e.target.value)}
-              error={formErrors.precioVenta}
-            />
-            <Input
-              label="Tiempo estimado (min)"
-              type="number"
-              inputMode="numeric"
-              value={tiempoMin === '' ? '' : String(tiempoMin)}
-              onChange={e =>
-                setTiempoMin(e.target.value === '' ? '' : e.currentTarget.valueAsNumber)
-              }
-              error={formErrors.tiempoEstimadoMinutos}
-            />
-            <Dropdown
-              label="Unidad de medida"
-              options={unidadOptions}
-              value={unidadOpt}
-              onChange={val => setUnidadOpt(val as DDOpt)}
-              placeholder="Selecciona"
-              error={formErrors.idUnidadDeMedida}
-              searchable={true}
-            />
-          </div>
-
+        {/* Campos principales */}
+        <div className="flex-1 flex flex-col gap-6">
+          <Input
+            label="Nombre"
+            value={denominacion}
+            onChange={e => setDenominacion(e.target.value)}
+            error={formErrors.denominacion}
+          />
+          <Input
+            label="Precio venta"
+            type="number"
+            inputMode="decimal"
+            value={precioVenta}
+            onChange={e => setPrecioVenta(e.target.value)}
+            error={formErrors.precioVenta}
+            prefix="$"
+          />
           <Dropdown
             label="Categoría"
             options={categoriaOptions}
@@ -325,9 +357,8 @@ export default function ArticuloManufacturadoForm({
             onChange={val => setCategoriaOpt(val as DDOpt)}
             placeholder="Selecciona"
             error={formErrors.idCategoria}
-            searchable={true}
+            searchable
           />
-
           <Input
             label="Descripción"
             multiline
@@ -342,71 +373,122 @@ export default function ArticuloManufacturadoForm({
             onChange={e => setPreparacion(e.target.value)}
             error={formErrors.preparacion}
           />
+        </div>
+      </div>
 
-          {/* Ingredientes editor */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-text">Ingredientes</label>
+      {/* Ingredientes */}
+      <div className="space-y-2">
+        <label className="block font-medium text-text">
+          <span>Ingredientes</span>
+        </label>
 
-            {detalles.length === 0 && (
-              <p className="text-sm text-muted">Aún no agregaste ingredientes.</p>
-            )}
+        {detalles.length === 0 && (
+          <p className="text-sm text-muted">Aún no agregaste ingredientes.</p>
+        )}
 
-            {detalles.map(d => {
-              const opt = insumoOptions.find(o => Number(o.value) === d.idArticuloInsumo)
-              return (
-                <div key={d.idArticuloInsumo} className="flex items-center gap-2">
-                  <div className="flex-1 text-sm">
-                    {opt?.label ?? `Insumo #${d.idArticuloInsumo}`}
-                  </div>
-                  <Input
-                    label="Cantidad"
-                    className="w-32"
-                    type="number"
-                    inputMode="decimal"
-                    value={String(d.cantidad)}
-                    onChange={e =>
-                      updateDetalle(d.idArticuloInsumo, e.currentTarget.valueAsNumber || 0)
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => removeDetalle(d.idArticuloInsumo)}
-                  >
-                    Quitar
-                  </Button>
-                </div>
-              )
-            })}
+        {detalles.map(d => {
+          const meta = insumoMetaById[d.idArticuloInsumo]
+          const catLabel = meta?.categoriaLabel ?? '—'
+          const unidadLabel = meta?.unidadLabel ?? '—'
+          const insumoLabel =
+            allInsumoOptions.find(o => Number(o.value) === d.idArticuloInsumo)?.label ??
+            `Insumo #${d.idArticuloInsumo}`
 
-            <div className="flex items-center gap-2 mt-2">
-              <div className="flex-1">
-                <Dropdown
-                  placeholder="Selecciona insumo…"
-                  options={addableOptions}
-                  value={newInsumoOpt}
-                  onChange={v => setNewInsumoOpt(v as DDOpt)}
-                  searchable
+          return (
+            <div
+              key={d.idArticuloInsumo}
+              className="grid grid-cols-[1fr_6rem_8rem_auto] items-center gap-3"
+            >
+              {/* "Categoría > Insumo" */}
+              <div className="flex-1 text-sm">
+                <span className="text-muted">{catLabel}</span>
+                <span className="text-muted"> &gt; </span>
+                <span>{insumoLabel}</span>
+              </div>
+
+              {/* cantidad × unidad */}
+              <div className="w-24">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={String(d.cantidad)}
+                  onChange={e =>
+                    updateDetalle(d.idArticuloInsumo, e.currentTarget.valueAsNumber || 0)
+                  }
+                  placeholder="Cant."
                 />
               </div>
-              <Input
-                placeholder="Cant."
-                className="w-28"
-                type="number"
-                inputMode="decimal"
-                value={newCantidad === '' ? '' : String(newCantidad)}
-                onChange={e =>
-                  setNewCantidad(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
-                }
-              />
-              <Button type="button" variant="primary" onClick={addDetalle}>
-                Agregar
+              <div className="w-28">
+                <span className="text-sm text-muted">× {unidadLabel}</span>
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => removeDetalle(d.idArticuloInsumo)}
+              >
+                Quitar
               </Button>
             </div>
+          )
+        })}
 
-            {formErrors.detalles && <p className="text-sm text-danger">{formErrors.detalles}</p>}
+        {/* Add row: [Categoría] > [Insumo] — [Cantidad] × unidad  [Agregar] */}
+        <div className="grid grid-cols-[minmax(220px,1fr)_minmax(240px,1fr)_6rem_8rem_auto] items-end gap-2 mt-2">
+          <div className="min-w-[220px] flex-1">
+            <Dropdown
+              label="Categoría"
+              placeholder="Selecciona"
+              options={insumoCategoriaOptions}
+              value={addCatOpt}
+              onChange={v => setAddCatOpt(v as DDOpt)}
+              searchable
+            />
           </div>
+
+          <div className="min-w-[240px] flex-1">
+            <Dropdown
+              label="Insumo"
+              placeholder="Selecciona"
+              options={addInsumoOptions}
+              value={addInsumoOpt}
+              onChange={v => setAddInsumoOpt(v as DDOpt)}
+              searchable
+            />
+          </div>
+
+          <div>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={newCantidad === '' ? '' : String(newCantidad)}
+              onChange={e =>
+                setNewCantidad(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
+              }
+              placeholder="Cant."
+            />
+          </div>
+
+          <div className="self-center w-28">
+            <span className="text-sm text-muted">
+              ×{' '}
+              {addInsumoOpt
+                ? (insumoMetaById[Number(addInsumoOpt.value)]?.unidadLabel ?? '—')
+                : '—'}
+            </span>
+          </div>
+
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => addDetalle()}
+            disabled={!addInsumoOpt || !newCantidad}
+          >
+            Agregar
+          </Button>
         </div>
+
+        {formErrors.detalles && <p className="text-sm text-danger">{formErrors.detalles}</p>}
       </div>
 
       {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}
