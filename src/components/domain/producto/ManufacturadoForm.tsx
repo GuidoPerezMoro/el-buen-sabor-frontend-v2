@@ -169,8 +169,6 @@ export default function ArticuloManufacturadoForm({
   }, [isEdit, initialData])
 
   // ── detalles editor helpers ──────────────────────────────────────────────
-  const alreadyChosen = useMemo(() => new Set(detalles.map(d => d.idArticuloInsumo)), [detalles])
-
   const addDetalle = () => {
     const id = Number(addInsumoOpt?.value)
     const qty = Number(newCantidad)

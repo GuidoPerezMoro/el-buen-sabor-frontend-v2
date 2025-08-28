@@ -56,13 +56,13 @@ export default function ManufacturadosTable({items, onView, onEdit, onDelete}: P
         header: 'Tiempo (min)',
         accessor: p => <span className="font-mono">{p.tiempoEstimadoMinutos ?? 0}</span>,
         sortable: true,
-        sortKey: 'tiempoEstimadoMinutos' as any,
+        sortKey: 'tiempoEstimadoMinutos' as keyof ArticuloManufacturado,
       },
       {
         header: 'Ingredientes',
         accessor: p => p.detalles?.length ?? 0,
         sortable: true,
-        sortKey: 'detalles' as any, // no-op; UI sort will treat undefined as 0
+        sortKey: 'detalles' as keyof ArticuloManufacturado,
       },
       {
         header: 'Detalles',
@@ -98,7 +98,7 @@ export default function ManufacturadosTable({items, onView, onEdit, onDelete}: P
         ),
       },
     ],
-    [onEdit, onDelete]
+    [onView, onEdit, onDelete]
   )
 
   return (
