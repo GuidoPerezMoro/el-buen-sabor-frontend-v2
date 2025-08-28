@@ -447,6 +447,7 @@ export default function ArticuloManufacturadoForm({
           <div>
             <Input
               type="number"
+              label="Cantidad"
               inputMode="decimal"
               value={newCantidad === '' ? '' : String(newCantidad)}
               onChange={e =>
