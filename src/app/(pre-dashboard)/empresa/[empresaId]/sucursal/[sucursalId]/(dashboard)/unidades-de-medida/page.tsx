@@ -49,6 +49,7 @@ export default function UnidadDeMedidaPage() {
     openDialog('editar-unidad')
   }
 
+  // TODO: Dialog warning instead of alert
   const handleDelete = async (u: UnidadDeMedida) => {
     if (!confirm(`¿Eliminar “${u.denominacion}”?`)) return
     try {
