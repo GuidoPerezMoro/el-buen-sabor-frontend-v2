@@ -33,13 +33,18 @@ export const articuloInsumoCreateSchema = baseArticuloInsumoSchema.refine(
 
 // 3) Update = PARTIAL(base) + refine (only when both provided)
 const partialBase = baseArticuloInsumoSchema.partial()
-export const articuloInsumoUpdateSchema = partialBase.refine(
-  (d: z.infer<typeof partialBase>) => {
-    if (d.stockMinimo == null || d.stockMaximo == null) return true
-    return d.stockMinimo <= d.stockMaximo
-  },
-  {message: 'El mínimo no puede superar el máximo', path: ['stockMinimo']}
-)
+export const articuloInsumoUpdateSchema = partialBase
+  .extend({
+    idUnidadDeMedida: requiredId('Unidad'),
+    idCategoria: requiredId('Categoría'),
+  })
+  .refine(
+    (d: z.infer<typeof partialBase>) => {
+      if (d.stockMinimo == null || d.stockMaximo == null) return true
+      return d.stockMinimo <= d.stockMaximo
+    },
+    {message: 'El mínimo no puede superar el máximo', path: ['stockMinimo']}
+  )
 
 export type ArticuloInsumoCreatePayload = z.infer<typeof articuloInsumoCreateSchema>
 export type ArticuloInsumoUpdatePayload = z.infer<typeof articuloInsumoUpdateSchema>
