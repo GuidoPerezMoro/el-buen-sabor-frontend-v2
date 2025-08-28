@@ -2,6 +2,7 @@
 
 import Input from '@/components/ui/Input'
 import SearchIcon from '@/assets/icons/search.svg'
+import {XIcon} from 'lucide-react'
 
 export interface SearchBarProps {
   value: string
@@ -16,7 +17,30 @@ export default function SearchBar({value, onChange, placeholder = 'Search...'}: 
       placeholder={placeholder}
       value={value}
       onChange={e => onChange(e.target.value)}
-      iconRight={<SearchIcon size={20} />}
+      onKeyDown={e => {
+        if (e.key === 'Escape' && value) {
+          e.preventDefault()
+          onChange('')
+        }
+      }}
+      iconRight={
+        <div className="flex items-center gap-1">
+          {value && (
+            <button
+              type="button"
+              aria-label="Limpiar búsqueda"
+              className="p-1 rounded hover:bg-surfaceHover focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={e => {
+                e.preventDefault()
+                onChange('')
+              }}
+            >
+              <XIcon className="w-4 h-4 text-muted" />
+            </button>
+          )}
+          <SearchIcon size={20} />
+        </div>
+      }
     />
   )
 }
