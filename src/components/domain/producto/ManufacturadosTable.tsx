@@ -3,7 +3,6 @@
 import {useMemo} from 'react'
 import {Pencil, Trash, Sandwich, Eye} from 'lucide-react'
 import Image from 'next/image'
-import {cn} from '@/lib/utils'
 import {formatARS} from '@/lib/format'
 import Table, {Column} from '@/components/ui/Table'
 import IconButton from '@/components/ui/IconButton'
