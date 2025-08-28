@@ -8,7 +8,6 @@ import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
 import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
 import {ArticuloInsumo} from '@/services/types/articuloInsumo'
-import {fetchAllUnidades} from '@/services/unidadDeMedida'
 import {fetchAllCategorias} from '@/services/categoria'
 import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
 import {
@@ -457,7 +456,7 @@ export default function ArticuloManufacturadoForm({
             />
           </div>
 
-          <div className="self-center w-28">
+          <div className="self-end pb-2 w-28">
             <span className="text-sm text-muted">
               ×{' '}
               {addInsumoOpt
@@ -470,7 +469,7 @@ export default function ArticuloManufacturadoForm({
             type="button"
             variant="primary"
             onClick={() => addDetalle()}
-            disabled={!addInsumoOpt || !newCantidad}
+            disabled={!addInsumoOpt || !(typeof newCantidad === 'number' && newCantidad > 0)}
           >
             Agregar
           </Button>
