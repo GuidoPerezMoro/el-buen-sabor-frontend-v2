@@ -71,7 +71,7 @@ export default function ManufacturadoDetails({item}: {item: ArticuloManufacturad
                 <li key={idx} className="flex items-baseline gap-2">
                   {/* fixed width for qty keeps alignment; × improves readability */}
                   <span className="font-mono w-6 text-right">{d.cantidad}</span>
-                  <span className="text-muted-foreground">× {unit}</span>
+                  <span>× {unit}</span>
                   <span>— {name}</span>
                 </li>
               )

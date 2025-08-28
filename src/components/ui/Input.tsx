@@ -76,7 +76,7 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
         ) : (
           <div className="relative w-full flex items-center">
             {(iconLeft || prefix) && (
-              <span className="absolute left-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="absolute left-2 flex items-center gap-2 text-sm text-muted">
                 {iconLeft}
                 {prefix}
               </span>
@@ -88,14 +88,14 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
               type={inputType}
               className={cn(
                 inputClasses,
-                hasLeftAffix ? 'pl-16' : undefined, // roomy enough for tokens/icons
-                hasRightAffix ? 'pr-16' : undefined
+                hasLeftAffix ? 'pl-8' : undefined, // roomy enough for tokens/icons
+                hasRightAffix ? 'pr-8' : undefined
               )}
             />
 
             {/* Right affix area (suffix + optional icon/password) */}
             <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+              {suffix && <span className="text-sm text-muted">{suffix}</span>}
               {isPassword && showPasswordToggle ? (
                 <button
                   type="button"
@@ -104,9 +104,9 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
                   title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="w-4 h-4 text-gray-700" />
+                    <EyeSlashIcon className="w-4 h-4 text-muted" />
                   ) : (
-                    <EyeIcon className="w-4 h-4 text-gray-700" />
+                    <EyeIcon className="w-4 h-4 text-muted" />
                   )}
                 </button>
               ) : (
