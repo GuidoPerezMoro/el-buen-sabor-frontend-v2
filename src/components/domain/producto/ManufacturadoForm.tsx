@@ -169,6 +169,7 @@ export default function ArticuloManufacturadoForm({
   }, [isEdit, initialData])
 
   // ── detalles editor helpers ──────────────────────────────────────────────
+  // TODO: Limpiar categoria when adding a new insumo
   const addDetalle = () => {
     const id = Number(addInsumoOpt?.value)
     const qty = Number(newCantidad)
@@ -193,7 +194,7 @@ export default function ArticuloManufacturadoForm({
 
   // ── submit ───────────────────────────────────────────────────────────────
   // TODO: el producto no usa unidad. La API la exige.
-  // Se fija temporalmente a "Unidades" (id 7) hasta definir un modelo mejor.
+  // Se fija temporalmente a "Unidades" (id 1) hasta definir un modelo mejor.
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setFormErrors({})
@@ -207,7 +208,7 @@ export default function ArticuloManufacturadoForm({
           descripcion,
           tiempoEstimadoMinutos: tiempoMin === '' ? undefined : Number(tiempoMin),
           preparacion,
-          idUnidadDeMedida: 7, // TODO: ver nota arriba
+          idUnidadDeMedida: 1, // TODO: ver nota arriba
           // idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
           idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
           detalles: detalles.length
@@ -238,7 +239,7 @@ export default function ArticuloManufacturadoForm({
           tiempoEstimadoMinutos: Number(tiempoMin || 0),
           preparacion,
           idSucursal: sucursalId,
-          idUnidadDeMedida: 7, // TODO: ver nota arriba
+          idUnidadDeMedida: 1, // TODO: ver nota arriba
           // idUnidadDeMedida: Number(unidadOpt?.value),
           idCategoria: Number(categoriaOpt?.value),
           detalles: detalles.map(d => ({

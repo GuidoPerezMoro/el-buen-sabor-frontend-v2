@@ -1,4 +1,4 @@
 export interface BaseEntity {
   id: number
-  habilitado: boolean
+  habilitado: boolean // TODO: Update: Eliminado de la BBDD
 }

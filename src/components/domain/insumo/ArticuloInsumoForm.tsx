@@ -122,6 +122,7 @@ export default function ArticuloInsumoForm({
   }, [isEdit, initialData])
 
   // ── submit ───────────────────────────────────────────────────────────────
+  // TODO: Clear image preview when submitting
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault()
     setFormErrors({})
