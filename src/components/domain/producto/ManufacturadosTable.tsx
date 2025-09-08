@@ -1,7 +1,7 @@
 'use client'
 
 import {useMemo} from 'react'
-import {Pencil, Trash, Sandwich, Eye} from 'lucide-react'
+import {Sandwich, Info, Pencil, Trash} from 'lucide-react'
 import Image from 'next/image'
 import {formatARS} from '@/lib/format'
 import Table, {Column} from '@/components/ui/Table'
@@ -69,7 +69,7 @@ export default function ManufacturadosTable({items, onView, onEdit, onDelete}: P
         accessor: p => (
           <div className="flex justify-center md:justify-start">
             <IconButton
-              icon={<Eye size={16} />}
+              icon={<Info size={16} />}
               aria-label={`Ver detalles de ${p.denominacion}`}
               title="Ver detalles"
               onClick={() => onView?.(p)}
