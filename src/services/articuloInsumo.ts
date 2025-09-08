@@ -5,7 +5,7 @@ import {
   ArticuloInsumoUpdatePayload,
 } from './types/articuloInsumo'
 
-const BASE = '/articuloInsumo' // TODO: cuando migre a kebab-case, actualizar a '/articulo-insumo'
+const BASE = '/articulo-insumo'
 
 export async function fetchAllArticuloInsumos(): Promise<ArticuloInsumo[]> {
   const res = await api.get<ArticuloInsumo[]>(BASE)
