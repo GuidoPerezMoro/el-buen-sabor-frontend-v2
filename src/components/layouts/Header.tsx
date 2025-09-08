@@ -7,6 +7,7 @@ import {fetchEmpresaById} from '@/services/empresa'
 import {fetchSucursalById} from '@/services/sucursal'
 import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
+// TODO: Fix Breadcrumbs: Incluir pestaña (Promociones, Productos, etc.)
 export default function Header() {
   const {empresaId, sucursalId} = useParams()
   const [empresaName, setEmpresaName] = useState<string>('Empresa')
