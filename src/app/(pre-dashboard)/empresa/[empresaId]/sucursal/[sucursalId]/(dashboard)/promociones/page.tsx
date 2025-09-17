@@ -12,14 +12,17 @@ import PromocionesTable from '@/components/domain/promocion/PromocionesTable'
 import PromocionDetails from '@/components/domain/promocion/PromocionDetails'
 import {Promocion} from '@/services/types/promocion'
 import {fetchAllPromociones, deletePromocion} from '@/services/promocion'
+import {filterPromocionesBySucursalId, filterPromocionesByText} from '@/services/promocion.utils'
 
 export default function PromocionesPage() {
-  const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const {empresaId: eid, sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const empresaId = Number(eid)
   const sucursalId = Number(sid)
   const {openDialog, closeDialog} = useDialog()
 
   const [items, setItems] = useState<Promocion[]>([])
   const [filter, setFilter] = useState('')
+  const filtered = useMemo(() => filterPromocionesByText(items, filter), [items, filter])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,7 +30,7 @@ export default function PromocionesPage() {
     try {
       setError(null)
       const all = await fetchAllPromociones()
-      setItems(all.filter(p => p.sucursales?.some(s => s.id === sucursalId)))
+      setItems(filterPromocionesBySucursalId(all, sucursalId))
     } catch (e: any) {
       setError(e?.message ?? 'Error desconocido')
     } finally {
@@ -38,16 +41,6 @@ export default function PromocionesPage() {
   useEffect(() => {
     load()
   }, [load])
-
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase()
-    if (!q) return items
-    return items.filter(
-      p =>
-        p.denominacion.toLowerCase().includes(q) ||
-        (p.descripcionDescuento ?? '').toLowerCase().includes(q)
-    )
-  }, [items, filter])
 
   // row actions
   const [editing, setEditing] = useState<Promocion | null>(null)
@@ -123,7 +116,12 @@ export default function PromocionesPage() {
 
       {/* Crear */}
       <Dialog name="nueva-promocion" title="Nueva promoción">
-        <PromocionForm sucursalId={sucursalId} dialogName="nueva-promocion" onSuccess={load} />
+        <PromocionForm
+          empresaId={empresaId}
+          sucursalId={sucursalId}
+          dialogName="nueva-promocion"
+          onSuccess={load}
+        />
       </Dialog>
 
       {/* Editar */}
@@ -134,6 +132,7 @@ export default function PromocionesPage() {
       >
         {editing && (
           <PromocionForm
+            empresaId={empresaId}
             sucursalId={sucursalId}
             initialData={editing}
             dialogName="editar-promocion"

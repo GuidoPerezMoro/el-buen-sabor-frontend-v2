@@ -32,3 +32,5 @@ export async function updateSucursal(id: number, data: SucursalPayload): Promise
 export async function deleteSucursal(id: number): Promise<void> {
   await api.delete<void>(`${BASE}/${id}`)
 }
+
+// TODO: With image

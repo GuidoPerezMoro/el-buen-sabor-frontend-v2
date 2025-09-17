@@ -7,8 +7,8 @@ import Button from '@/components/ui/Button'
 import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
-
 import {
   Promocion,
   PromocionCreatePayload,
@@ -16,7 +16,12 @@ import {
   TipoPromocion,
 } from '@/services/types/promocion'
 import {promocionCreateSchema, promocionUpdateSchema} from '@/schemas/promocionSchema'
-import {createPromocion, updatePromocion} from '@/services/promocion'
+import {
+  createPromocion,
+  updatePromocion,
+  createPromocionWithImage,
+  updatePromocionWithImage,
+} from '@/services/promocion'
 
 import {ArticuloInsumo} from '@/services/types/articuloInsumo'
 import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
@@ -26,6 +31,8 @@ import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {filterArticuloInsumosBySucursalId} from '@/services/articuloInsumo.utils'
 import PromocionDetailsEditor from './PromocionDetailsEditor'
+import {TIPO_PROMOCION_OPTIONS} from '@/services/promocion.utils'
+import {filterSucursalesByEmpresaId} from '@/services/sucursal.utils'
 
 type DD = {value: string; label: string}
 
@@ -37,18 +44,26 @@ function fromApiTime(t: string) {
 }
 
 type Props = {
+  empresaId: number
   sucursalId: number
   initialData?: Promocion
   onSuccess?: () => void
   dialogName?: string
 }
 
-export default function PromocionForm({sucursalId, initialData, onSuccess, dialogName}: Props) {
+export default function PromocionForm({
+  empresaId,
+  sucursalId,
+  initialData,
+  onSuccess,
+  dialogName,
+}: Props) {
   const isEdit = !!initialData
   const {closeDialog} = useDialog()
 
   // fields
   const [denominacion, setDenominacion] = useState(initialData?.denominacion ?? '')
+  const [imagen, setImagen] = useState<File | null>(null)
   const [fechaDesde, setFechaDesde] = useState(initialData?.fechaDesde ?? '')
   const [fechaHasta, setFechaHasta] = useState(initialData?.fechaHasta ?? '')
   const [horaDesde, setHoraDesde] = useState(initialData ? fromApiTime(initialData.horaDesde) : '')
@@ -57,14 +72,30 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
   const [precioPromo, setPrecioPromo] = useState<string>(
     initialData?.precioPromocional != null ? String(initialData.precioPromocional) : ''
   )
-  const [tipo, setTipo] = useState<DD | null>(
-    initialData ? {value: initialData.tipoPromocion, label: initialData.tipoPromocion} : null
-  )
+  const [tipo, setTipo] = useState<DD | null>(() => {
+    if (!initialData) return null
+    const opt = TIPO_PROMOCION_OPTIONS.find(o => o.value === initialData.tipoPromocion)
+    return opt
+      ? {value: opt.value, label: opt.label}
+      : {value: initialData.tipoPromocion as any, label: String(initialData.tipoPromocion)}
+  })
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
-  const [idSucursales, setIdSucursales] = useState<number[]>(
-    initialData ? initialData.sucursales.map(s => s.id) : [sucursalId]
-  )
+  const [idSucursales, setIdSucursales] = useState<number[]>(() => {
+    if (initialData) {
+      // backend may return either embedded sucursales or only ids
+      if (Array.isArray(initialData.sucursales) && initialData.sucursales.length) {
+        return initialData.sucursales.map(s => s.id)
+      }
+      if (
+        Array.isArray((initialData as any).idSucursales) &&
+        (initialData as any).idSucursales.length
+      ) {
+        return (initialData as any).idSucursales as number[]
+      }
+    }
+    return [sucursalId]
+  })
 
   // detalles (line items)
   type Row = {idArticulo: number; cantidad: number}
@@ -73,8 +104,9 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
   )
 
   // options
-  // TODO: Update based on enum from type
-  const [tipoOptions] = useState<DD[]>([{value: TipoPromocion.HAPPY_HOUR, label: 'Happy Hour'}])
+  const [tipoOptions] = useState<DD[]>(
+    TIPO_PROMOCION_OPTIONS.map(o => ({value: o.value, label: o.label}))
+  )
   const [articuloOptions, setArticuloOptions] = useState<DD[]>([])
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -82,12 +114,14 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
   // load data
   useEffect(() => {
     ;(async () => {
-      const [sucs, insumos, prods] = await Promise.all([
+      const [allSucursales, insumos, prods] = await Promise.all([
         fetchAllSucursales(),
         fetchAllArticuloInsumos(),
         fetchAllArticuloManufacturados(),
       ])
 
+      // limit sucursales to current empresa
+      const sucs = filterSucursalesByEmpresaId(allSucursales, empresaId)
       setSucursales(sucs)
       // restrict insumos to current sucursal; manufacturados already tied to sucursal
       const insumosHere = filterArticuloInsumosBySucursalId(insumos, sucursalId)
@@ -104,7 +138,7 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
       ]
       setArticuloOptions(opts)
     })()
-  }, [sucursalId])
+  }, [empresaId, sucursalId])
 
   // reset on edit switch
   useEffect(() => {
@@ -118,10 +152,24 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
     setPrecioPromo(
       initialData?.precioPromocional != null ? String(initialData.precioPromocional) : ''
     )
-    setTipo(
-      initialData ? {value: initialData.tipoPromocion, label: initialData.tipoPromocion} : null
+    if (initialData) {
+      const opt = TIPO_PROMOCION_OPTIONS.find(o => o.value === initialData.tipoPromocion)
+      setTipo(
+        opt
+          ? ({value: opt.value, label: opt.label} as DD)
+          : ({
+              value: initialData.tipoPromocion as any,
+              label: String(initialData.tipoPromocion),
+            } as DD)
+      )
+    } else {
+      setTipo(null)
+    }
+    setIdSucursales(
+      initialData?.sucursales?.map(s => s.id) ??
+        ((initialData as any)?.idSucursales as number[] | undefined) ??
+        []
     )
-    setIdSucursales(initialData?.sucursales.map(s => s.id) ?? [])
     setDetalles(
       initialData?.detalles?.map(d => ({idArticulo: d.articulo.id, cantidad: d.cantidad})) ?? []
     )
@@ -160,7 +208,11 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
           setLoading(false)
           return
         }
-        await updatePromocion(initialData.id, parsed.data)
+        if (imagen) {
+          await updatePromocionWithImage(initialData.id, parsed.data, imagen)
+        } else {
+          await updatePromocion(initialData.id, parsed.data)
+        }
       } else {
         const raw: PromocionCreatePayload = {
           denominacion: denominacion.trim(),
@@ -182,7 +234,11 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
           setLoading(false)
           return
         }
-        await createPromocion(parsed.data)
+        if (imagen) {
+          await createPromocionWithImage(parsed.data, imagen)
+        } else {
+          await createPromocion(parsed.data)
+        }
 
         // reset
         setDenominacion('')
@@ -195,6 +251,7 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
         setTipo(null)
         setIdSucursales([sucursalId])
         setDetalles([])
+        setImagen(null)
       }
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
@@ -263,15 +320,25 @@ export default function PromocionForm({sucursalId, initialData, onSuccess, dialo
           onChange={e => setDescripcion(e.target.value)}
           error={formErrors.descripcionDescuento}
         />
+        <div className="md:col-span-2">
+          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
+          <ImageDropzone
+            previewUrl={initialData?.imagenUrl ?? null}
+            onFileAccepted={file => setImagen(file)}
+          />
+        </div>
       </div>
 
       {/* Sucursales */}
       <MultiSelectCheckbox
         label="Sucursales"
-        options={sucursales.map(s => ({label: s.nombre, value: s.id}))}
+        options={sucursales
+          .map(s => ({label: s.nombre, value: s.id}))
+          .sort((a, b) => a.label.localeCompare(b.label))}
         value={idSucursales}
         onChange={setIdSucursales}
         error={formErrors.idSucursales}
+        disabled={isEdit}
       />
 
       {/* Detalles */}

@@ -40,7 +40,6 @@ export default function PromocionesTable({items, onDetails, onEdit, onDelete}: P
         sortable: true,
         sortKey: 'precioPromocional',
       },
-      {header: 'Suc.', accessor: p => p.sucursales?.length ?? 0},
       {
         header: '',
         accessor: p => (

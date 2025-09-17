@@ -32,3 +32,28 @@ export async function deletePromocion(id: number): Promise<boolean> {
   const {data} = await api.delete<boolean>(`${BASE}/${id}`)
   return data
 }
+
+export async function createPromocionWithImage(
+  payload: PromocionCreatePayload,
+  image: File
+): Promise<Promocion> {
+  const dataBlob = new Blob([JSON.stringify(payload)], {type: 'application/json'})
+  const form = new FormData()
+  form.append('data', dataBlob)
+  form.append('file', image)
+  const {data} = await api.post<Promocion>(`${BASE}/create-with-image`, form)
+  return data
+}
+
+export async function updatePromocionWithImage(
+  id: number,
+  payload: PromocionUpdatePayload,
+  image: File
+): Promise<Promocion> {
+  const dataBlob = new Blob([JSON.stringify(payload)], {type: 'application/json'})
+  const form = new FormData()
+  form.append('data', dataBlob)
+  form.append('file', image)
+  const {data} = await api.put<Promocion>(`${BASE}/update-with-image/${id}`, form)
+  return data
+}

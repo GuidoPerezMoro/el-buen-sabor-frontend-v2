@@ -4,12 +4,10 @@ import {Sucursal} from './sucursal'
 
 // API uses a string enum. Extend as backend grows.
 export enum TipoPromocion {
-  HAPPY_HOUR = 'HAPPY HOUR',
+  HAPPY_HOUR = 'HAPPY_HOUR',
   PROMOCION = 'PROMOCION',
 }
 
-// Narrow references we actually get/use in promo responses
-export type SucursalRef = Pick<Sucursal, 'id' | 'nombre' | 'habilitado'>
 export type ArticuloRef = Pick<Articulo, 'id' | 'denominacion' | 'imagenUrl' | 'precioVenta'>
 
 export interface PromocionDetalle extends BaseEntity {
@@ -19,6 +17,7 @@ export interface PromocionDetalle extends BaseEntity {
 
 export interface Promocion extends BaseEntity {
   denominacion: string
+  imagenUrl: string | null
   fechaDesde: string // 'YYYY-MM-DD'
   fechaHasta: string // 'YYYY-MM-DD'
   horaDesde: string // 'HH:mm:ss'
@@ -26,7 +25,10 @@ export interface Promocion extends BaseEntity {
   descripcionDescuento: string | null
   precioPromocional: number
   tipoPromocion: TipoPromocion
-  sucursales: SucursalRef[]
+
+  idSucursales?: number[] // sometimes only ids
+  sucursales?: Array<{id: number; nombre: string}> // or embedded
+
   detalles: PromocionDetalle[]
 }
 
