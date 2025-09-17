@@ -26,8 +26,10 @@ export default function PromoDetallesEditor({
   error,
 }: Props) {
   // local add state
-  const [addArticulo, setAddArticulo] = useState<DD | null>(null)
-  const [addCantidad, setAddCantidad] = useState<number | ''>('')
+  const [addProd, setAddProd] = useState<DD | null>(null)
+  const [addProdQty, setAddProdQty] = useState<number | ''>('')
+  const [addInsumo, setAddInsumo] = useState<DD | null>(null)
+  const [addInsumoQty, setAddInsumoQty] = useState<number | ''>('')
 
   // prevent duplicates
   const taken = useMemo(() => new Set(detalles.map(d => d.idArticulo)), [detalles])
@@ -36,13 +38,30 @@ export default function PromoDetallesEditor({
     [articuloOptions, taken]
   )
 
-  const handleAdd = () => {
-    const id = Number(addArticulo?.value)
-    const qty = Number(addCantidad)
+  // split options by type (based on label suffix added upstream: [Prod] / [Insumo])
+  const prodOptions = useMemo(() => addable.filter(o => /\[Prod\]\s*$/.test(o.label)), [addable])
+  const insumoOptions = useMemo(
+    () => addable.filter(o => /\[Insumo\]\s*$/.test(o.label)),
+    [addable]
+  )
+  const showDivider = prodOptions.length > 0 && insumoOptions.length > 0
+
+  const handleAddProd = () => {
+    const id = Number(addProd?.value)
+    const qty = Number(addProdQty)
     if (!id || !qty || qty <= 0) return
     onAdd(id, qty)
-    setAddArticulo(null)
-    setAddCantidad('')
+    setAddProd(null)
+    setAddProdQty('')
+  }
+
+  const handleAddInsumo = () => {
+    const id = Number(addInsumo?.value)
+    const qty = Number(addInsumoQty)
+    if (!id || !qty || qty <= 0) return
+    onAdd(id, qty)
+    setAddInsumo(null)
+    setAddInsumoQty('')
   }
 
   return (
@@ -73,37 +92,80 @@ export default function PromoDetallesEditor({
         )
       })}
 
-      <div className="flex flex-wrap items-end gap-2 mt-2">
-        <div className="min-w-[280px] flex-1">
-          <Dropdown
-            label="Artículo"
-            placeholder="Selecciona"
-            options={addable}
-            value={addArticulo}
-            onChange={v => setAddArticulo(v as DD)}
-            searchable
-          />
+      {/* --- Add controls: Productos --- */}
+      {prodOptions.length > 0 && (
+        <div className="flex flex-wrap items-end gap-2 mt-3">
+          <div className="min-w-[280px] flex-1">
+            <Dropdown
+              label="Producto"
+              placeholder="Selecciona un producto"
+              options={prodOptions}
+              value={addProd}
+              onChange={v => setAddProd(v as DD)}
+              searchable
+            />
+          </div>
+          <div className="w-28">
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={addProdQty === '' ? '' : String(addProdQty)}
+              onChange={e =>
+                setAddProdQty(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
+              }
+              placeholder="Cant."
+            />
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleAddProd}
+            disabled={!addProd || !addProdQty}
+          >
+            Agregar
+          </Button>
         </div>
-        <div className="w-28">
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={addCantidad === '' ? '' : String(addCantidad)}
-            onChange={e =>
-              setAddCantidad(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
-            }
-            placeholder="Cant."
-          />
+      )}
+
+      {/* Divider shown only when both groups exist */}
+      {showDivider && (
+        <div className="my-2 h-px w-full bg-border" role="separator" aria-hidden="true" />
+      )}
+
+      {/* --- Add controls: Insumos --- */}
+      {insumoOptions.length > 0 && (
+        <div className="flex flex-wrap items-end gap-2 mt-1">
+          <div className="min-w-[280px] flex-1">
+            <Dropdown
+              label="Insumo"
+              placeholder="Selecciona un insumo"
+              options={insumoOptions}
+              value={addInsumo}
+              onChange={v => setAddInsumo(v as DD)}
+              searchable
+            />
+          </div>
+          <div className="w-28">
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={addInsumoQty === '' ? '' : String(addInsumoQty)}
+              onChange={e =>
+                setAddInsumoQty(e.currentTarget.value === '' ? '' : e.currentTarget.valueAsNumber)
+              }
+              placeholder="Cant."
+            />
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleAddInsumo}
+            disabled={!addInsumo || !addInsumoQty}
+          >
+            Agregar
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={handleAdd}
-          disabled={!addArticulo || !addCantidad}
-        >
-          Agregar
-        </Button>
-      </div>
+      )}
 
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
