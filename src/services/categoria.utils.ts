@@ -31,7 +31,6 @@ export function flattenCategoriaTree(roots: CategoriaNode[]) {
     /** ids in order, e.g. [6,7,8] */
     pathIds: number[]
     esInsumo: boolean
-    habilitado: boolean
   }
   const out: Flat[] = []
 
@@ -45,7 +44,6 @@ export function flattenCategoriaTree(roots: CategoriaNode[]) {
       pathLabels: nextNames,
       pathIds: nextIds,
       esInsumo: node.esInsumo,
-      habilitado: node.habilitado,
     })
 
     node.children.forEach(child => walk(child, nextNames, nextIds))

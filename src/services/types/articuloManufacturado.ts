@@ -2,7 +2,7 @@ import {Articulo, CategoriaRef, UnidadDeMedidaRef} from './articulo'
 import {ArticuloInsumo} from './articuloInsumo'
 
 // Allow sparse embeds + the occasional null
-export type ArticuloInsumoRef = Pick<ArticuloInsumo, 'id' | 'habilitado' | 'denominacion'> & {
+export type ArticuloInsumoRef = Pick<ArticuloInsumo, 'id' | 'denominacion'> & {
   unidadDeMedida?: UnidadDeMedidaRef | null
   categoria?: CategoriaRef | null
 }

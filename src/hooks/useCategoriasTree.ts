@@ -37,7 +37,7 @@ export function useCategoriasTree(sucursalId: number) {
 
   return {
     tree,
-    flat, // [{ id, label: "Abuelo > Padre > Hijo", pathIds, esInsumo, habilitado }]
+    flat, // [{ id, label: "Abuelo > Padre > Hijo", pathIds, esInsumo }]
     loading,
     error,
     refetch: load,

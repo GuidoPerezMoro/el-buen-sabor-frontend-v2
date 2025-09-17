@@ -12,7 +12,6 @@ export interface UpdateCategoriaPayload {
   esInsumo?: boolean
   idSucursales?: number[]
   idCategoriaPadre?: number | null
-  habilitado?: boolean
 }
 
 const BASE = '/categorias'
