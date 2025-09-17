@@ -1,24 +1,23 @@
 import api from './baseService'
 import {UnidadDeMedida, UnidadDeMedidaPayload} from './types/unidadDeMedida'
 
-// TODO: Use BASE
 const BASE = '/unidad-de-medida'
 
 // GET all
 export async function fetchAllUnidades(): Promise<UnidadDeMedida[]> {
-  const res = await api.get<UnidadDeMedida[]>('/unidad-de-medida')
+  const res = await api.get<UnidadDeMedida[]>(BASE)
   return res.data
 }
 
 // GET one by ID
 export async function fetchUnidadById(id: number): Promise<UnidadDeMedida> {
-  const res = await api.get<UnidadDeMedida>(`/unidad-de-medida/${id}`)
+  const res = await api.get<UnidadDeMedida>(`${BASE}/${id}`)
   return res.data
 }
 
 // Create
 export async function createUnidad(data: UnidadDeMedidaPayload): Promise<UnidadDeMedida> {
-  const res = await api.post<UnidadDeMedida>('/unidad-de-medida', data)
+  const res = await api.post<UnidadDeMedida>(BASE, data)
   return res.data
 }
 
@@ -27,11 +26,11 @@ export async function updateUnidad(
   id: number,
   data: Partial<UnidadDeMedidaPayload>
 ): Promise<UnidadDeMedida> {
-  const res = await api.put<UnidadDeMedida>(`/unidad-de-medida/${id}`, data)
+  const res = await api.put<UnidadDeMedida>(`${BASE}/${id}`, data)
   return res.data
 }
 
 // Delete
 export async function deleteUnidad(id: number): Promise<void> {
-  await api.delete(`/unidad-de-medida/${id}`)
+  await api.delete<void>(`${BASE}/${id}`)
 }
