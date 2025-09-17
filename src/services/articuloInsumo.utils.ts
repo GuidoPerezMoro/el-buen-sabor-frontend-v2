@@ -1,4 +1,4 @@
-import {ArticuloInsumo} from './types/articulo'
+import {ArticuloInsumo} from './types/articuloInsumo'
 
 /** Filtra por sucursal (como hicimos con categorías) */
 export function filterArticuloInsumosBySucursalId(

@@ -31,7 +31,7 @@ import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {filterArticuloInsumosBySucursalId} from '@/services/articuloInsumo.utils'
 import PromocionDetailsEditor from './PromocionDetailsEditor'
-import {TIPO_PROMOCION_OPTIONS} from '@/services/promocion.utils'
+import {buildArticuloOptionsForSucursal, TIPO_PROMOCION_OPTIONS} from '@/services/promocion.utils'
 import {filterSucursalesByEmpresaId} from '@/services/sucursal.utils'
 
 type DD = {value: string; label: string}
@@ -123,20 +123,10 @@ export default function PromocionForm({
       // limit sucursales to current empresa
       const sucs = filterSucursalesByEmpresaId(allSucursales, empresaId)
       setSucursales(sucs)
-      // restrict insumos to current sucursal; manufacturados already tied to sucursal
-      const insumosHere = filterArticuloInsumosBySucursalId(insumos, sucursalId)
-
-      const opts: DD[] = [
-        ...prods.map((p: ArticuloManufacturado) => ({
-          value: String(p.id),
-          label: `${p.denominacion} [Prod]`,
-        })),
-        ...insumosHere.map((i: ArticuloInsumo) => ({
-          value: String(i.id),
-          label: `${i.denominacion} [Insumo]`,
-        })),
-      ]
-      setArticuloOptions(opts)
+      // build options with INSUMOS filtered to this sucursal
+      setArticuloOptions(
+        buildArticuloOptionsForSucursal({insumos, manufacturados: prods, sucursalId})
+      )
     })()
   }, [empresaId, sucursalId])
 

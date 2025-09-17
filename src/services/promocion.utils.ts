@@ -1,4 +1,5 @@
 import {filterArticuloInsumosBySucursalId} from './articuloInsumo.utils'
+import {filterManufacturadosBySucursalId} from './articuloManufacturado.utils'
 import {ArticuloInsumo} from './types/articuloInsumo'
 import {ArticuloManufacturado} from './types/articuloManufacturado'
 import {Promocion, TipoPromocion} from './types/promocion'
@@ -43,11 +44,13 @@ export function buildArticuloOptionsForSucursal(params: {
 }) {
   const {insumos, manufacturados, sucursalId} = params
   const insumosHere = filterArticuloInsumosBySucursalId(insumos, sucursalId)
+  const prodsHere = filterManufacturadosBySucursalId(manufacturados, sucursalId)
+
   const insumoOpts = insumosHere.map(i => ({
     value: String(i.id),
     label: `${i.denominacion} [Insumo]`,
   }))
-  const prodOpts = manufacturados.map(p => ({
+  const prodOpts = prodsHere.map(p => ({
     value: String(p.id),
     label: `${p.denominacion} [Prod]`,
   }))

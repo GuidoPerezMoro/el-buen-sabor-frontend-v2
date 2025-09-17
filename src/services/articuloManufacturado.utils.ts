@@ -17,5 +17,4 @@ export function filterManufacturadosByText(items: ArticuloManufacturado[], text:
   })
 }
 
-// optional helper: count of insumos
 export const countDetalles = (a: ArticuloManufacturado) => a.detalles?.length ?? 0
