@@ -23,13 +23,10 @@ import {
   updatePromocionWithImage,
 } from '@/services/promocion'
 
-import {ArticuloInsumo} from '@/services/types/articuloInsumo'
-import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
 import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
 import {fetchAllArticuloManufacturados} from '@/services/articuloManufacturado'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
-import {filterArticuloInsumosBySucursalId} from '@/services/articuloInsumo.utils'
 import PromocionDetailsEditor from './PromocionDetailsEditor'
 import {buildArticuloOptionsForSucursal, TIPO_PROMOCION_OPTIONS} from '@/services/promocion.utils'
 import {filterSucursalesByEmpresaId} from '@/services/sucursal.utils'
@@ -254,22 +251,62 @@ export default function PromocionForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      {/* Básicos */}
+      {/* Encabezado: Imagen + campos principales */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Col 1: Imagen compacta */}
+        <div className="order-first">
+          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
+          <ImageDropzone
+            previewUrl={initialData?.imagenUrl ?? null}
+            onFileAccepted={file => setImagen(file)}
+            className="max-w-full md:max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
+          />
+          <p className="mt-1 text-xs text-muted">
+            Recomendado 4:3. Puedes arrastrar y soltar un archivo.
+          </p>
+        </div>
+
+        {/* Col 2–3: Denominación, Tipo, Precio, Descripción */}
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <Input
+              label="Nombre de la promo"
+              value={denominacion}
+              onChange={e => setDenominacion(e.target.value)}
+              error={formErrors.denominacion}
+            />
+          </div>
+          <Dropdown
+            label="Tipo"
+            options={tipoOptions}
+            value={tipo}
+            onChange={v => setTipo(v as DD)}
+            placeholder="Selecciona"
+            error={formErrors.tipoPromocion}
+          />
+          <Input
+            label="Precio promocional"
+            type="number"
+            inputMode="decimal"
+            value={precioPromo}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setPrecioPromo(e.target.value)}
+            error={formErrors.precioPromocional}
+            prefix="$"
+          />
+          <div className="md:col-span-2">
+            <Input
+              label="Descripción (opcional)"
+              multiline
+              value={descripcion}
+              onChange={e => setDescripcion(e.target.value)}
+              error={formErrors.descripcionDescuento}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Vigencia */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Denominación"
-          value={denominacion}
-          onChange={e => setDenominacion(e.target.value)}
-          error={formErrors.denominacion}
-        />
-        <Dropdown
-          label="Tipo"
-          options={tipoOptions}
-          value={tipo}
-          onChange={v => setTipo(v as DD)}
-          placeholder="Selecciona"
-          error={formErrors.tipoPromocion}
-        />
         <DatePicker
           label="Fecha desde"
           value={fechaDesde}
@@ -294,30 +331,17 @@ export default function PromocionForm({
           onChange={setHoraHasta}
           error={formErrors.horaHasta}
         />
-        <Input
-          label="Precio promocional"
-          type="number"
-          inputMode="decimal"
-          value={precioPromo}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setPrecioPromo(e.target.value)}
-          error={formErrors.precioPromocional}
-          prefix="$"
-        />
-        <Input
-          label="Descripción (opcional)"
-          multiline
-          value={descripcion}
-          onChange={e => setDescripcion(e.target.value)}
-          error={formErrors.descripcionDescuento}
-        />
-        <div className="md:col-span-2">
-          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
-          <ImageDropzone
-            previewUrl={initialData?.imagenUrl ?? null}
-            onFileAccepted={file => setImagen(file)}
-          />
-        </div>
       </div>
+
+      {/* Detalles */}
+      <PromocionDetailsEditor
+        articuloOptions={articuloOptions}
+        detalles={detalles}
+        onAdd={(id, qty) => setDetalles(prev => [...prev, {idArticulo: id, cantidad: qty}])}
+        onChangeCantidad={(id, qty) => updateCantidad(id, qty)}
+        onRemove={removeDetalle}
+        error={formErrors.detalles}
+      />
 
       {/* Sucursales */}
       <MultiSelectCheckbox
@@ -329,16 +353,6 @@ export default function PromocionForm({
         onChange={setIdSucursales}
         error={formErrors.idSucursales}
         disabled={isEdit}
-      />
-
-      {/* Detalles */}
-      <PromocionDetailsEditor
-        articuloOptions={articuloOptions}
-        detalles={detalles}
-        onAdd={(id, qty) => setDetalles(prev => [...prev, {idArticulo: id, cantidad: qty}])}
-        onChangeCantidad={(id, qty) => updateCantidad(id, qty)}
-        onRemove={removeDetalle}
-        error={formErrors.detalles}
       />
 
       {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}

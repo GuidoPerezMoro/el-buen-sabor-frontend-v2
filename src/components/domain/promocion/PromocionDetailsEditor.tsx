@@ -66,7 +66,9 @@ export default function PromoDetallesEditor({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-text">Artículos en la promo</label>
+      <h3 className="text-base md:text-lg font-semibold text-text tracking-tight">
+        Artículos en la promo
+      </h3>
 
       {detalles.length === 0 && <p className="text-sm text-muted">Aún no agregaste artículos.</p>}
 
