@@ -208,7 +208,7 @@ export default function ArticuloManufacturadoForm({
           descripcion,
           tiempoEstimadoMinutos: tiempoMin === '' ? undefined : Number(tiempoMin),
           preparacion,
-          idUnidadDeMedida: 1, // TODO: ver nota arriba
+          idUnidadDeMedida: 1, // Ver nota arriba
           // idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
           idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
           detalles: detalles.length
@@ -239,7 +239,7 @@ export default function ArticuloManufacturadoForm({
           tiempoEstimadoMinutos: Number(tiempoMin || 0),
           preparacion,
           idSucursal: sucursalId,
-          idUnidadDeMedida: 1, // TODO: ver nota arriba
+          idUnidadDeMedida: 1, // Ver nota arriba
           // idUnidadDeMedida: Number(unidadOpt?.value),
           idCategoria: Number(categoriaOpt?.value),
           detalles: detalles.map(d => ({

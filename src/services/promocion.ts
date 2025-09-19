@@ -1,8 +1,6 @@
 import api from './baseService'
 import {Promocion, PromocionCreatePayload, PromocionUpdatePayload} from './types/promocion'
 
-// NOTE: backend still in camelCase for now.
-// TODO(api): switch to '/promocion' → '/promocion' or '/promociones' kebab when ready.
 const BASE = '/promociones'
 
 export async function fetchAllPromociones(): Promise<Promocion[]> {
