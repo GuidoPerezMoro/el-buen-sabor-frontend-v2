@@ -55,10 +55,22 @@ export default function PromocionesTable({items, onDetails, onEdit, onDelete}: P
       {
         header: 'Promoción',
         accessor: p => (
-          <div className="flex flex-col">
-            <span className="font-medium">{p.denominacion}</span>
+          <div className="flex flex-col min-w-0 max-w-[clamp(12rem,25vw,34rem)]">
+            <span className="font-medium truncate" title={p.denominacion}>
+              {p.denominacion}
+            </span>
             {p.descripcionDescuento && (
-              <span className="text-xs text-muted">{p.descripcionDescuento}</span>
+              <span
+                className="text-xs text-muted overflow-hidden text-ellipsis"
+                title={p.descripcionDescuento}
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                {p.descripcionDescuento}
+              </span>
             )}
           </div>
         ),
