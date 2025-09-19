@@ -168,6 +168,7 @@ export default function PromocionForm({
   const removeDetalle = (id: number) => setDetalles(prev => prev.filter(d => d.idArticulo !== id))
 
   // submit
+  // TODO: Fix create with image
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setFormErrors({})

@@ -193,8 +193,9 @@ export default function ArticuloManufacturadoForm({
   const [loading, setLoading] = useState(false)
 
   // ── submit ───────────────────────────────────────────────────────────────
-  // TODO: el producto no usa unidad. La API la exige.
+  // WARN: el producto no usa unidad. La API la exige.
   // Se fija temporalmente a "Unidades" (id 1) hasta definir un modelo mejor.
+  // TODO: Fix create with image. Insumo broken (API?)
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setFormErrors({})
