@@ -40,9 +40,14 @@ export default function PromocionDetails({promocion}: {promocion: Promocion}) {
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-base font-semibold leading-tight">{promocion.denominacion}</h2>
+            <div className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              <span className="text-text text-xl font-medium">
+                {formatARS(promocion.precioPromocional)}
+              </span>
+            </div>
             <div className="shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium">
               {tipoLabel}
             </div>
@@ -51,13 +56,6 @@ export default function PromocionDetails({promocion}: {promocion: Promocion}) {
           {promocion.descripcionDescuento && (
             <p className="text-text">{promocion.descripcionDescuento}</p>
           )}
-
-          <div className="flex items-center gap-1">
-            <Tag className="h-4 w-4" />
-            <span className="text-text text-lg font-medium">
-              {formatARS(promocion.precioPromocional)}
-            </span>
-          </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
             <div className="flex items-center gap-1">
