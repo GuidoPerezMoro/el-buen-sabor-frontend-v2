@@ -1,8 +1,12 @@
 export * from './base'
 
 export * from './articulo'
+export * from './articuloInsumo'
+export * from './articuloManufacturado'
 export * from './categoria'
 export * from './domicilio'
 export * from './empresa'
+export * from './localidad'
+export * from './promocion'
 export * from './sucursal'
 export * from './unidadDeMedida'
