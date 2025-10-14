@@ -64,6 +64,7 @@ export default function SucursalForm({
   const [loading, setLoading] = useState(false)
 
   // Load localidades and (re)derive cascades (also when switching record)
+  // TODO: Fix poblar provincia y localidad cuando la API lo guarde en la base de datos
   useEffect(() => {
     let active = true
     ;(async () => {
