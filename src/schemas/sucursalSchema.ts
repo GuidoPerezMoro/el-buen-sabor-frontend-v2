@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {domicilioSchema} from './domicilioSchema'
+import {domicilioSchema, domicilioUpdateSchema} from './domicilioSchema'
 
 export const sucursalSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio'),
@@ -11,3 +11,13 @@ export const sucursalSchema = z.object({
 })
 
 export type SucursalPayload = z.infer<typeof sucursalSchema>
+
+// Create payload (idLocalidad requerido)
+export type SucursalCreatePayload = z.infer<typeof sucursalSchema>
+
+// EDIT schema: same as create but domicilio.idLocalidad is optional
+export const sucursalUpdateSchema = sucursalSchema.extend({
+  domicilio: domicilioUpdateSchema,
+})
+
+export type SucursalUpdatePayload = z.infer<typeof sucursalUpdateSchema>

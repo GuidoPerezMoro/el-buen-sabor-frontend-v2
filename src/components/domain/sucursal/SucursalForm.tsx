@@ -9,7 +9,13 @@ import Toggle from '@/components/ui/Toggle'
 import useDialog from '@/hooks/useDialog'
 import {createSucursal, updateSucursal} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
-import {sucursalSchema, SucursalPayload} from '@/schemas/sucursalSchema'
+import {
+  sucursalSchema,
+  SucursalPayload,
+  sucursalUpdateSchema,
+  SucursalUpdatePayload,
+  SucursalCreatePayload,
+} from '@/schemas/sucursalSchema'
 import {fetchAllLocalidades} from '@/services/localidad'
 import {
   distinctPaises,
@@ -127,28 +133,52 @@ export default function SucursalForm({
     setFormErrors({})
     setLoading(true)
 
+    const domicilioBase = {
+      calle: calle.trim(),
+      numero: Number(numero),
+      cp: Number(cp),
+    }
+    const domicilio = isEdit
+      ? domicilioBase // omit idLocalidad on EDIT
+      : {...domicilioBase, idLocalidad: localidad ? Number(localidad.value) : (null as any)}
+
     const raw = {
       nombre: nombre.trim(),
       horarioApertura,
       horarioCierre,
       esCasaMatriz,
-      domicilio: {
-        calle: calle.trim(),
-        numero: Number(numero),
-        cp: Number(cp),
-        // If edit is read-only and for some reason the dropdowns didn't hydrate yet,
-        // fall back to the existing idLocalidad from initialData.
-        idLocalidad: localidad
-          ? Number(localidad.value)
-          : // prefer nested localidad.id from GET payload
-            ((initialData?.domicilio as any)?.localidad?.id ??
-            (initialData?.domicilio as any)?.idLocalidad ??
-            (null as any)),
-      },
+      domicilio,
       idEmpresa: empresaId,
     }
 
-    const result = sucursalSchema.safeParse(raw as SucursalPayload)
+    // Parse per-branch so TS narrows payload correctly
+    if (isEdit) {
+      const result = sucursalUpdateSchema.safeParse(raw as SucursalUpdatePayload)
+      if (!result.success) {
+        const errs: Record<string, string> = {}
+        result.error.errors.forEach(e => {
+          errs[e.path.join('.')] = e.message
+        })
+        setFormErrors(errs)
+        setLoading(false)
+        return
+      }
+      try {
+        if (initialData) {
+          await updateSucursal(initialData.id, result.data)
+        }
+        onSuccess?.()
+        if (dialogName) closeDialog(dialogName)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al guardar la sucursal'
+        setFormErrors({general: message})
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    const result = sucursalSchema.safeParse(raw as SucursalCreatePayload)
     if (!result.success) {
       const errs: Record<string, string> = {}
       result.error.errors.forEach(e => {
@@ -160,22 +190,19 @@ export default function SucursalForm({
     }
 
     try {
-      if (isEdit && initialData) {
-        const updated = await updateSucursal(initialData.id, result.data)
-      } else {
-        const created = await createSucursal(result.data)
-        // reset all fields
-        setNombre('')
-        setHorarioApertura('')
-        setHorarioCierre('')
-        setEsCasaMatriz(false)
-        setCalle('')
-        setNumero('')
-        setCp('')
-        setPais(null)
-        setProvincia(null)
-        setLocalidad(null)
-      }
+      // CREATE branch
+      const created = await createSucursal(result.data)
+      // reset all fields
+      setNombre('')
+      setHorarioApertura('')
+      setHorarioCierre('')
+      setEsCasaMatriz(false)
+      setCalle('')
+      setNumero('')
+      setCp('')
+      setPais(null)
+      setProvincia(null)
+      setLocalidad(null)
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
@@ -256,44 +283,43 @@ export default function SucursalForm({
       </div>
 
       {/* País > Provincia > Localidad */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Dropdown
-          label="País"
-          options={paisOptions}
-          value={pais}
-          onChange={v => {
-            const next = v as DDOpt | null
-            setPais(next)
-            // Clearing a higher level clears dependants
-            setProvincia(null)
-            setLocalidad(null)
-          }}
-          placeholder="Selecciona un país"
-          error={formErrors['domicilio.idLocalidad']}
-          disabled={isEdit} // API can't handle change on edit
-        />
-        <Dropdown
-          label="Provincia"
-          options={provinciaOptions}
-          value={provincia}
-          onChange={v => {
-            const next = v as DDOpt | null
-            setProvincia(next)
-            setLocalidad(null)
-          }}
-          placeholder="Selecciona una provincia"
-          disabled={provinciaDisabled}
-        />
-        <Dropdown
-          label="Localidad"
-          options={localidadOptions}
-          value={localidad}
-          onChange={v => setLocalidad(v as DDOpt | null)}
-          placeholder="Selecciona una localidad"
-          disabled={localidadDisabled}
-          error={formErrors['domicilio.idLocalidad']}
-        />
-      </div>
+      {!isEdit && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Dropdown
+            label="País"
+            options={paisOptions}
+            value={pais}
+            onChange={v => {
+              const next = v as DDOpt | null
+              setPais(next)
+              setProvincia(null)
+              setLocalidad(null)
+            }}
+            placeholder="Selecciona un país"
+          />
+          <Dropdown
+            label="Provincia"
+            options={provinciaOptions}
+            value={provincia}
+            onChange={v => {
+              const next = v as DDOpt | null
+              setProvincia(next)
+              setLocalidad(null)
+            }}
+            placeholder="Selecciona una provincia"
+            disabled={!pais}
+          />
+          <Dropdown
+            label="Localidad"
+            options={localidadOptions}
+            value={localidad}
+            onChange={v => setLocalidad(v as DDOpt | null)}
+            placeholder="Selecciona una localidad"
+            disabled={!provincia}
+            error={formErrors['domicilio.idLocalidad']}
+          />
+        </div>
+      )}
 
       {/* Casa matriz toggle*/}
       <div className="flex">

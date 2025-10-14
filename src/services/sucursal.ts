@@ -1,6 +1,10 @@
 import api from './baseService'
 import {Sucursal} from './types'
-import {SucursalPayload} from '@/schemas/sucursalSchema'
+import {
+  SucursalPayload,
+  SucursalCreatePayload,
+  SucursalUpdatePayload,
+} from '@/schemas/sucursalSchema'
 
 const BASE = '/sucursales'
 
@@ -18,13 +22,13 @@ export async function fetchSucursalById(id: number): Promise<Sucursal> {
 
 // Crear nueva sucursal
 export async function createSucursal(data: SucursalPayload): Promise<Sucursal> {
-  const response = await api.post<Sucursal>(BASE, data)
+  const response = await api.post<Sucursal>(BASE, data as SucursalCreatePayload)
   return response.data
 }
 
 // Actualizar una sucursal
-export async function updateSucursal(id: number, data: SucursalPayload): Promise<Sucursal> {
-  const response = await api.put<Sucursal>(`${BASE}/${id}`, data)
+export async function updateSucursal(id: number, data: SucursalUpdatePayload): Promise<Sucursal> {
+  const response = await api.put<Sucursal>(`${BASE}/${id}`, data as SucursalUpdatePayload)
   return response.data
 }
 

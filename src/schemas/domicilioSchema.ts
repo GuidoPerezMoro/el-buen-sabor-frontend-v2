@@ -10,3 +10,8 @@ export const domicilioSchema = z.object({
 })
 
 export type DomicilioPayload = z.infer<typeof domicilioSchema>
+
+// EDIT: allow omitting idLocalidad temporarily (backend can't handle change yet)
+export const domicilioUpdateSchema = domicilioSchema.extend({
+  idLocalidad: domicilioSchema.shape.idLocalidad.optional(),
+})
