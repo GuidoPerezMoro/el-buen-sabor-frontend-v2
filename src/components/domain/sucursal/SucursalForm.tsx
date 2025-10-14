@@ -7,7 +7,12 @@ import TimePicker from '@/components/ui/TimePicker'
 import Dropdown from '@/components/ui/Dropdown'
 import Toggle from '@/components/ui/Toggle'
 import useDialog from '@/hooks/useDialog'
-import {createSucursal, updateSucursal} from '@/services/sucursal'
+import {
+  createSucursal,
+  createSucursalWithImage,
+  updateSucursal,
+  updateSucursalWithImage,
+} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import {
   sucursalSchema,
@@ -28,6 +33,7 @@ import {
   localidadesByProvinciaId,
   dedupeLocalidades,
 } from '@/services/localidad.utils'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 
 interface SucursalFormProps {
   initialData?: Sucursal
@@ -37,7 +43,6 @@ interface SucursalFormProps {
   dialogName?: string
 }
 
-// TODO: Add imagenes
 export default function SucursalForm({
   initialData,
   empresaId,
@@ -68,6 +73,8 @@ export default function SucursalForm({
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+
+  const [imagen, setImagen] = useState<File | null>(null)
 
   // Load localidades and (re)derive cascades (also when switching record)
   // TODO: Fix poblar provincia y localidad cuando la API lo guarde en la base de datos
@@ -126,6 +133,7 @@ export default function SucursalForm({
     setCp(initialData?.domicilio.cp ?? '')
 
     setFormErrors({})
+    setImagen(null)
   }, [initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,7 +173,11 @@ export default function SucursalForm({
       }
       try {
         if (initialData) {
-          await updateSucursal(initialData.id, result.data)
+          if (imagen) {
+            await updateSucursalWithImage(initialData.id, result.data, imagen)
+          } else {
+            await updateSucursal(initialData.id, result.data)
+          }
         }
         onSuccess?.()
         if (dialogName) closeDialog(dialogName)
@@ -191,7 +203,9 @@ export default function SucursalForm({
 
     try {
       // CREATE branch
-      const created = await createSucursal(result.data)
+      const created = imagen
+        ? await createSucursalWithImage(result.data, imagen)
+        : await createSucursal(result.data)
       // reset all fields
       setNombre('')
       setHorarioApertura('')
@@ -203,6 +217,7 @@ export default function SucursalForm({
       setPais(null)
       setProvincia(null)
       setLocalidad(null)
+      setImagen(null)
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
@@ -233,6 +248,17 @@ export default function SucursalForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      {/* Imagen (compacta) */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
+        <ImageDropzone
+          previewUrl={initialData?.imagenUrl ?? null}
+          onFileAccepted={file => setImagen(file)}
+          className="max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
+        />
+        <p className="mt-1 text-xs text-muted">Recomendado JPG/PNG/WebP.</p>
+      </div>
+
       {/* Detalles: Nombre + horarios */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input

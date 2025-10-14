@@ -105,6 +105,8 @@ export default function SucursalPage() {
             <Card
               key={sucursal.id}
               title={sucursal.nombre}
+              imageSrc={sucursal.imagenUrl}
+              imageAlt={sucursal.nombre}
               line1={`Dirección: ${sucursal.domicilio.calle} ${sucursal.domicilio.numero}`}
               line2={`Horario: ${sucursal.horarioApertura} - ${sucursal.horarioCierre}`}
               badge={sucursal.esCasaMatriz ? 'Casa matriz' : undefined}
