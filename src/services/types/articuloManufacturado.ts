@@ -15,7 +15,6 @@ export interface ArticuloManufacturadoDetalle {
 }
 
 export interface ArticuloManufacturado extends Articulo {
-  // image is usually allowed for productos; keep same field as insumo:
   imagenUrl: string | null
 
   descripcion: string | null

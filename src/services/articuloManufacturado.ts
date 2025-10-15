@@ -42,12 +42,13 @@ export async function createArticuloManufacturadoWithImage(
   data: ArticuloManufacturadoCreatePayload,
   file: File
 ): Promise<ArticuloManufacturado> {
+  // JSON part must be under key "data" to match backend @RequestPart("data")
   const form = new FormData()
-  form.append('payload', new Blob([JSON.stringify(data)], {type: 'application/json'}))
+  form.append('data', new Blob([JSON.stringify(data)], {type: 'application/json'}))
   form.append('file', file)
-  const res = await api.post<ArticuloManufacturado>(`${BASE}`, form, {
-    headers: {'Content-Type': 'multipart/form-data'},
-  } as any)
+  // hit the dedicated multipart route; let axios/browser set boundary header
+  const res = await api.post<ArticuloManufacturado>(`${BASE}/create-with-image`, form)
+
   return res.data
 }
 
@@ -56,11 +57,11 @@ export async function updateArticuloManufacturadoWithImage(
   data: ArticuloManufacturadoUpdatePayload,
   file: File
 ): Promise<ArticuloManufacturado> {
+  // JSON part must be under key "data" to match backend @RequestPart("data")
   const form = new FormData()
-  form.append('payload', new Blob([JSON.stringify(data)], {type: 'application/json'}))
+  form.append('data', new Blob([JSON.stringify(data)], {type: 'application/json'}))
   form.append('file', file)
-  const res = await api.put<ArticuloManufacturado>(`${BASE}/${id}`, form, {
-    headers: {'Content-Type': 'multipart/form-data'},
-  } as any)
+  // hit the dedicated multipart route; let axios/browser set boundary header
+  const res = await api.put<ArticuloManufacturado>(`${BASE}/update-with-image/${id}`, form)
   return res.data
 }

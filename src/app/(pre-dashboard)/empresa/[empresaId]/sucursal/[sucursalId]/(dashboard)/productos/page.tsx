@@ -71,7 +71,7 @@ export default function ProductosPage() {
     openDialog('confirm-delete-producto')
   }
 
-  // TODO: When pedidos/comandas exist, block deletion if referenced.
+  // TODO: When pedidos exist, block deletion if referenced.
   const confirmDelete = async () => {
     if (!deleting) return
     try {
