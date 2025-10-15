@@ -48,7 +48,7 @@ export default function Button({
       ) : (
         icon && <span className={children ? 'mr-2' : ''}>{icon}</span>
       )}
-      {loading ? 'Loading...' : children}
+      {loading ? 'Cargando...' : children}
     </button>
   )
 }
