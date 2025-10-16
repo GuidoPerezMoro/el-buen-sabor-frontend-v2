@@ -42,6 +42,7 @@ export default function Card({
         className
       )}
     >
+      {/* TODO: Fix image square */}
       <div className="relative w-full h-52">
         <Image
           src={imageSrc || defaultImage}
@@ -57,10 +58,10 @@ export default function Card({
         )}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold text-text">{title}</h3>
-        {line1 && <p className="text-sm text-muted">{line1}</p>}
-        {line2 && <p className="text-sm text-muted">{line2}</p>}
+      <div className="flex flex-col gap-1 overflow-hidden">
+        <h3 className="text-lg font-semibold text-text break-words line-clamp-2">{title}</h3>
+        {line1 && <p className="text-sm text-muted break-words line-clamp-3">{line1}</p>}
+        {line2 && <p className="text-sm text-muted break-words line-clamp-1">{line2}</p>}
       </div>
 
       <div className="mt-auto flex justify-end gap-2">

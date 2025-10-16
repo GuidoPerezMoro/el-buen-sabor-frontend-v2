@@ -25,7 +25,7 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative inline-flex items-center h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50',
+          'relative inline-flex items-center h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-25',
           checked ? 'bg-primary' : 'bg-muted',
           className
         )}

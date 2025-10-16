@@ -7,6 +7,7 @@ export interface Sucursal extends BaseEntity {
   horarioApertura: string // formato HH:mm:ss
   horarioCierre: string // formato HH:mm:ss
   esCasaMatriz: boolean
+  imagenUrl?: string
 
   domicilio: Domicilio
   empresa: Empresa

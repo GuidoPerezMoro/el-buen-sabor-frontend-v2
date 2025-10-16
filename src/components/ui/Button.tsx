@@ -46,9 +46,9 @@ export default function Button({
       {loading ? (
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
       ) : (
-        icon && <span className="mr-2">{icon}</span>
+        icon && <span className={children ? 'mr-2' : ''}>{icon}</span>
       )}
-      {loading ? 'Loading...' : children}
+      {loading ? 'Cargando...' : children}
     </button>
   )
 }

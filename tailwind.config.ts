@@ -11,8 +11,8 @@ const config: Config = {
       colors: {
         background: '#f9f9f9', // app background (dominant)
         text: '#0f0f0f', // default text
-        primary: '#e66200', // CTA / brand highlight
-        primaryHover: '#cc5200',
+        primary: '#0000ff', // CTA / brand highlight
+        primaryHover: '#0000cc',
         muted: '#c6c6cd', // disabled/inactive background
         danger: '#ff0000', // errors / danger zone
         dangerHover: '#cc0000',

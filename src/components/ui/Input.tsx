@@ -10,17 +10,15 @@ type BaseProps = {
   error?: string
   iconLeft?: React.ReactNode
   iconRight?: React.ReactNode
+  prefix?: React.ReactNode
+  suffix?: React.ReactNode
   multiline?: boolean
   showPasswordToggle?: boolean
 }
 
 type InputProps =
-  | (BaseProps & {
-      multiline?: false
-    } & InputHTMLAttributes<HTMLInputElement>)
-  | (BaseProps & {
-      multiline: true
-    } & TextareaHTMLAttributes<HTMLTextAreaElement>)
+  | (BaseProps & {multiline?: false} & InputHTMLAttributes<HTMLInputElement>)
+  | (BaseProps & {multiline: true} & TextareaHTMLAttributes<HTMLTextAreaElement>)
 
 const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
   (
@@ -29,6 +27,8 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
       error,
       iconLeft,
       iconRight,
+      prefix,
+      suffix,
       showPasswordToggle = false,
       multiline = false,
       className,
@@ -56,11 +56,18 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
       ? 'border-danger focus:ring-danger'
       : 'border-muted focus:ring-primary'
 
-    const inputClasses = cn(baseClasses, borderClasses, className)
+    const hasLeftAdornment = !!iconLeft || !!prefix
+    const hasRightAdornment = !!iconRight || !!suffix || (isPassword && showPasswordToggle)
 
-    const hasRightContent = !!iconRight || (isPassword && showPasswordToggle)
+    const inputClasses = cn(
+      baseClasses,
+      borderClasses,
+      hasLeftAdornment && 'pl-7',
+      hasRightAdornment && 'pr-7',
+      className
+    )
 
-    const {type: _ignoredType, ...restProps} = props as InputHTMLAttributes<HTMLInputElement>
+    const inputProps = props as InputHTMLAttributes<HTMLInputElement>
 
     return (
       <div className="w-full">
@@ -75,16 +82,17 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
         ) : (
           <div className="relative w-full flex items-center">
             {iconLeft && <span className="absolute left-2">{iconLeft}</span>}
+            {prefix && <span className="absolute left-2 text-muted text-sm">{prefix}</span>}
+
             <input
               ref={ref as React.Ref<HTMLInputElement>}
+              {...inputProps}
               type={inputType}
-              {...restProps}
-              className={cn(
-                inputClasses,
-                !!iconLeft ? 'pl-8' : undefined,
-                hasRightContent ? 'pr-8' : undefined
-              )}
+              className={inputClasses}
             />
+
+            {suffix && <span className="absolute right-2 text-muted text-sm">{suffix}</span>}
+
             {isPassword && showPasswordToggle && (
               <button
                 type="button"
@@ -93,12 +101,13 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
                 title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="w-4 h-4 text-gray-700" />
+                  <EyeSlashIcon className="w-4 h-4 text-muted" />
                 ) : (
-                  <EyeIcon className="w-4 h-4 text-gray-700" />
+                  <EyeIcon className="w-4 h-4 text-muted" />
                 )}
               </button>
             )}
+
             {!isPassword && iconRight && <span className="absolute right-2">{iconRight}</span>}
           </div>
         )}

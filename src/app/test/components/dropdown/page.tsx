@@ -1,11 +1,26 @@
-// src/app/test/components/dropdown/page.tsx
 'use client'
 
 import {useState} from 'react'
 import Dropdown from '@/components/ui/Dropdown'
 
 export default function DropdownTestPage() {
-  const fruits = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry']
+  const fruits = [
+    'Apple',
+    'Banana',
+    'Cherry',
+    'Date',
+    'Elderberry',
+    'Fig',
+    'Grape',
+    'Honeydew',
+    'Kiwi',
+    'Lemon',
+    'Mango',
+    'Nectarine',
+    'Orange',
+    'Papaya',
+    'Quince',
+  ]
   const [selectedFruit, setSelectedFruit] = useState<string | null>(null)
 
   const cities = [

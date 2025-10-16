@@ -1,15 +1,39 @@
 'use client'
 
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useMemo} from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import TimePicker from '@/components/ui/TimePicker'
 import Dropdown from '@/components/ui/Dropdown'
 import Toggle from '@/components/ui/Toggle'
 import useDialog from '@/hooks/useDialog'
-import {createSucursal, updateSucursal} from '@/services/sucursal'
+import {
+  createSucursal,
+  createSucursalWithImage,
+  updateSucursal,
+  updateSucursalWithImage,
+} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
-import {sucursalSchema, SucursalInput} from '@/schemas/sucursalSchema'
+import {
+  sucursalSchema,
+  SucursalPayload,
+  sucursalUpdateSchema,
+  SucursalUpdatePayload,
+  SucursalCreatePayload,
+} from '@/schemas/sucursalSchema'
+import {fetchAllLocalidades} from '@/services/localidad'
+import {
+  distinctPaises,
+  resolveHierarchyByLocalidadId,
+  DD as DDOpt,
+  toPaisOptions,
+  toProvinciaOptions,
+  provinciasByPaisId,
+  toLocalidadOptions,
+  localidadesByProvinciaId,
+  dedupeLocalidades,
+} from '@/services/localidad.utils'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 
 interface SucursalFormProps {
   initialData?: Sucursal
@@ -39,16 +63,64 @@ export default function SucursalForm({
   const [numero, setNumero] = useState<number | ''>(initialData?.domicilio.numero ?? '')
   const [cp, setCp] = useState<number | ''>(initialData?.domicilio.cp ?? '')
 
-  // TODO: Implement País > Provincia > Localidad logic and uncomment.
-  //   const [idLocalidad, setIdLocalidad] = useState<number | null>(
-  //     initialData?.domicilio.idLocalidad ?? null
-  //   )
-
-  // TEST. TODO: Delete
-  const [idLocalidad, setIdLocalidad] = useState<number>(initialData?.domicilio.idLocalidad ?? 158)
+  // País > Provincia > Localidad (cascading)
+  const [allLocalidades, setAllLocalidades] = useState<
+    import('@/services/types/localidad').Localidad[]
+  >([])
+  const [pais, setPais] = useState<DDOpt | null>(null)
+  const [provincia, setProvincia] = useState<DDOpt | null>(null)
+  const [localidad, setLocalidad] = useState<DDOpt | null>(null)
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+
+  const [imagen, setImagen] = useState<File | null>(null)
+
+  // Load localidades and (re)derive cascades (also when switching record)
+  // TODO: Fix poblar provincia y localidad cuando la API lo guarde en la base de datos
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const data = await fetchAllLocalidades()
+        if (!active) return
+        const clean = dedupeLocalidades(data)
+        setAllLocalidades(clean)
+        // Derive selection from current record if EDIT, otherwise set sensible defaults
+        const existingIdLoc =
+          // prefer nested object from GET /sucursales/:id
+          (initialData?.domicilio as any)?.localidad?.id ??
+          // fallback in case some callers still provide the id flat
+          (initialData?.domicilio as any)?.idLocalidad ??
+          null
+        if (existingIdLoc) {
+          const {paisId, provinciaId} = resolveHierarchyByLocalidadId(clean, existingIdLoc)
+          if (paisId) {
+            const pMatch = clean.find(l => l.provincia.pais.id === paisId)!.provincia.pais
+            setPais({value: String(pMatch.id), label: pMatch.nombre})
+          }
+          if (provinciaId) {
+            const prMatch = clean.find(l => l.provincia.id === provinciaId)!.provincia
+            setProvincia({value: String(prMatch.id), label: prMatch.nombre})
+          }
+          const loc = clean.find(l => l.id === existingIdLoc)
+          if (loc) setLocalidad({value: String(loc.id), label: loc.nombre})
+        } else {
+          // CREATE default: if only one country (Argentina), preselect it
+          const paises = distinctPaises(clean)
+          if (paises.length === 1) {
+            const p = paises[0]
+            setPais({value: String(p.id), label: p.nombre})
+          }
+        }
+      } catch {
+        // fail-open with empty lists
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [initialData?.domicilio.idLocalidad])
 
   // ── reset on edit change ────────────────────────────────────────────────
   useEffect(() => {
@@ -60,39 +132,65 @@ export default function SucursalForm({
     setNumero(initialData?.domicilio.numero ?? '')
     setCp(initialData?.domicilio.cp ?? '')
 
-    // TODO: Implement País > Provincia > Localidad logic and uncomment.
-    // setIdLocalidad(initialData?.domicilio.idLocalidad ?? null)
-
-    // TEST. TODO: Delete
-    setIdLocalidad(initialData?.domicilio.idLocalidad ?? 158)
-
     setFormErrors({})
+    setImagen(null)
   }, [initialData])
 
-  // ── submit handler ──────────────────────────────────────────────────────
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setFormErrors({})
     setLoading(true)
+
+    const domicilioBase = {
+      calle: calle.trim(),
+      numero: Number(numero),
+      cp: Number(cp),
+    }
+    const domicilio = isEdit
+      ? domicilioBase // omit idLocalidad on EDIT
+      : {...domicilioBase, idLocalidad: localidad ? Number(localidad.value) : (null as any)}
 
     const raw = {
       nombre: nombre.trim(),
       horarioApertura,
       horarioCierre,
       esCasaMatriz,
-      domicilio: {
-        calle: calle.trim(),
-        numero: Number(numero),
-        cp: Number(cp),
-        // idLocalidad: idLocalidad!,
-        idLocalidad, // always 158 for now
-      },
+      domicilio,
       idEmpresa: empresaId,
     }
 
-    // TEST. TODO: Delete
-    console.log('[SucursalForm] Submitting payload →', raw)
+    // Parse per-branch so TS narrows payload correctly
+    if (isEdit) {
+      const result = sucursalUpdateSchema.safeParse(raw as SucursalUpdatePayload)
+      if (!result.success) {
+        const errs: Record<string, string> = {}
+        result.error.errors.forEach(e => {
+          errs[e.path.join('.')] = e.message
+        })
+        setFormErrors(errs)
+        setLoading(false)
+        return
+      }
+      try {
+        if (initialData) {
+          if (imagen) {
+            await updateSucursalWithImage(initialData.id, result.data, imagen)
+          } else {
+            await updateSucursal(initialData.id, result.data)
+          }
+        }
+        onSuccess?.()
+        if (dialogName) closeDialog(dialogName)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al guardar la sucursal'
+        setFormErrors({general: message})
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
-    const result = sucursalSchema.safeParse(raw as SucursalInput)
+    const result = sucursalSchema.safeParse(raw as SucursalCreatePayload)
     if (!result.success) {
       const errs: Record<string, string> = {}
       result.error.errors.forEach(e => {
@@ -103,88 +201,87 @@ export default function SucursalForm({
       return
     }
 
-    // TODO: Implement País > Provincia > Localidad logic and uncomment.
-    // try {
-    //   if (isEdit && initialData) {
-    //     await updateSucursal(initialData.id, result.data)
-    //   } else {
-    //     await createSucursal(result.data)
-    //     // reset all fields
-    //     setNombre('')
-    //     setHorarioApertura('')
-    //     setHorarioCierre('')
-    //     setEsCasaMatriz(false)
-    //     setCalle('')
-    //     setNumero('')
-    //     setCp('')
-    //     setIdLocalidad(null)
-    //   }
-    //   onSuccess?.()
-    //   dialogName && closeDialog(dialogName)
-    // } catch (err: any) {
-    //   setFormErrors({general: err.message})
-    // } finally {
-    //   setLoading(false)
-    // }
-
-    // TEST. TODO: Delete
     try {
-      if (isEdit && initialData) {
-        console.log('[SucursalForm] Updating sucursal id:', initialData.id, 'payload:', result.data)
-        const updated = await updateSucursal(initialData.id, result.data)
-        console.log('[SucursalForm] updateSucursal response →', updated)
-      } else {
-        console.log(
-          '[SucursalForm] Creating sucursal for empresa:',
-          empresaId,
-          'payload:',
-          result.data
-        )
-        const created = await createSucursal(result.data)
-        console.log('[SucursalForm] createSucursal response →', created)
-        // reset all fields
-        setNombre('')
-        setHorarioApertura('')
-        setHorarioCierre('')
-        setEsCasaMatriz(false)
-        setCalle('')
-        setNumero('')
-        setCp('')
-        setIdLocalidad(158)
-      }
+      // CREATE branch
+      const created = imagen
+        ? await createSucursalWithImage(result.data, imagen)
+        : await createSucursal(result.data)
+      // reset all fields
+      setNombre('')
+      setHorarioApertura('')
+      setHorarioCierre('')
+      setEsCasaMatriz(false)
+      setCalle('')
+      setNumero('')
+      setCp('')
+      setPais(null)
+      setProvincia(null)
+      setLocalidad(null)
+      setImagen(null)
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
-      console.log('[SucursalForm] Error →', err)
-      setFormErrors({general: err.message})
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al guardar la sucursal'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }
   }
 
+  // ---------- Derived dropdown options/state ----------
+  const paisOptions = useMemo(() => toPaisOptions(distinctPaises(allLocalidades)), [allLocalidades])
+  const provinciaOptions = useMemo(
+    () => toProvinciaOptions(provinciasByPaisId(allLocalidades, pais ? Number(pais.value) : null)),
+    [allLocalidades, pais]
+  )
+  const localidadOptions = useMemo(
+    () =>
+      toLocalidadOptions(
+        localidadesByProvinciaId(allLocalidades, provincia ? Number(provincia.value) : null)
+      ),
+    [allLocalidades, provincia]
+  )
+
+  const provinciaDisabled = isEdit || !pais
+  const localidadDisabled = isEdit || !provincia
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Detalles: Nombre + horarios */}
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      {/* Encabezado: Imagen + campos principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Nombre"
-          value={nombre}
-          onChange={e => setNombre(e.target.value)}
-          error={formErrors.nombre}
-        />
-        <TimePicker
-          label="Apertura"
-          value={horarioApertura}
-          onChange={setHorarioApertura}
-          error={formErrors.horarioApertura}
-        />
-        <TimePicker
-          label="Cierre"
-          value={horarioCierre}
-          onChange={setHorarioCierre}
-          error={formErrors.horarioCierre}
-        />
+        {/* Col 1: Imagen compacta */}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
+          <ImageDropzone
+            previewUrl={initialData?.imagenUrl ?? null}
+            onFileAccepted={file => setImagen(file)}
+            className="max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
+          />
+          <p className="mt-1 text-xs text-muted">Recomendado JPG/PNG/WebP.</p>
+        </div>
+
+        {/* Col 2–3: Detalles: Nombre + horarios */}
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-1 gap-4">
+          <Input
+            label="Nombre"
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            error={formErrors.nombre}
+          />
+          <TimePicker
+            label="Apertura"
+            value={horarioApertura}
+            onChange={setHorarioApertura}
+            error={formErrors.horarioApertura}
+          />
+          <TimePicker
+            label="Cierre"
+            value={horarioCierre}
+            onChange={setHorarioCierre}
+            error={formErrors.horarioCierre}
+          />
+        </div>
       </div>
 
       {/* Domicilio section header */}
@@ -214,12 +311,44 @@ export default function SucursalForm({
         />
       </div>
 
-      {/* País / Provincia / Localidad */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Dropdown options={[]} value={null} onChange={() => {}} placeholder="País" disabled />
-        <Dropdown options={[]} value={null} onChange={() => {}} placeholder="Provincia" disabled />
-        <Dropdown options={[]} value={null} onChange={() => {}} placeholder="Localidad" disabled />
-      </div>
+      {/* País > Provincia > Localidad */}
+      {!isEdit && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Dropdown
+            label="País"
+            options={paisOptions}
+            value={pais}
+            onChange={v => {
+              const next = v as DDOpt | null
+              setPais(next)
+              setProvincia(null)
+              setLocalidad(null)
+            }}
+            placeholder="Selecciona un país"
+          />
+          <Dropdown
+            label="Provincia"
+            options={provinciaOptions}
+            value={provincia}
+            onChange={v => {
+              const next = v as DDOpt | null
+              setProvincia(next)
+              setLocalidad(null)
+            }}
+            placeholder="Selecciona una provincia"
+            disabled={!pais}
+          />
+          <Dropdown
+            label="Localidad"
+            options={localidadOptions}
+            value={localidad}
+            onChange={v => setLocalidad(v as DDOpt | null)}
+            placeholder="Selecciona una localidad"
+            disabled={!provincia}
+            error={formErrors['domicilio.idLocalidad']}
+          />
+        </div>
+      )}
 
       {/* Casa matriz toggle*/}
       <div className="flex">
@@ -237,10 +366,10 @@ export default function SucursalForm({
             Cancelar
           </Button>
         )}
-        <Button variant="primary" onClick={handleSubmit} loading={loading}>
+        <Button type="submit" variant="primary" loading={loading}>
           {isEdit ? 'Guardar cambios' : 'Crear sucursal'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }

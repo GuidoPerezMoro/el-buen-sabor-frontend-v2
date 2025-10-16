@@ -1,6 +1,7 @@
 'use client'
 
-import {ChangeEvent, useCallback, useRef, useState} from 'react'
+import {ChangeEvent, useCallback, useEffect, useRef, useState} from 'react'
+import Image from 'next/image'
 import {cn} from '@/lib/utils'
 
 interface ImageDropzoneProps {
@@ -13,6 +14,7 @@ export default function ImageDropzone({onFileAccepted, previewUrl, className}: I
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [localUrl, setLocalUrl] = useState<string | null>(null) // track object URL to revoke
 
   const handleClick = () => inputRef.current?.click()
 
@@ -20,7 +22,12 @@ export default function ImageDropzone({onFileAccepted, previewUrl, className}: I
     (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] || null
       if (file) {
-        setPreview(URL.createObjectURL(file))
+        const url = URL.createObjectURL(file)
+        setPreview(url)
+        setLocalUrl(prev => {
+          if (prev) URL.revokeObjectURL(prev)
+          return url
+        })
         onFileAccepted?.(file)
       }
     },
@@ -34,12 +41,31 @@ export default function ImageDropzone({onFileAccepted, previewUrl, className}: I
       e.stopPropagation()
       const file = e.dataTransfer.files?.[0] || null
       if (file) {
-        setPreview(URL.createObjectURL(file))
+        const url = URL.createObjectURL(file)
+        setPreview(url)
+        setLocalUrl(prev => {
+          if (prev) URL.revokeObjectURL(prev)
+          return url
+        })
         onFileAccepted?.(file)
       }
     },
     [onFileAccepted]
   )
+
+  // Sync external preview when no local file was chosen
+  useEffect(() => {
+    if (!localUrl) {
+      setPreview(previewUrl ?? null)
+    }
+  }, [previewUrl, localUrl])
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (localUrl) URL.revokeObjectURL(localUrl)
+    }
+  }, [localUrl])
 
   return (
     <div
@@ -59,11 +85,14 @@ export default function ImageDropzone({onFileAccepted, previewUrl, className}: I
       onDrop={handleDrop}
     >
       {preview ? (
-        <div className="flex items-center justify-center w-full h-full">
-          <img
+        <div className="relative w-full h-full">
+          <Image
             src={preview}
             alt="Preview de imagen"
-            className="object-contain max-w-full max-h-full"
+            fill
+            className="object-contain"
+            unoptimized
+            priority
           />
         </div>
       ) : (

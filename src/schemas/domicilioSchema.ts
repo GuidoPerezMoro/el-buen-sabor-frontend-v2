@@ -9,4 +9,9 @@ export const domicilioSchema = z.object({
   idLocalidad: z.number({invalid_type_error: 'Debe seleccionar una localidad válida'}),
 })
 
-export type DomicilioInput = z.infer<typeof domicilioSchema>
+export type DomicilioPayload = z.infer<typeof domicilioSchema>
+
+// EDIT: allow omitting idLocalidad temporarily (backend can't handle change yet)
+export const domicilioUpdateSchema = domicilioSchema.extend({
+  idLocalidad: domicilioSchema.shape.idLocalidad.optional(),
+})

@@ -5,10 +5,14 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import {Empresa} from '@/services/types'
-import {createEmpresa, createEmpresaWithImage, updateEmpresa} from '@/services/empresa'
+import {
+  createEmpresa,
+  createEmpresaWithImage,
+  updateEmpresa,
+  updateEmpresaWithImage,
+} from '@/services/empresa'
 import useDialog from '@/hooks/useDialog'
-import {z} from 'zod'
-import {empresaSchema, EmpresaInput} from '@/schemas/empresaSchema'
+import {empresaSchema, type EmpresaPayload} from '@/schemas/empresaSchema'
 
 interface EmpresaFormProps {
   initialData?: Empresa
@@ -35,7 +39,9 @@ export default function EmpresaForm({
 
   const isEdit = !!initialData
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
     setFormErrors({})
     setLoading(true)
 
@@ -54,15 +60,20 @@ export default function EmpresaForm({
     }
 
     try {
-      const payload = {
+      const payload: EmpresaPayload = {
         nombre: result.data.nombre.trim(),
         razonSocial: result.data.razonSocial.trim(),
         cuil: result.data.cuil,
       }
 
-      if (isEdit) {
-        console.log('[EmpresaForm] Updating empresa id:', initialData.id, 'payload:', payload)
-        await updateEmpresa(initialData.id, payload)
+      if (isEdit && initialData) {
+        if (imagen) {
+          console.log('[EmpresaForm] Updating empresa WITH new image:', initialData.id)
+          await updateEmpresaWithImage(initialData.id, payload, imagen)
+        } else {
+          console.log('[EmpresaForm] Updating empresa WITHOUT image:', initialData.id)
+          await updateEmpresa(initialData.id, payload)
+        }
       } else {
         if (imagen) {
           console.log('[EmpresaForm] Creating empresa WITH image:', imagen)
@@ -80,8 +91,9 @@ export default function EmpresaForm({
 
       onSuccess?.()
       if (dialogName) closeDialog(dialogName)
-    } catch (err: any) {
-      setFormErrors({general: err.message || 'Error al guardar la empresa'})
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al guardar la empresa'
+      setFormErrors({general: message})
     } finally {
       setLoading(false)
     }
@@ -95,13 +107,13 @@ export default function EmpresaForm({
   }, [initialData])
 
   return (
-    <div className="flex flex-col gap-6">
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
       {/* Sección principal con imagen + inputs */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Imagen */}
         <div className="w-full md:w-1/2">
           <label className="block text-sm font-medium text-gray-700 mb-2">Logo de la empresa</label>
-          <ImageDropzone onFileAccepted={setImagen} />
+          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
         </div>
 
         {/* Campos del formulario */}
@@ -139,10 +151,10 @@ export default function EmpresaForm({
             Cancelar
           </Button>
         )}
-        <Button variant="primary" onClick={handleSubmit} loading={loading}>
+        <Button type="submit" variant="primary" loading={loading}>
           {isEdit ? 'Guardar cambios' : 'Crear empresa'}
         </Button>
       </div>
-    </div>
+    </form>
   )
 }
