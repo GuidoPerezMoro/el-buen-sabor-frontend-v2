@@ -8,15 +8,22 @@ export default async function PostLoginPage() {
   if (!session?.user) redirect('/')
 
   const user = session.user as Record<string, any>
+
+  // When RBAC is not configured yet, this will be []
   const roles: string[] = user[`${NS}roles`] || []
+
+  // Placeholders until you add app_metadata + Action
   const empresaId = user[`${NS}empresa_id`] ?? '1'
   const sucursalId = user[`${NS}sucursal_id`] ?? '1'
 
   const rset = new Set(roles)
+
   if (rset.has('superadmin')) redirect('/empresa')
   if (rset.has('admin')) redirect(`/empresa/${empresaId}/sucursal`)
   if (rset.has('gerente') || rset.has('cocinero')) {
     redirect(`/empresa/${empresaId}/sucursal/${sucursalId}`)
   }
-  redirect('/')
+
+  // Fallback while roles aren’t set up yet:
+  redirect('/empresa')
 }
