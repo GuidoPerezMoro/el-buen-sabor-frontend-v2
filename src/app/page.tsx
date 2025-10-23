@@ -8,8 +8,9 @@ export default function HomePage() {
   const router = useRouter()
   const {user, isLoading} = useUser()
 
+  // TODO: Improve logic based on roles
   const handleStart = () => {
-    router.push('/empresa')
+    router.push('/post-login')
   }
 
   return (
