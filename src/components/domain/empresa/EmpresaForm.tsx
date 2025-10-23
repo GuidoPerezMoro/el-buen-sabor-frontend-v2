@@ -68,18 +68,14 @@ export default function EmpresaForm({
 
       if (isEdit && initialData) {
         if (imagen) {
-          console.log('[EmpresaForm] Updating empresa WITH new image:', initialData.id)
           await updateEmpresaWithImage(initialData.id, payload, imagen)
         } else {
-          console.log('[EmpresaForm] Updating empresa WITHOUT image:', initialData.id)
           await updateEmpresa(initialData.id, payload)
         }
       } else {
         if (imagen) {
-          console.log('[EmpresaForm] Creating empresa WITH image:', imagen)
           await createEmpresaWithImage(payload, imagen)
         } else {
-          console.log('[EmpresaForm] Creating empresa WITHOUT image, payload:', payload)
           await createEmpresa(payload)
         }
         // reset fields
