@@ -65,6 +65,7 @@ export default function EmpresaPage() {
   }, [rolesLoading, claimsLoading, isAdmin, isSuper, empresaIdClaim])
 
   const handleCreateEmpresa = () => {
+    // TODO: Bind empresaId to Auth0 user app_metadata when BE is ready
     openDialog('nueva-empresa')
   }
 
