@@ -1,24 +1,29 @@
 import {NextRequest, NextResponse} from 'next/server'
-import {auth0} from '@/lib/auth0'
 import {decodeJwt} from 'jose'
 
 const NS = 'https://elbuensabor/'
 
 export async function GET(req: NextRequest) {
-  const session = await auth0.getSession()
-  if (!session) return NextResponse.json({ok: false, reason: 'no_session'}, {status: 401})
+  // Pedimos el AT al endpoint del SDK reenviando cookies
+  const url = new URL('/auth/access-token', req.url)
+  url.searchParams.set('audience', process.env.AUTH0_AUDIENCE ?? '')
+  url.searchParams.set('scope', process.env.AUTH0_SCOPE ?? 'openid profile email')
 
-  // Ask SDK for an AT for your API (uses cookies from this req)
-  const {token} = await auth0.getAccessToken(req)
+  const atRes = await fetch(url.toString(), {
+    headers: {cookie: req.headers.get('cookie') ?? ''},
+    cache: 'no-store',
+  })
 
-  if (!token) return NextResponse.json({ok: false, reason: 'no_token'}, {status: 401})
+  if (!atRes.ok) {
+    return NextResponse.json({ok: false, reason: 'no_token'}, {status: 401})
+  }
 
+  const {token} = (await atRes.json()) as {token: string}
   const claims = decodeJwt(token) as Record<string, any>
-  const roles: string[] = (claims[`${NS}roles`] as string[]) || []
+
+  const roles: string[] = claims[`${NS}roles`] || []
   const empresaId = claims[`${NS}empresa_id`] ?? null
   const sucursalId = claims[`${NS}sucursal_id`] ?? null
 
-  return NextResponse.json({ok: true, roles, empresaId, sucursalId, claims})
+  return NextResponse.json({ok: true, roles, empresaId, sucursalId})
 }
-
-// TODO: Remove this file

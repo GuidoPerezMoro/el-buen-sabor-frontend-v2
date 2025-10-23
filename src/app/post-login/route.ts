@@ -20,12 +20,15 @@ export async function GET(req: NextRequest) {
   const claims = decodeJwt(token) as Record<string, any>
 
   const roles: string[] = claims[`${NS}roles`] || []
-  const empresaId = claims[`${NS}empresa_id`] ?? '1'
-  const sucursalId = claims[`${NS}sucursal_id`] ?? '1'
+  const empresaId = claims[`${NS}empresa_id`]
+  const sucursalId = claims[`${NS}sucursal_id`]
 
   const r = new Set(roles)
   let dest = '/empresa'
-  if (r.has('admin')) dest = `/empresa/${empresaId}/sucursal`
+  if (r.has('admin')) {
+    dest = empresaId && empresaId !== 'null' ? `/empresa/${empresaId}/sucursal` : '/empresa'
+  }
+  console.log('dest: ', dest)
   if (r.has('gerente') || r.has('cocinero')) dest = `/empresa/${empresaId}/sucursal/${sucursalId}`
   if (r.has('superadmin')) dest = '/empresa'
 
