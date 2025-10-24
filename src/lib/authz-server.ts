@@ -3,20 +3,33 @@ import {decodeJwt} from 'jose'
 
 const NS = 'https://elbuensabor/'
 
-export async function getServerRoles(): Promise<string[]> {
-  // Pide el AT al endpoint del SDK, reenviando cookies del request actual
+export async function getServerClaims() {
   const cookie = (await headers()).get('cookie') ?? ''
   const base = process.env.APP_BASE_URL || 'http://localhost:3000'
-  const res = await fetch(
-    `${base}/auth/access-token?audience=${encodeURIComponent(process.env.AUTH0_AUDIENCE!)}&scope=${encodeURIComponent(process.env.AUTH0_SCOPE || 'openid profile email')}`,
-    {
-      headers: {cookie},
-      cache: 'no-store',
+  const audience = process.env.AUTH0_AUDIENCE
+  const scope = process.env.AUTH0_SCOPE || 'openid profile email'
+  if (!audience) console.warn('AUTH0_AUDIENCE missing')
+
+  const url = `${base}/auth/access-token?audience=${encodeURIComponent(audience || '')}&scope=${encodeURIComponent(scope)}`
+  const res = await fetch(url, {headers: {cookie}, cache: 'no-store'})
+  if (!res.ok) {
+    // 401/403 → sesión sin AT; devolvemos forma estable
+    return {
+      roles: [] as string[],
+      empresaId: null as string | null,
+      sucursalId: null as string | null,
     }
-  )
-  if (!res.ok) return []
-  const {token} = (await res.json()) as {token?: string}
-  if (!token) return []
+  }
+  const {token} = (await res.json()) as {token: string}
   const claims = decodeJwt(token) as Record<string, any>
-  return (claims[`${NS}roles`] as string[]) || []
+  return {
+    roles: (claims[`${NS}roles`] as string[]) || [],
+    empresaId: (claims[`${NS}empresa_id`] as string) ?? null,
+    sucursalId: (claims[`${NS}sucursal_id`] as string) ?? null,
+  }
+}
+
+export async function getServerRoles() {
+  const {roles} = await getServerClaims()
+  return roles
 }

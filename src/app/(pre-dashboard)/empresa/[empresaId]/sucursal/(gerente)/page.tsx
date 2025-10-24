@@ -10,6 +10,7 @@ import useDialog from '@/hooks/useDialog'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import SucursalForm from '@/components/domain/sucursal/SucursalForm'
+import {useRoles} from '@/hooks/useRoles'
 
 export default function SucursalPage() {
   const router = useRouter()
@@ -19,6 +20,13 @@ export default function SucursalPage() {
   const [sucursalAEditar, setSucursalAEditar] = useState<Sucursal | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const {roles, loading: rolesLoading} = useRoles()
+  const isSuper = roles?.includes('superadmin')
+  const isAdmin = roles?.includes('admin')
+  const isGerente = roles?.includes('gerente')
+  // claims del usuario (sucursal asignada) – los traemos desde /api/me/claims
+  const [sucursalIdClaim, setSucursalIdClaim] = useState<number | null | undefined>(undefined)
+  const [claimsLoading, setClaimsLoading] = useState(true)
 
   const loadSucursales = useCallback(async () => {
     setLoading(true)
@@ -26,14 +34,31 @@ export default function SucursalPage() {
     try {
       const data = await fetchAllSucursales()
       const empresaIdNum = Number(empresaId)
-      setSucursales(data.filter(s => s.empresa.id === empresaIdNum))
+      let result = data.filter(s => s.empresa.id === empresaIdNum)
+      // Gerente: solo su sucursal
+      if (isGerente && sucursalIdClaim != null) {
+        result = result.filter(s => s.id === Number(sucursalIdClaim))
+      }
+      if (isGerente && sucursalIdClaim == null) {
+        result = []
+      }
+      setSucursales(result)
     } catch (err) {
       console.error('Error al cargar sucursales', err)
       setError(true)
     } finally {
       setLoading(false)
     }
-  }, [empresaId])
+  }, [empresaId, isGerente, sucursalIdClaim])
+
+  // cargar claims (sucursalId)
+  useEffect(() => {
+    fetch('/api/me/claims', {cache: 'no-store'})
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setSucursalIdClaim(d?.sucursalId != null ? Number(d.sucursalId) : null))
+      .catch(() => setSucursalIdClaim(null))
+      .finally(() => setClaimsLoading(false))
+  }, [])
 
   const handleSelectSucursal = (sucursalId: number) => {
     router.push(`/empresa/${empresaId}/sucursal/${sucursalId}`)
@@ -50,10 +75,14 @@ export default function SucursalPage() {
   }
 
   useEffect(() => {
-    loadSucursales()
-  }, [loadSucursales])
+    if (!rolesLoading && !claimsLoading && sucursalIdClaim !== undefined) {
+      loadSucursales()
+    }
+  }, [loadSucursales, rolesLoading, claimsLoading, sucursalIdClaim])
 
-  if (loading) return <StatusMessage type="loading" message="Cargando sucursales..." />
+  if (loading || rolesLoading || claimsLoading)
+    return <StatusMessage type="loading" message="Cargando sucursales..." />
+
   if (error)
     return (
       <StatusMessage
@@ -66,10 +95,23 @@ export default function SucursalPage() {
     <main className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Sucursales</h1>
-        <Button onClick={handleCreateSucursal} variant="primary">
-          + Nueva sucursal
-        </Button>
+        {(isSuper || isAdmin) && (
+          <Button onClick={handleCreateSucursal} variant="primary">
+            + Nueva sucursal
+          </Button>
+        )}
       </div>
+
+      {/* Aviso para gerente sin sucursal asignada */}
+      {isGerente && sucursalIdClaim === null && (
+        <div className="mb-4">
+          <StatusMessage
+            type="empty"
+            title="Sin sucursal asignada"
+            message="No tienes una sucursal asignada. Consulta con un administrador."
+          />
+        </div>
+      )}
 
       <Dialog name="nueva-sucursal" title="Crear nueva sucursal">
         <SucursalForm
@@ -111,7 +153,7 @@ export default function SucursalPage() {
               line2={`Horario: ${sucursal.horarioApertura} - ${sucursal.horarioCierre}`}
               badge={sucursal.esCasaMatriz ? 'Casa matriz' : undefined}
               onPrimaryClick={() => handleSelectSucursal(sucursal.id)}
-              onSecondaryClick={() => handleEditSucursal(sucursal)}
+              onSecondaryClick={isSuper || isAdmin ? () => handleEditSucursal(sucursal) : undefined}
             />
           ))}
         </div>

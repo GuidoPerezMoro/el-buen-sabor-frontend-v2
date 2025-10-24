@@ -106,7 +106,7 @@ export default function EmpresaPage() {
         <StatusMessage
           type="empty"
           title="Sin empresa asignada"
-          message="Crea tu empresa con el botón o pide a soporte que te asigne una."
+          message="Crea tu empresa o pide a soporte que te asigne una."
         />
       )}
 
