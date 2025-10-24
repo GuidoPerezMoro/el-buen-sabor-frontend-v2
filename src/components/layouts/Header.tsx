@@ -2,10 +2,11 @@
 
 import {useEffect, useMemo, useState} from 'react'
 import {useParams, usePathname} from 'next/navigation'
-import PersonIcon from '@/assets/icons/person.svg'
+import CurrentUserLabel from '@/components/auth/CurrentUserLabel'
+import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import UserMenu from '@/components/auth/UserMenu'
 import {fetchEmpresaById} from '@/services/empresa'
 import {fetchSucursalById} from '@/services/sucursal'
-import Breadcrumbs from '@/components/ui/Breadcrumbs'
 
 export default function Header() {
   const {empresaId, sucursalId} = useParams()
@@ -48,6 +49,7 @@ export default function Header() {
     if (sucursalId && tail === String(sucursalId)) return null
     // if we're at "/empresa/:empresaId/sucursal" (list of sucursales), don't add a "Sucursal" crumb
     if (!sucursalId && tail === 'sucursal') return null
+
     // map known tabs to pretty labels; fallback to Title Case
     const map: Record<string, string> = {
       promociones: 'Promociones',
@@ -55,6 +57,7 @@ export default function Header() {
       insumos: 'Insumos',
       categorias: 'Categorías',
       configuracion: 'Configuración',
+      unidadesDeMedida: 'Unidades de medida',
       // add more as needed
     }
     const pretty = map[tail] ?? tail.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -62,10 +65,10 @@ export default function Header() {
   }, [pathname, sucursalId])
 
   return (
-    <header className="w-full min-h-[48px] bg-primary/10 border-surface px-4 py-3 flex items-center justify-between overflow-hidden">
+    <header className="w-full min-h-[48px] bg-primary/10 border-surface px-4 py-3 flex items-center justify-between relative overflow-visible z-40">
       {/* Left section: user + breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-y-1 max-w-full">
-        <span className="text-xs sm:text-sm font-medium text-text">White Dragon</span>
+        <CurrentUserLabel />
 
         {empresaId && (
           <Breadcrumbs
@@ -92,14 +95,8 @@ export default function Header() {
         )}
       </div>
 
-      {/* Right section: user icon */}
-      <button
-        type="button"
-        className="w-10 h-10 flex items-center justify-center rounded-full bg-surface hover:bg-surfaceHover transition-colors"
-        title="Perfil de usuario"
-      >
-        <PersonIcon className="w-5 h-5 text-black" />
-      </button>
+      {/* Right section: user menu */}
+      <UserMenu />
     </header>
   )
 }
