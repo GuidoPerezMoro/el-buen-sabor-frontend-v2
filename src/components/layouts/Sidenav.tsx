@@ -4,7 +4,7 @@ import {useParams, usePathname} from 'next/navigation'
 import Divider from '@/components/ui/Divider'
 import SidenavItem from '@/components/ui/SidenavItem'
 import type {LucideIcon} from 'lucide-react'
-import {Home, Percent, ChefHat, Wheat, Tags, Ruler, Settings} from 'lucide-react'
+import {Home, Percent, ChefHat, Wheat, Tags, Ruler, UsersRound, Settings} from 'lucide-react'
 
 export default function Sidenav() {
   const {empresaId, sucursalId} = useParams()
@@ -23,6 +23,8 @@ export default function Sidenav() {
     {type: 'item', href: `${base}/insumos`, label: 'Insumos', icon: Wheat},
     {type: 'item', href: `${base}/categorias`, label: 'Categorías', icon: Tags},
     {type: 'item', href: `${base}/unidades-de-medida`, label: 'Unidades de medida', icon: Ruler},
+    {type: 'divider'},
+    {type: 'item', href: `${base}/empleados`, label: 'Empleados', icon: UsersRound},
     {type: 'divider'},
     {type: 'item', href: `${base}/configuracion`, label: 'Configuración', icon: Settings},
   ]
