@@ -11,6 +11,7 @@ type Row = {idArticulo: number; cantidad: number}
 type Props = {
   articuloOptions: DD[]
   detalles: Row[]
+  labelById?: Record<number, string>
   onAdd: (idArticulo: number, cantidad: number) => void
   onChangeCantidad: (idArticulo: number, cantidad: number | '') => void
   onRemove: (idArticulo: number) => void
@@ -20,6 +21,7 @@ type Props = {
 export default function PromoDetallesEditor({
   articuloOptions,
   detalles,
+  labelById,
   onAdd,
   onChangeCantidad,
   onRemove,
@@ -74,7 +76,9 @@ export default function PromoDetallesEditor({
 
       {detalles.map(d => {
         const label =
-          articuloOptions.find(o => Number(o.value) === d.idArticulo)?.label ?? `#${d.idArticulo}`
+          labelById?.[d.idArticulo] ??
+          articuloOptions.find(o => Number(o.value) === d.idArticulo)?.label ??
+          `#${d.idArticulo}`
         return (
           <div key={d.idArticulo} className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
             <div className="text-sm">{label}</div>
