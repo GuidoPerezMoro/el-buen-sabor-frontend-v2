@@ -6,6 +6,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
+import {useRoles} from '@/hooks/useRoles'
 import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
 import {ArticuloInsumo} from '@/services/types/articuloInsumo'
 import {fetchAllCategorias} from '@/services/categoria'
@@ -46,6 +47,9 @@ export default function ArticuloManufacturadoForm({
 }: Props) {
   const isEdit = !!initialData
   const {closeDialog} = useDialog()
+  const {roles} = useRoles()
+  const isCocinero = roles?.includes('cocinero')
+  const locked = isEdit && isCocinero
 
   // ── fields ───────────────────────────────────────────────────────────────
   const [denominacion, setDenominacion] = useState(initialData?.denominacion ?? '')
@@ -169,7 +173,6 @@ export default function ArticuloManufacturadoForm({
   }, [isEdit, initialData])
 
   // ── detalles editor helpers ──────────────────────────────────────────────
-  // TODO: Limpiar categoria when adding a new insumo
   const addDetalle = () => {
     const id = Number(addInsumoOpt?.value)
     const qty = Number(newCantidad)
@@ -202,15 +205,13 @@ export default function ArticuloManufacturadoForm({
 
     try {
       if (isEdit && initialData) {
-        const raw = {
+        const raw: any = {
           denominacion: denominacion.trim(),
-          precioVenta: precioVenta === '' ? undefined : Number(precioVenta),
           descripcion,
           tiempoEstimadoMinutos: tiempoMin === '' ? undefined : Number(tiempoMin),
           preparacion,
           idUnidadDeMedida: 1, // Ver nota arriba
           // idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
-          idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
           detalles: detalles.length
             ? detalles.map(d => ({
                 cantidad: Number(d.cantidad),
@@ -218,6 +219,20 @@ export default function ArticuloManufacturadoForm({
               }))
             : undefined,
         }
+        // Lock rules for cocinero: enviar valores existentes (o el state si no hay initial)
+        const effectivePrecio = locked
+          ? (initialData?.precioVenta ?? (precioVenta === '' ? undefined : Number(precioVenta)))
+          : precioVenta === ''
+            ? undefined
+            : Number(precioVenta)
+        const effectiveCategoriaId = locked
+          ? initialData?.categoria?.id
+          : categoriaOpt
+            ? Number(categoriaOpt.value)
+            : undefined
+
+        raw.precioVenta = effectivePrecio
+        raw.idCategoria = effectiveCategoriaId
         const parsed = articuloManufacturadoUpdateSchema.safeParse(raw)
         if (!parsed.success) {
           const errs: Record<string, string> = {}
@@ -313,15 +328,17 @@ export default function ArticuloManufacturadoForm({
             onChange={e => setDenominacion(e.target.value)}
             error={formErrors.denominacion}
           />
-          <Input
-            label="Precio venta"
-            type="number"
-            inputMode="decimal"
-            value={precioVenta}
-            onChange={e => setPrecioVenta(e.target.value)}
-            error={formErrors.precioVenta}
-            prefix="$"
-          />
+          {!locked && (
+            <Input
+              label="Precio venta"
+              type="number"
+              inputMode="decimal"
+              value={precioVenta}
+              onChange={e => setPrecioVenta(e.target.value)}
+              error={formErrors.precioVenta}
+              prefix="$"
+            />
+          )}
           <Dropdown
             label="Categoría"
             options={categoriaOptions}
@@ -330,6 +347,8 @@ export default function ArticuloManufacturadoForm({
             placeholder="Selecciona"
             error={formErrors.idCategoria}
             searchable
+            disabled={locked}
+            clearable={!locked}
           />
           <Input
             label="Descripción"

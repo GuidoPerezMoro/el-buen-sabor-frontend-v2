@@ -13,6 +13,8 @@ type Props = {
   onView?: (item: ArticuloManufacturado) => void
   onEdit: (item: ArticuloManufacturado) => void
   onDelete: (item: ArticuloManufacturado) => void
+  canDelete?: boolean
+  showPrecio?: boolean
 }
 
 function ProdImage({src, alt}: {src: string | null; alt: string}) {
@@ -31,7 +33,14 @@ function ProdImage({src, alt}: {src: string | null; alt: string}) {
   )
 }
 
-export default function ManufacturadosTable({items, onView, onEdit, onDelete}: Props) {
+export default function ManufacturadosTable({
+  items,
+  onView,
+  onEdit,
+  onDelete,
+  canDelete = true,
+  showPrecio = true,
+}: Props) {
   const columns = useMemo<Column<ArticuloManufacturado>[]>(
     () => [
       {header: '', accessor: p => <ProdImage src={p.imagenUrl} alt={p.denominacion} />},
@@ -46,12 +55,17 @@ export default function ManufacturadosTable({items, onView, onEdit, onDelete}: P
         sortable: true,
         sortKey: 'denominacion',
       },
-      {
-        header: 'Precio',
-        accessor: p => ((p.precioVenta ?? 0) === 0 ? '-' : formatARS(p.precioVenta ?? 0)),
-        sortable: true,
-        sortKey: 'precioVenta',
-      },
+      ...(showPrecio
+        ? [
+            {
+              header: 'Precio',
+              accessor: (p: ArticuloManufacturado) =>
+                (p.precioVenta ?? 0) === 0 ? '-' : formatARS(p.precioVenta ?? 0),
+              sortable: true,
+              sortKey: 'precioVenta' as keyof ArticuloManufacturado,
+            },
+          ]
+        : []),
       {
         header: 'Tiempo (min)',
         accessor: p => <span className="font-mono">{p.tiempoEstimadoMinutos ?? 0}</span>,
@@ -87,18 +101,28 @@ export default function ManufacturadosTable({items, onView, onEdit, onDelete}: P
               title="Editar"
               onClick={() => onEdit(p)}
             />
-            <IconButton
-              icon={<Trash size={16} />}
-              aria-label={`Eliminar ${p.denominacion}`}
-              title="Eliminar"
-              onClick={() => onDelete(p)}
-              className="text-danger"
-            />
+            {canDelete ? (
+              <IconButton
+                icon={<Trash size={16} />}
+                aria-label={`Eliminar ${p.denominacion}`}
+                title="Eliminar"
+                onClick={() => onDelete(p)}
+                className="text-danger"
+              />
+            ) : (
+              <IconButton
+                icon={<Trash size={16} />}
+                aria-label={`Eliminar ${p.denominacion}`}
+                title="Sin permisos para eliminar"
+                disabled
+                className="text-muted opacity-50 cursor-not-allowed pointer-events-none"
+              />
+            )}
           </div>
         ),
       },
     ],
-    [onView, onEdit, onDelete]
+    [onView, onEdit, onDelete, canDelete, showPrecio]
   )
 
   return (
