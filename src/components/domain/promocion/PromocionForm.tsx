@@ -268,15 +268,13 @@ export default function PromocionForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Col 1: Imagen compacta */}
         <div className="order-first">
-          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
           <ImageDropzone
+            label="Imagen (opcional)"
+            hint="Recomendado 4:3"
             previewUrl={initialData?.imagenUrl ?? null}
             onFileAccepted={file => setImagen(file)}
             className="max-w-full md:max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
           />
-          <p className="mt-1 text-xs text-muted">
-            Recomendado 4:3. Puedes arrastrar y soltar un archivo.
-          </p>
         </div>
 
         {/* Col 2–3: Denominación, Tipo, Precio, Descripción */}

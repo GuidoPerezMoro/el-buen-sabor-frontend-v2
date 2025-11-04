@@ -303,9 +303,12 @@ export default function ArticuloManufacturadoForm({
       <div className="flex flex-col md:flex-row gap-6">
         {/* Imagen (compact) */}
         <div className="md:w-50 space-y-4">
-          <label className="block text-sm font-medium mb-2">Imagen</label>
-          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
-          <p className="text-xs text-muted mt-2">Formatos comunes soportados (SVG, JPG, PNG...).</p>
+          <ImageDropzone
+            label="Imagen"
+            hint="Formatos soportados: SVG/JPG/PNG..."
+            onFileAccepted={setImagen}
+            previewUrl={initialData?.imagenUrl ?? null}
+          />
 
           <Input
             label="Tiempo de preparación estimado"
