@@ -6,15 +6,15 @@ import {z} from 'zod'
  * with backend role values (samples show "ADMIN", "COCINERO"). UI will restrict choices.
  */
 export const empleadoBaseSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellido: z.string().min(1, 'El apellido es obligatorio'),
+  nombre: z.string().min(1, 'Ingrese el nombre'),
+  apellido: z.string().min(1, 'Ingrese el apellido'),
   telefono: z.string().min(1, 'El teléfono es obligatorio'),
   email: z.string().email('El email no es válido'),
   // Accept "YYYY-MM-DD" as provided by BE; map to Date only at the edges if needed
   fechaNacimiento: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD'),
-  rol: z.string().min(1, 'El rol es obligatorio'),
+  rol: z.string().min(1, 'Seleccione un rol'),
 })
 
 /**

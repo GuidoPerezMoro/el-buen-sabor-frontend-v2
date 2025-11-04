@@ -98,7 +98,7 @@ export default function EmpleadosPage() {
           message={
             filter.trim()
               ? 'No se encontraron empleados con el texto ingresado.'
-              : 'Aún no hay empleados en esta sucursal.'
+              : 'Aún no hay empleados en esta sucursal. ¿Desea agregar uno?'
           }
         />
       ) : (
