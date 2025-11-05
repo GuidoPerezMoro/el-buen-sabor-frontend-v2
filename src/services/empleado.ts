@@ -45,3 +45,30 @@ export async function deleteEmpleado(id: number): Promise<boolean> {
   // BE returns `true` on success per sample
   return res.data === true
 }
+
+/** Crear empleado + subir imagen en una sola request (multipart: { data, file }) */
+export async function createEmpleadoWithImage(
+  payload: EmpleadoCreatePayload,
+  file: File
+): Promise<Empleado> {
+  const data = empleadoCreateSchema.parse(payload)
+  const form = new FormData()
+  form.append('data', new Blob([JSON.stringify(data)], {type: 'application/json'}))
+  form.append('file', file)
+  const res = await api.post<Empleado>(`${BASE}/create-with-image`, form)
+  return res.data
+}
+
+/** Actualizar empleado + subir imagen en una sola request (multipart: { data, file }) */
+export async function updateEmpleadoWithImage(
+  id: number,
+  payload: EmpleadoUpdatePayload,
+  file: File
+): Promise<Empleado> {
+  const data = empleadoUpdateSchema.parse(payload)
+  const form = new FormData()
+  form.append('data', new Blob([JSON.stringify(data)], {type: 'application/json'}))
+  form.append('file', file)
+  const res = await api.put<Empleado>(`${BASE}/update-with-image/${id}`, form)
+  return res.data
+}

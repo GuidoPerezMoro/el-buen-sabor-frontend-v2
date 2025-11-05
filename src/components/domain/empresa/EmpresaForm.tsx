@@ -108,8 +108,12 @@ export default function EmpresaForm({
       <div className="flex flex-col md:flex-row gap-6">
         {/* Imagen */}
         <div className="w-full md:w-1/2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Logo de la empresa</label>
-          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
+          <ImageDropzone
+            label="Logo de la empresa"
+            hint="Recomendado SVG/JPG/PNG/WebP."
+            onFileAccepted={setImagen}
+            previewUrl={initialData?.imagenUrl ?? null}
+          />
         </div>
 
         {/* Campos del formulario */}

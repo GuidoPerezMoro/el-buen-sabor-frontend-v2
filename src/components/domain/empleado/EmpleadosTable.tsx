@@ -1,6 +1,6 @@
 'use client'
 
-import {useMemo} from 'react'
+import {useMemo, useState} from 'react'
 import {UserRound, Pencil, Trash} from 'lucide-react'
 import Image from 'next/image'
 import Table, {Column} from '@/components/ui/Table'
@@ -15,10 +15,18 @@ type Props = {
 }
 
 function Avatar({src, alt}: {src: string | null; alt: string}) {
+  const [errored, setErrored] = useState(false)
   return (
     <div className="w-14 h-14 overflow-hidden rounded-full border border-muted flex items-center justify-center bg-white">
-      {src ? (
-        <Image src={src} alt="" width={56} height={56} className="h-14 w-14 object-cover" />
+      {src && !errored ? (
+        <Image
+          src={src}
+          alt=""
+          width={56}
+          height={56}
+          className="h-14 w-14 object-cover"
+          onError={() => setErrored(true)}
+        />
       ) : (
         <>
           <UserRound className="h-6 w-6 text-muted" aria-hidden="true" />

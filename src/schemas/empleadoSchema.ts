@@ -8,12 +8,13 @@ import {z} from 'zod'
 export const empleadoBaseSchema = z.object({
   nombre: z.string().min(1, 'Ingrese el nombre'),
   apellido: z.string().min(1, 'Ingrese el apellido'),
-  telefono: z.string().min(1, 'El teléfono es obligatorio'),
-  email: z.string().email('El email no es válido'),
+  telefono: z.string().min(1, 'El teléfono es obligatorio').optional(),
+  email: z.string().email('El email es inválido').optional(),
   // Accept "YYYY-MM-DD" as provided by BE; map to Date only at the edges if needed
   fechaNacimiento: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato YYYY-MM-DD'),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
+    .optional(),
   rol: z.string().min(1, 'Seleccione un rol'),
 })
 

@@ -3,6 +3,7 @@
 import {useEffect, useMemo, useState} from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import useDialog from '@/hooks/useDialog'
 import type {Empleado} from '@/services/types/empleado'
@@ -12,7 +13,12 @@ import {
   type EmpleadoCreatePayload,
   type EmpleadoUpdatePayload,
 } from '@/schemas/empleadoSchema'
-import {createEmpleado, updateEmpleado} from '@/services/empleado'
+import {
+  createEmpleado,
+  createEmpleadoWithImage,
+  updateEmpleado,
+  updateEmpleadoWithImage,
+} from '@/services/empleado'
 
 interface Props {
   sucursalId: number
@@ -46,6 +52,7 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
   const [roleVal, setRoleVal] = useState<number[]>(
     isEdit ? (roleToValue(initialData?.rol) ? [roleToValue(initialData?.rol)!] : []) : []
   )
+  const [imagen, setImagen] = useState<File | null>(null)
 
   // reset when initialData changes
   useEffect(() => {
@@ -56,6 +63,7 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
     setEmail(initialData?.email ?? '')
     setFechaNacimiento(initialData?.fechaNacimiento ?? '')
     setRoleVal(roleToValue(initialData?.rol) ? [roleToValue(initialData?.rol)!] : [])
+    setImagen(null)
   }, [isEdit, initialData])
 
   const selectedRole = useMemo(() => (roleVal.length ? valueToRole(roleVal[0]) : null), [roleVal])
@@ -70,12 +78,15 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
 
     try {
       if (isEdit && initialData) {
+        const _tel = telefono.trim()
+        const _email = email.trim()
+        const _fnac = fechaNacimiento.trim()
         const raw: EmpleadoUpdatePayload = {
           nombre: nombre.trim(),
           apellido: apellido.trim(),
-          telefono: telefono.trim(),
-          email: email.trim(),
-          fechaNacimiento: fechaNacimiento.trim(),
+          ...(!!_tel && {telefono: _tel}),
+          ...(!!_email && {email: _email}),
+          ...(!!_fnac && {fechaNacimiento: _fnac}),
           // UI: rol no cambia, pero BE lo pide → reenviar el actual
           rol: initialData.rol,
           idSucursal: initialData.sucursal.id,
@@ -88,15 +99,22 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
           setLoading(false)
           return
         }
-        await updateEmpleado(initialData.id, parsed.data)
+        if (imagen) {
+          await updateEmpleadoWithImage(initialData.id, parsed.data, imagen)
+        } else {
+          await updateEmpleado(initialData.id, parsed.data)
+        }
       } else {
         const rol = selectedRole
+        const _tel = telefono.trim()
+        const _email = email.trim()
+        const _fnac = fechaNacimiento.trim()
         const raw: EmpleadoCreatePayload = {
           nombre: nombre.trim(),
           apellido: apellido.trim(),
-          telefono: telefono.trim(),
-          email: email.trim(),
-          fechaNacimiento: fechaNacimiento.trim(),
+          ...(!!_tel && {telefono: _tel}),
+          ...(!!_email && {email: _email}),
+          ...(!!_fnac && {fechaNacimiento: _fnac}),
           rol: rol ?? '',
           idSucursal: sucursalId,
         }
@@ -108,7 +126,11 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
           setLoading(false)
           return
         }
-        await createEmpleado(parsed.data)
+        if (imagen) {
+          await createEmpleadoWithImage(parsed.data, imagen)
+        } else {
+          await createEmpleado(parsed.data)
+        }
         // reset for next create
         setNombre('')
         setApellido('')
@@ -116,6 +138,7 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
         setEmail('')
         setFechaNacimiento('')
         setRoleVal([])
+        setImagen(null)
       }
 
       onSuccess?.()
@@ -129,50 +152,66 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Nombre"
-          value={nombre}
-          onChange={e => setNombre(e.target.value)}
-          error={formErrors.nombre}
-        />
-        <Input
-          label="Apellido"
-          value={apellido}
-          onChange={e => setApellido(e.target.value)}
-          error={formErrors.apellido}
-        />
-        <Input
-          label="Teléfono"
-          value={telefono}
-          onChange={e => setTelefono(e.target.value)}
-          error={formErrors.telefono}
-        />
-        <Input
-          label="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          error={formErrors.email}
-        />
-        <Input
-          label="Fecha de nacimiento"
-          type="date"
-          value={fechaNacimiento}
-          onChange={e => setFechaNacimiento(e.target.value)}
-          error={formErrors.fechaNacimiento}
-        />
-
-        {/* Rol: single-select using MultiSelectCheckbox (en create es obligatorio; en edit, solo lectura visual) */}
-        <div className="md:col-span-2">
-          <MultiSelectCheckbox
-            label="Rol"
-            options={roleOptions}
-            value={roleVal}
-            onChange={next => setRoleVal(next.length > 1 ? [next[next.length - 1]] : next)}
-            disabled={isEdit} // no se permite cambiar rol en edición (milestone 1)
-            error={formErrors.rol}
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      {/* Header: photo (1/3) + fields (2/3) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Col 1: compact photo area */}
+        <div className="md:col-span-1">
+          <ImageDropzone
+            label="Foto de perfil"
+            hint="Recomendado SVG/JPG/PNG/WebP."
+            onFileAccepted={setImagen}
+            previewUrl={initialData?.imagenUrl ?? null}
+            // keep it visually contained
+            className="max-w-xs md:max-w-none aspect-square max-h-60 mx-auto"
           />
+        </div>
+
+        {/* Col 2–3: employee fields */}
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Nombre"
+            value={nombre}
+            onChange={e => setNombre(e.target.value)}
+            error={formErrors.nombre}
+          />
+          <Input
+            label="Apellido"
+            value={apellido}
+            onChange={e => setApellido(e.target.value)}
+            error={formErrors.apellido}
+          />
+          <Input
+            label="Teléfono"
+            value={telefono}
+            onChange={e => setTelefono(e.target.value)}
+            error={formErrors.telefono}
+          />
+          <Input
+            label="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            error={formErrors.email}
+          />
+          <Input
+            label="Fecha de nacimiento"
+            type="date"
+            value={fechaNacimiento}
+            onChange={e => setFechaNacimiento(e.target.value)}
+            error={formErrors.fechaNacimiento}
+          />
+
+          {/* Rol (full width) */}
+          <div className="md:col-span-2">
+            <MultiSelectCheckbox
+              label="Rol"
+              options={roleOptions}
+              value={roleVal}
+              onChange={next => setRoleVal(next.length > 1 ? [next[next.length - 1]] : next)}
+              disabled={isEdit}
+              error={formErrors.rol}
+            />
+          </div>
         </div>
       </div>
 
