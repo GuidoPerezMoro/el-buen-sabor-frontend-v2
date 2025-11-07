@@ -3,8 +3,8 @@
 import {useState} from 'react'
 import Sidenav from '@/components/layouts/Sidenav'
 import Drawer from '@/components/layouts/Drawer'
-import {Menu} from 'lucide-react'
 import Button from '@/components/ui/Button'
+import {Menu} from 'lucide-react'
 
 export default function SucursalLayout({children}: {children: React.ReactNode}) {
   const [drawerOpen, setDrawerOpen] = useState(false)
