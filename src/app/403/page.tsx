@@ -19,8 +19,7 @@ export default function ForbiddenPage() {
           <Link href="/">
             <Button variant="secondary">Ir al inicio</Button>
           </Link>
-          <ForbiddenActions />
-          {/* primary: volver (router.back) */}
+          <ForbiddenActions /> {/* primary: volver (router.back) */}
         </div>
       </div>
     </main>
