@@ -29,8 +29,14 @@ export async function GET(req: NextRequest) {
     dest = empresaId && empresaId !== 'null' ? `/empresa/${empresaId}/sucursal` : '/empresa'
   }
   console.log('dest: ', dest)
-  if (r.has('gerente') || r.has('cocinero')) dest = `/empresa/${empresaId}/sucursal/${sucursalId}`
-  if (r.has('superadmin')) dest = '/empresa'
+  if (r.has('gerente') || r.has('cocinero')) {
+    if (empresaId && sucursalId && empresaId !== 'null' && sucursalId !== 'null') {
+      dest = `/empresa/${empresaId}/sucursal/${sucursalId}`
+    } else {
+      dest = '/empresa' // safe fallback
+    }
+  }
+  if (r.has('superadmin') || r.has('cliente')) dest = '/empresa'
 
   return NextResponse.redirect(new URL(dest, req.url))
 }

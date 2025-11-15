@@ -20,10 +20,11 @@ export default function EmpresaPage() {
   const [error, setError] = useState(false)
   const [empresaAEditar, setEmpresaAEditar] = useState<Empresa | null>(null)
 
-  //Roles
+  // Roles
   const {roles, loading: rolesLoading} = useRoles()
   const isAdmin = roles?.includes('admin')
   const isSuper = roles?.includes('superadmin')
+
   // undefined = aún no cargado; null = cargado pero sin valor
   const [empresaIdClaim, setEmpresaIdClaim] = useState<number | null | undefined>(undefined)
   const [claimsLoading, setClaimsLoading] = useState(true)
@@ -31,11 +32,11 @@ export default function EmpresaPage() {
   const loadEmpresas = async () => {
     try {
       const data = await fetchAllEmpresas()
-      // Admin: show only their empresa (via claim). Superadmin: all.
+      // Admin: solo su empresa vía claim. Superadmin: todas. Público/otros: todas (solo lectura).
       if (isAdmin && empresaIdClaim != null) {
         setEmpresas(data.filter(e => e.id === Number(empresaIdClaim)))
       } else if (isAdmin && empresaIdClaim == null) {
-        setEmpresas([]) // no assignment yet
+        setEmpresas([]) // aún no asignado
       } else {
         setEmpresas(data)
       }
@@ -47,7 +48,7 @@ export default function EmpresaPage() {
     }
   }
 
-  // get empresaId from token claims
+  // claims (empresaId)
   useEffect(() => {
     fetch('/api/me/claims', {cache: 'no-store'})
       .then(r => (r.ok ? r.json() : null))
@@ -57,7 +58,6 @@ export default function EmpresaPage() {
   }, [])
 
   useEffect(() => {
-    // espera a que roles y claims estén listos
     if (!rolesLoading && !claimsLoading && empresaIdClaim !== undefined) {
       loadEmpresas()
     }
@@ -65,7 +65,7 @@ export default function EmpresaPage() {
   }, [rolesLoading, claimsLoading, isAdmin, isSuper, empresaIdClaim])
 
   const handleCreateEmpresa = () => {
-    // TODO: Bind empresaId to Auth0 user app_metadata when BE is ready
+    // Admin: podrá crear su única empresa (el BE luego la vincula)
     openDialog('nueva-empresa')
   }
 
@@ -75,6 +75,8 @@ export default function EmpresaPage() {
   }
 
   const handleSelectEmpresa = (empresaId: number) => {
+    // Público/cliente/invitado: pasa a elegir sucursal
+    // Staff: idem, y luego cada rol verá lo que corresponde
     router.push(`/empresa/${empresaId}/sucursal`)
   }
 
@@ -93,7 +95,7 @@ export default function EmpresaPage() {
     <main className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Empresas</h1>
-        {/* superadmin can always create; admin only if he has none */}
+        {/* superadmin siempre; admin solo si no tiene empresa; público (cliente/invitado) no ve el botón */}
         {(isSuper || (isAdmin && empresaIdClaim == null)) && (
           <Button onClick={handleCreateEmpresa} variant="primary">
             + Nueva empresa
@@ -101,21 +103,22 @@ export default function EmpresaPage() {
         )}
       </div>
 
-      {/* Aviso específico para admin sin empresa asignada */}
+      {/* Aviso específico para admin sin empresa */}
       {isAdmin && empresaIdClaim === null && (
-        <StatusMessage
-          type="empty"
-          title="Sin empresa asignada"
-          message="Crea tu empresa o pide a soporte que te asigne una."
-        />
+        <div className="mb-4">
+          <StatusMessage
+            type="empty"
+            title="Sin empresa asignada"
+            message="Crea tu empresa o pide a soporte que te asigne una."
+          />
+        </div>
       )}
 
-      {/* Form para nueva empresa */}
+      {/* Diálogos de crear/editar (solo útiles para staff; el UI ya controla visibilidad del botón) */}
       <Dialog name="nueva-empresa" title="Crear nueva empresa">
         <EmpresaForm dialogName="nueva-empresa" onSuccess={loadEmpresas} />
       </Dialog>
 
-      {/* Form para editar empresa */}
       <Dialog name="editar-empresa" title="Editar empresa" onClose={() => setEmpresaAEditar(null)}>
         {empresaAEditar && (
           <EmpresaForm
@@ -129,10 +132,10 @@ export default function EmpresaPage() {
         )}
       </Dialog>
 
-      {/* Empresas */}
+      {/* Listado */}
       {empresas.length === 0 ? (
-        // Si admin sin empresa → ya mostramos el aviso arriba; si superadmin sin empresas → mensaje genérico
-        !isAdmin && <StatusMessage type="empty" message="Aún no se ha cargado ninguna empresa." />
+        // Si admin sin empresa → ya mostramos aviso arriba; superadmin sin empresas → genérico; público sin datos → genérico
+        <StatusMessage type="empty" message="Aún no se ha cargado ninguna empresa." />
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           {empresas.map(empresa => (
@@ -144,7 +147,8 @@ export default function EmpresaPage() {
               line1={`CUIT: ${empresa.cuil}`}
               line2={empresa.razonSocial}
               onPrimaryClick={() => handleSelectEmpresa(empresa.id)}
-              onSecondaryClick={() => handleEditEmpresa(empresa)}
+              // Editar visible solo si es admin/super
+              onSecondaryClick={isSuper || isAdmin ? () => handleEditEmpresa(empresa) : undefined}
             />
           ))}
         </div>
@@ -152,3 +156,5 @@ export default function EmpresaPage() {
     </main>
   )
 }
+
+// ERROR MENOR: Gerente/Cocinero ve otras empresas, aunque luego redirige a la suya

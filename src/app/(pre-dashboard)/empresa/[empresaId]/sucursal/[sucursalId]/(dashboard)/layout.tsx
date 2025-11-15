@@ -1,39 +1,26 @@
-'use client'
+import {ReactNode} from 'react'
+import {redirect} from 'next/navigation'
+import {getServerClaims} from '@/lib/authz-server'
+import DashboardShell from './shell'
 
-import {useState} from 'react'
-import Sidenav from '@/components/layouts/Sidenav'
-import Drawer from '@/components/layouts/Drawer'
-import Button from '@/components/ui/Button'
-import {Menu} from 'lucide-react'
+export default async function DashboardLayout({
+  children,
+  params,
+}: {
+  children: ReactNode
+  params: Promise<{empresaId: string; sucursalId: string}>
+}) {
+  const {empresaId, sucursalId} = await params
+  const {roles} = await getServerClaims()
 
-export default function SucursalLayout({children}: {children: React.ReactNode}) {
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  // "Public" means: no roles, or *only* cliente.
+  // If someone accidentally has both cliente + staff, they are treated as staff.
+  const isOnlyCliente = roles.length === 1 && roles[0] === 'cliente'
+  const isPublic = roles.length === 0 || isOnlyCliente
 
-  return (
-    <div className="min-h-screen flex">
-      {/* Mobile: Drawer */}
-      <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Sidenav />
-      </Drawer>
+  if (isPublic) {
+    redirect(`/empresa/${empresaId}/sucursal/${sucursalId}/shop`)
+  }
 
-      {/* Desktop: Sidebar */}
-      <aside className="hidden md:block w-64 bg-primary/10 p-4 border-r border-surface">
-        <Sidenav />
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 p-4 md:p-6 bg-background text-text w-full">
-        {/* Toggle only on mobile */}
-        <div className="md:hidden mb-1">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Menu />}
-            onClick={() => setDrawerOpen(true)}
-          />
-        </div>
-        {children}
-      </main>
-    </div>
-  )
+  return <DashboardShell>{children}</DashboardShell>
 }
