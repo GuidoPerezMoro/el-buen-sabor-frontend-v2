@@ -13,12 +13,10 @@ export default async function DashboardLayout({
   const {empresaId, sucursalId} = await params
   const {roles} = await getServerClaims()
 
-  // "Public" means: no roles, or *only* cliente.
-  // If someone accidentally has both cliente + staff, they are treated as staff.
+  // Treat as PUBLIC *only* if it's exactly ["cliente"].
+  // Empty roles are considered "unknown yet" → don't redirect.
   const isOnlyCliente = roles.length === 1 && roles[0] === 'cliente'
-  const isPublic = roles.length === 0 || isOnlyCliente
-
-  if (isPublic) {
+  if (isOnlyCliente) {
     redirect(`/empresa/${empresaId}/sucursal/${sucursalId}/shop`)
   }
 

@@ -9,27 +9,29 @@ export default async function SucursalParentLayout({
   children: ReactNode
   params: Promise<{empresaId: string; sucursalId: string}>
 }) {
-  const {empresaId, sucursalId} = await params
-  const {roles, empresaId: empresaIdClaim, sucursalId: sucursalIdClaim} = await getServerClaims()
+  // NOTE: no redirect logic here to avoid loops with partial/lagging claims.
 
-  const isGerente = roles.includes('gerente')
-  const isCocinero = roles.includes('cocinero')
-  const isStaffRestr = isGerente || isCocinero
+  // const {empresaId, sucursalId} = await params
+  // const {roles, empresaId: empresaIdClaim, sucursalId: sucursalIdClaim} = await getServerClaims()
 
-  if (isStaffRestr) {
-    // compute the canonical target for this user
-    const targetEmpresa = empresaIdClaim ? String(empresaIdClaim) : empresaId
-    const targetSucursal = sucursalIdClaim ? String(sucursalIdClaim) : sucursalId
-    const targetUrl = `/empresa/${targetEmpresa}/sucursal/${targetSucursal}`
-    const currentUrl = `/empresa/${empresaId}/sucursal/${sucursalId}`
+  // const isGerente = roles.includes('gerente')
+  // const isCocinero = roles.includes('cocinero')
+  // const isStaffRestr = isGerente || isCocinero
 
-    const empresaMismatch = empresaIdClaim && String(empresaIdClaim) !== empresaId
-    const sucursalMismatch = sucursalIdClaim && String(sucursalIdClaim) !== sucursalId
+  // // Only try to "snap" to the claimed route if BOTH claims exist.
+  // const hasBothClaims = Boolean(empresaIdClaim && sucursalIdClaim)
 
-    if ((empresaMismatch || sucursalMismatch) && targetUrl !== currentUrl) {
-      redirect(targetUrl)
-    }
-  }
+  // if (isStaffRestr && hasBothClaims) {
+  //   const claimedEmpresa = String(empresaIdClaim)
+  //   const claimedSucursal = String(sucursalIdClaim)
+
+  //   const currentUrl = `/empresa/${empresaId}/sucursal/${sucursalId}`
+  //   const targetUrl = `/empresa/${claimedEmpresa}/sucursal/${claimedSucursal}`
+
+  //   if (currentUrl !== targetUrl) {
+  //     redirect(targetUrl)
+  //   }
+  // }
 
   return <>{children}</>
 }

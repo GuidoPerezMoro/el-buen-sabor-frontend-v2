@@ -28,7 +28,6 @@ export default function SucursalPage() {
   const isSuper = roles?.includes('superadmin')
   const isAdmin = roles?.includes('admin')
   const isGerente = roles?.includes('gerente')
-  const isStaff = isSuper || isAdmin || isGerente
 
   // Gerente claim for filtering
   const [sucursalIdClaim, setSucursalIdClaim] = useState<number | null | undefined>(undefined)
