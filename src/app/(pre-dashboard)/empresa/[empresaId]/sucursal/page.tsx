@@ -44,10 +44,11 @@ export default function SucursalPage() {
       const empresaIdNum = Number(empresaId)
       let result = data.filter(s => s.empresa.id === empresaIdNum)
 
-      if (isGerente && sucursalIdClaim != null) {
+      const isRestricted = isGerente || isCocinero
+      if (isRestricted && sucursalIdClaim != null) {
         result = result.filter(s => s.id === Number(sucursalIdClaim))
       }
-      if (isGerente && sucursalIdClaim == null) {
+      if (isRestricted && sucursalIdClaim == null) {
         result = []
       }
 
@@ -83,21 +84,19 @@ export default function SucursalPage() {
 
   useEffect(() => {
     if (rolesLoading || claimsLoading) return
-    // Cocinero: nunca ve la lista, se redirige directo a su dashboard
-    if (isCocinero) {
-      if (empresaIdClaim && sucursalIdClaim) {
-        router.replace(`/empresa/${empresaIdClaim}/sucursal/${sucursalIdClaim}`)
-      } else {
-        // Fallback si faltan claims
-        router.replace('/')
+
+    const isRestricted = isGerente || isCocinero
+
+    // Restricted roles (gerente/cocinero) must wait for claims
+    if (isRestricted) {
+      if (sucursalIdClaim !== undefined) {
+        loadSucursales()
       }
       return
     }
 
-    // Gerente (con claims cargadas) y resto de roles: cargar lista
-    if (!isGerente || sucursalIdClaim !== undefined) {
-      loadSucursales()
-    }
+    // Unrestricted roles: load normally
+    loadSucursales()
   }, [
     rolesLoading,
     claimsLoading,
