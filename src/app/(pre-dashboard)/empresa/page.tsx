@@ -32,14 +32,24 @@ export default function EmpresaPage() {
   const loadEmpresas = async () => {
     try {
       const data = await fetchAllEmpresas()
-      // Admin: solo su empresa vía claim. Superadmin: todas. Público/otros: todas (solo lectura).
-      if (isAdmin && empresaIdClaim != null) {
-        setEmpresas(data.filter(e => e.id === Number(empresaIdClaim)))
-      } else if (isAdmin && empresaIdClaim == null) {
-        setEmpresas([]) // aún no asignado
-      } else {
-        setEmpresas(data)
+      const empresaClaimNum = empresaIdClaim != null ? Number(empresaIdClaim) : null
+
+      const isRestricted =
+        roles?.includes('admin') || roles?.includes('gerente') || roles?.includes('cocinero')
+
+      // Restricted roles → only their empresa
+      if (isRestricted) {
+        if (empresaClaimNum != null) {
+          setEmpresas(data.filter(e => e.id === empresaClaimNum))
+        } else {
+          // Restricted role but no empresa claim → empty state
+          setEmpresas([])
+        }
+        return
       }
+
+      // Unrestricted roles (superadmin, cliente, invitado)
+      setEmpresas(data)
     } catch (err) {
       console.error('Error al cargar empresas', err)
       setError(true)
@@ -62,7 +72,7 @@ export default function EmpresaPage() {
       loadEmpresas()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rolesLoading, claimsLoading, isAdmin, isSuper, empresaIdClaim])
+  }, [roles, rolesLoading, claimsLoading, isAdmin, isSuper, empresaIdClaim])
 
   const handleCreateEmpresa = () => {
     // Admin: podrá crear su única empresa (el BE luego la vincula)
