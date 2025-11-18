@@ -157,7 +157,7 @@ export default function EmpresaPage() {
               line1={`CUIT: ${empresa.cuil}`}
               line2={empresa.razonSocial}
               onPrimaryClick={() => handleSelectEmpresa(empresa.id)}
-              // Editar visible solo si es admin/super
+              // Editar visible solo para admin/superadmin
               onSecondaryClick={isSuper || isAdmin ? () => handleEditEmpresa(empresa) : undefined}
             />
           ))}
