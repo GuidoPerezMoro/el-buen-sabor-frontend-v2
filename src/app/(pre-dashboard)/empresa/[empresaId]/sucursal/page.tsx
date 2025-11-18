@@ -28,8 +28,10 @@ export default function SucursalPage() {
   const isSuper = roles?.includes('superadmin')
   const isAdmin = roles?.includes('admin')
   const isGerente = roles?.includes('gerente')
+  const isCocinero = roles?.includes('cocinero')
 
-  // Gerente claim for filtering
+  // Claims
+  const [empresaIdClaim, setEmpresaIdClaim] = useState<number | null | undefined>(undefined)
   const [sucursalIdClaim, setSucursalIdClaim] = useState<number | null | undefined>(undefined)
   const [claimsLoading, setClaimsLoading] = useState(true)
 
@@ -60,23 +62,52 @@ export default function SucursalPage() {
 
   // Fetch claims only if potentially needed (staff path)
   useEffect(() => {
-    if (!isGerente) {
+    if (!isGerente && !isCocinero) {
+      setEmpresaIdClaim(undefined)
       setSucursalIdClaim(undefined)
       setClaimsLoading(false)
       return
     }
     fetch('/api/me/claims', {cache: 'no-store'})
       .then(r => (r.ok ? r.json() : null))
-      .then(d => setSucursalIdClaim(d?.sucursalId != null ? Number(d.sucursalId) : null))
-      .catch(() => setSucursalIdClaim(null))
+      .then(d => {
+        setEmpresaIdClaim(d?.empresaId != null ? Number(d.empresaId) : null)
+        setSucursalIdClaim(d?.sucursalId != null ? Number(d.sucursalId) : null)
+      })
+      .catch(() => {
+        setEmpresaIdClaim(null)
+        setSucursalIdClaim(null)
+      })
       .finally(() => setClaimsLoading(false))
-  }, [isGerente])
+  }, [isGerente, isCocinero])
 
   useEffect(() => {
-    if (!rolesLoading && !claimsLoading && (isGerente ? sucursalIdClaim !== undefined : true)) {
+    if (rolesLoading || claimsLoading) return
+    // Cocinero: nunca ve la lista, se redirige directo a su dashboard
+    if (isCocinero) {
+      if (empresaIdClaim && sucursalIdClaim) {
+        router.replace(`/empresa/${empresaIdClaim}/sucursal/${sucursalIdClaim}`)
+      } else {
+        // Fallback si faltan claims
+        router.replace('/')
+      }
+      return
+    }
+
+    // Gerente (con claims cargadas) y resto de roles: cargar lista
+    if (!isGerente || sucursalIdClaim !== undefined) {
       loadSucursales()
     }
-  }, [loadSucursales, rolesLoading, claimsLoading, isGerente, sucursalIdClaim])
+  }, [
+    rolesLoading,
+    claimsLoading,
+    isCocinero,
+    isGerente,
+    empresaIdClaim,
+    sucursalIdClaim,
+    loadSucursales,
+    router,
+  ])
 
   const handleSelectSucursal = (sucursalId: number) => {
     const isStaff = roles?.some(r => ['superadmin', 'admin', 'gerente', 'cocinero'].includes(r))
