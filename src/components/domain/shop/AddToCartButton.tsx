@@ -20,7 +20,7 @@ export default function AddToCartButton({disabled, onClick}: AddToCartButtonProp
       }}
       icon={<ShoppingCart className="h-4 w-4" />}
     >
-      Agregar al carrito
+      + Agregar al carrito
     </Button>
   )
 }

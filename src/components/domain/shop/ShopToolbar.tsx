@@ -42,7 +42,7 @@ export default function ShopToolbar({
           options={categoryOptions}
           value={categoryValue}
           onChange={onCategoryChange}
-          placeholder="Todas las categorías"
+          placeholder="Todo"
           label="Categoría"
           clearable
           showLabelOnMobile

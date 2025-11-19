@@ -6,11 +6,10 @@ import {useParams} from 'next/navigation'
 import ShopToolbar from '@/components/domain/shop/ShopToolbar'
 import ShopSection from '@/components/domain/shop/ShopSection'
 import ShopGrid from '@/components/domain/shop/ShopGrid'
-import ShopCard, {ShopItemKind} from '@/components/domain/shop/ShopCard'
+import ShopCard, {ShopItemType} from '@/components/domain/shop/ShopCard'
 import ShopEmptyState from '@/components/domain/shop/ShopEmptyState'
 
 import {useRoles} from '@/hooks/useRoles'
-import {formatARS} from '@/lib/format'
 
 import {fetchAllPromociones} from '@/services/promocion'
 import {fetchAllArticuloManufacturados} from '@/services/articuloManufacturado'
@@ -182,7 +181,7 @@ export default function ShopPage() {
     if (!sortByPrice) return []
 
     type Unified = {
-      kind: ShopItemKind
+      type: ShopItemType
       id: number
       title: string
       price: number
@@ -195,7 +194,7 @@ export default function ShopPage() {
 
     activePromos.forEach(p => {
       list.push({
-        kind: 'promo',
+        type: 'promo',
         id: p.id,
         title: p.denominacion,
         price: p.precioPromocional,
@@ -207,7 +206,7 @@ export default function ShopPage() {
 
     filteredManufacturados.forEach(m => {
       list.push({
-        kind: 'manufacturado',
+        type: 'manufacturado',
         id: m.id,
         title: m.denominacion,
         price: m.precioVenta,
@@ -218,7 +217,7 @@ export default function ShopPage() {
 
     filteredInsumos.forEach(i => {
       list.push({
-        kind: 'insumo',
+        type: 'insumo',
         id: i.id,
         title: i.denominacion,
         price: i.precioVenta,
@@ -273,8 +272,8 @@ export default function ShopPage() {
               <ShopGrid>
                 {sortedUnifiedItems.map(item => (
                   <ShopCard
-                    key={`${item.kind}-${item.id}`}
-                    kind={item.kind}
+                    key={`${item.type}-${item.id}`}
+                    type={item.type}
                     title={item.title}
                     price={item.price}
                     categoryLabel={item.categoryLabel}
@@ -297,7 +296,7 @@ export default function ShopPage() {
                 {inactivePromos.map(p => (
                   <ShopCard
                     key={p.id}
-                    kind="promo"
+                    type="promo"
                     title={p.denominacion}
                     price={p.precioPromocional}
                     imageUrl={p.imagenUrl}
@@ -329,7 +328,7 @@ export default function ShopPage() {
                       {activePromos.map(p => (
                         <ShopCard
                           key={p.id}
-                          kind="promo"
+                          type="promo"
                           title={p.denominacion}
                           price={p.precioPromocional}
                           imageUrl={p.imagenUrl}
@@ -348,7 +347,7 @@ export default function ShopPage() {
                       {inactivePromos.map(p => (
                         <ShopCard
                           key={p.id}
-                          kind="promo"
+                          type="promo"
                           title={p.denominacion}
                           price={p.precioPromocional}
                           imageUrl={p.imagenUrl}
@@ -381,7 +380,7 @@ export default function ShopPage() {
                       {filteredManufacturados.map(m => (
                         <ShopCard
                           key={m.id}
-                          kind="manufacturado"
+                          type="manufacturado"
                           title={m.denominacion}
                           price={m.precioVenta}
                           categoryLabel={m.categoria?.denominacion ?? null}
@@ -401,7 +400,7 @@ export default function ShopPage() {
                       {filteredInsumos.map(i => (
                         <ShopCard
                           key={i.id}
-                          kind="insumo"
+                          type="insumo"
                           title={i.denominacion}
                           price={i.precioVenta}
                           categoryLabel={i.categoria?.denominacion ?? null}

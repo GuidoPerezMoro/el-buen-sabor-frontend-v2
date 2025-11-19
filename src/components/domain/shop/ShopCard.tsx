@@ -1,16 +1,16 @@
 'use client'
 
+import {useState} from 'react'
 import Image from 'next/image'
-import {ImageOff, Percent} from 'lucide-react'
-import defaultImage from '@/assets/images/company.png'
+import {Percent, Utensils} from 'lucide-react'
 import {cn} from '@/lib/utils'
 import {formatARS} from '@/lib/format'
 import AddToCartButton from './AddToCartButton'
 
-export type ShopItemKind = 'promo' | 'manufacturado' | 'insumo'
+export type ShopItemType = 'promo' | 'manufacturado' | 'insumo'
 
 export interface ShopCardProps {
-  kind: ShopItemKind
+  type: ShopItemType
   title: string
   price?: number | null
   categoryLabel?: string | null
@@ -20,7 +20,7 @@ export interface ShopCardProps {
 }
 
 export default function ShopCard({
-  kind,
+  type,
   title,
   price,
   categoryLabel,
@@ -29,6 +29,8 @@ export default function ShopCard({
   inactive = false,
 }: ShopCardProps) {
   const showPrice = typeof price === 'number'
+  const [imgError, setImgError] = useState(false)
+  const showImage = Boolean(imageUrl) && !imgError
 
   return (
     <article
@@ -40,21 +42,18 @@ export default function ShopCard({
     >
       <div className="flex gap-3">
         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted/30">
-          {imageUrl ? (
+          {showImage ? (
             <Image
-              src={imageUrl}
+              src={imageUrl as string}
               alt={title}
               fill
               className="object-cover"
               sizes="64px"
-              onError={e => {
-                const el = e.currentTarget as HTMLImageElement
-                el.src = (defaultImage as unknown as string) ?? ''
-              }}
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <ImageOff className="h-5 w-5 text-muted" aria-hidden="true" />
+              <Utensils className="h-5 w-5 text-muted" aria-hidden="true" />
             </div>
           )}
         </div>
@@ -70,7 +69,7 @@ export default function ShopCard({
           </div>
 
           <div className="flex flex-wrap items-center gap-1 text-[11px]">
-            {kind === 'promo' && (
+            {type === 'promo' && (
               <span className="inline-flex items-center gap-1 rounded-full border border-primary px-2 py-0.5 text-[10px] font-medium text-primary">
                 <Percent className="h-3 w-3" />
                 {promoBadge ?? 'Promoción'}
