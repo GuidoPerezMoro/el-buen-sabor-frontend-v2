@@ -3,7 +3,7 @@
 import {useEffect, useMemo, useState} from 'react'
 import {useParams, usePathname} from 'next/navigation'
 import CurrentUserLabel from '@/components/auth/CurrentUserLabel'
-import Breadcrumbs from '@/components/ui/Breadcrumbs'
+import Breadcrumbs from '@/components/layouts/Breadcrumbs'
 import UserMenu from '@/components/auth/UserMenu'
 import {fetchEmpresaById} from '@/services/empresa'
 import {fetchSucursalById} from '@/services/sucursal'
@@ -58,6 +58,7 @@ export default function Header() {
       categorias: 'Categorías',
       configuracion: 'Configuración',
       unidadesDeMedida: 'Unidades de medida',
+      shop: 'Tienda',
       // add more as needed
     }
     const pretty = map[tail] ?? tail.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())

@@ -4,7 +4,17 @@ import {useParams, usePathname} from 'next/navigation'
 import Divider from '@/components/ui/Divider'
 import SidenavItem from '@/components/ui/SidenavItem'
 import type {LucideIcon} from 'lucide-react'
-import {Home, Percent, ChefHat, Wheat, Tags, Ruler, UsersRound, Settings} from 'lucide-react'
+import {
+  Home,
+  Percent,
+  ChefHat,
+  Wheat,
+  Tags,
+  Ruler,
+  UsersRound,
+  Settings,
+  ShoppingBasketIcon,
+} from 'lucide-react'
 import type {Role} from '@/services/types'
 import {useRoles} from '@/hooks/useRoles'
 
@@ -63,6 +73,14 @@ const NAV: NavEl[] = [
     makeHref: b => `${b}/unidades-de-medida`,
     label: 'Unidades de medida',
     icon: Ruler,
+    allow: ['superadmin', 'admin', 'gerente'],
+  },
+  {type: 'divider'},
+  {
+    type: 'item',
+    makeHref: b => `${b}/shop`,
+    label: 'Tienda',
+    icon: ShoppingBasketIcon,
     allow: ['superadmin', 'admin', 'gerente'],
   },
   {type: 'divider'},
