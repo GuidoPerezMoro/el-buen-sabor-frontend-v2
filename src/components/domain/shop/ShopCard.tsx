@@ -16,6 +16,8 @@ export interface ShopCardProps {
   categoryLabel?: string | null
   imageUrl?: string | null
   promoBadge?: string | null
+  description?: string | null
+  validityLabel?: string | null
   inactive?: boolean
 }
 
@@ -26,6 +28,8 @@ export default function ShopCard({
   categoryLabel,
   imageUrl,
   promoBadge,
+  description,
+  validityLabel,
   inactive = false,
 }: ShopCardProps) {
   const showPrice = typeof price === 'number'
@@ -81,6 +85,8 @@ export default function ShopCard({
               </span>
             )}
           </div>
+          {description && <p className="text-[11px] text-muted line-clamp-2">{description}</p>}
+          {validityLabel && <p className="text-[10px] text-muted/80 mt-0.5">{validityLabel}</p>}
         </div>
       </div>
 

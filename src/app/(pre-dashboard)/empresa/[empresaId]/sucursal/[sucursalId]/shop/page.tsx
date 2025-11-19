@@ -7,7 +7,6 @@ import ShopToolbar from '@/components/domain/shop/ShopToolbar'
 import ShopSection from '@/components/domain/shop/ShopSection'
 import ShopGrid from '@/components/domain/shop/ShopGrid'
 import ShopCard, {ShopItemType} from '@/components/domain/shop/ShopCard'
-import ShopEmptyState from '@/components/domain/shop/ShopEmptyState'
 
 import {useRoles} from '@/hooks/useRoles'
 
@@ -76,6 +75,15 @@ function isPromocionActive(p: Promocion, now = new Date()): boolean {
   return t >= from.getTime() && t <= to.getTime()
 }
 
+// Small helper to show vigencia (for staff)
+function formatPromocionVigencia(p: Promocion): string {
+  const fromDate = p.fechaDesde
+  const toDate = p.fechaHasta
+  const fromTime = p.horaDesde.slice(0, 5)
+  const toTime = p.horaHasta.slice(0, 5)
+  return `Vigente del ${fromDate} al ${toDate}, de ${fromTime} a ${toTime}`
+}
+
 export default function ShopPage() {
   const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
   const sucursalId = Number(sid)
@@ -92,6 +100,7 @@ export default function ShopPage() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<Opt | null>(null)
   const [sortByPrice, setSortByPrice] = useState(false)
+  const [showInactivePromos, setShowInactivePromos] = useState(true)
 
   const load = useCallback(async () => {
     try {
@@ -176,6 +185,8 @@ export default function ShopPage() {
     [manufacturados, nonElaborarInsumos]
   )
 
+  const hasFilters = Boolean(search.trim() || categoryValue)
+
   // When sortByPrice is active, merge active promos + productos + insumos into one list
   const sortedUnifiedItems = useMemo(() => {
     if (!sortByPrice) return []
@@ -255,24 +266,45 @@ export default function ShopPage() {
         <>
           <ShopSection
             title="Catálogo ordenado por precio"
-            subtitle="Mostrando promociones vigentes, productos e insumos."
+            // subtitle="Mostrando promociones vigentes, productos e insumos."
             count={sortedUnifiedItems.length}
           >
             {sortedUnifiedItems.length === 0 ? (
-              <ShopEmptyState scope="items" filtered={Boolean(search.trim() || categoryValue)} />
+              <p className="text-xs text-muted">
+                {hasFilters
+                  ? 'No se encontraron artículos con los filtros actuales.'
+                  : 'Aún no hay artículos cargados para esta sucursal.'}
+              </p>
             ) : (
               <ShopGrid>
-                {sortedUnifiedItems.map(item => (
-                  <ShopCard
-                    key={`${item.type}-${item.id}`}
-                    type={item.type}
-                    title={item.title}
-                    price={item.price}
-                    categoryLabel={item.categoryLabel}
-                    imageUrl={item.imageUrl}
-                    promoBadge={item.promoBadge ?? null}
-                  />
-                ))}
+                {sortedUnifiedItems.map(item => {
+                  const promo =
+                    item.type === 'promo' ? activePromos.find(p => p.id === item.id) : undefined
+
+                  return (
+                    <ShopCard
+                      key={`${item.type}-${item.id}`}
+                      type={item.type}
+                      title={item.title}
+                      price={item.price}
+                      categoryLabel={item.categoryLabel}
+                      imageUrl={item.imageUrl}
+                      promoBadge={item.promoBadge ?? null}
+                      description={
+                        item.type === 'promo'
+                          ? (promo?.descripcionDescuento ?? null)
+                          : item.type === 'manufacturado'
+                            ? (manufacturados.find(m => m.id === item.id)?.descripcion ?? null)
+                            : null
+                      }
+                      validityLabel={
+                        item.type === 'promo' && promo && isStaff
+                          ? formatPromocionVigencia(promo)
+                          : null
+                      }
+                    />
+                  )
+                })}
               </ShopGrid>
             )}
           </ShopSection>
@@ -280,7 +312,7 @@ export default function ShopPage() {
           {isStaff && inactivePromos.length > 0 && (
             <ShopSection
               title="Promociones fuera de vigencia"
-              subtitle="Solo visible para personal interno."
+              // subtitle="Solo visible para personal interno."
               count={inactivePromos.length}
               defaultOpen={false}
             >
@@ -301,110 +333,136 @@ export default function ShopPage() {
         </>
       ) : (
         <>
-          {/* Promociones (sección propia) */}
-          <ShopSection
-            title="Promociones"
-            subtitle="Promociones vigentes en esta sucursal."
-            count={filteredPromos.length}
-          >
-            {filteredPromos.length === 0 ? (
-              <ShopEmptyState scope="promos" filtered={Boolean(search.trim() || categoryValue)} />
-            ) : (
-              <div className="space-y-3">
-                {activePromos.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-success">
-                      Vigentes ({activePromos.length})
-                    </p>
-                    <ShopGrid>
-                      {activePromos.map(p => (
-                        <ShopCard
-                          key={p.id}
-                          type="promo"
-                          title={p.denominacion}
-                          price={p.precioPromocional}
-                          imageUrl={p.imagenUrl}
-                        />
-                      ))}
-                    </ShopGrid>
-                  </div>
-                )}
+          {/* Promociones (sección propia).
+              - Invitado/cliente: solo ve vigentes y el contador refleja solo esas.
+              - Staff: ve vigentes + fuera de vigencia y el contador refleja todas. */}
+          {(filteredPromos.length > 0 || hasFilters) && (
+            <ShopSection
+              title="Promociones"
+              // subtitle="Promociones vigentes en esta sucursal."
+              count={isStaff ? filteredPromos.length : activePromos.length}
+            >
+              {filteredPromos.length === 0 ? (
+                <p className="text-xs text-muted">
+                  No se encontraron promociones con los filtros actuales.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {activePromos.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-success">
+                        Vigentes ({activePromos.length})
+                      </p>
+                      <ShopGrid>
+                        {activePromos.map(p => (
+                          <ShopCard
+                            key={p.id}
+                            type="promo"
+                            title={p.denominacion}
+                            price={p.precioPromocional}
+                            imageUrl={p.imagenUrl}
+                            description={p.descripcionDescuento}
+                            validityLabel={isStaff ? formatPromocionVigencia(p) : null}
+                          />
+                        ))}
+                      </ShopGrid>
+                    </div>
+                  )}
 
-                {isStaff && inactivePromos.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted">
-                      Fuera de vigencia ({inactivePromos.length})
-                    </p>
-                    <ShopGrid>
-                      {inactivePromos.map(p => (
-                        <ShopCard
-                          key={p.id}
-                          type="promo"
-                          title={p.denominacion}
-                          price={p.precioPromocional}
-                          imageUrl={p.imagenUrl}
-                          inactive
-                        />
-                      ))}
-                    </ShopGrid>
-                  </div>
-                )}
-              </div>
-            )}
-          </ShopSection>
+                  {isStaff && inactivePromos.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <p className="font-medium text-muted">
+                          Fuera de vigencia ({inactivePromos.length})
+                        </p>
+                        <button
+                          type="button"
+                          className="text-[11px] text-primary underline-offset-2 hover:underline"
+                          onClick={() => setShowInactivePromos(v => !v)}
+                        >
+                          {showInactivePromos ? 'Ocultar' : 'Ver'}
+                        </button>
+                      </div>
+                      {showInactivePromos && (
+                        <ShopGrid>
+                          {inactivePromos.map(p => (
+                            <ShopCard
+                              key={p.id}
+                              type="promo"
+                              title={p.denominacion}
+                              price={p.precioPromocional}
+                              imageUrl={p.imagenUrl}
+                              description={p.descripcionDescuento}
+                              validityLabel={formatPromocionVigencia(p)}
+                              inactive
+                            />
+                          ))}
+                        </ShopGrid>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </ShopSection>
+          )}
 
           {/* Productos + insumos no-para-elaborar */}
-          <ShopSection
-            title="Productos e insumos"
-            subtitle="Artículos manufacturados e insumos listos para la venta."
-            count={filteredManufacturados.length + filteredInsumos.length}
-          >
-            {filteredManufacturados.length === 0 && filteredInsumos.length === 0 ? (
-              <ShopEmptyState scope="items" filtered={Boolean(search.trim() || categoryValue)} />
-            ) : (
-              <div className="space-y-4">
-                {filteredManufacturados.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-text">
-                      Artículos manufacturados ({filteredManufacturados.length})
-                    </p>
-                    <ShopGrid>
-                      {filteredManufacturados.map(m => (
-                        <ShopCard
-                          key={m.id}
-                          type="manufacturado"
-                          title={m.denominacion}
-                          price={m.precioVenta}
-                          categoryLabel={m.categoria?.denominacion ?? null}
-                          imageUrl={m.imagenUrl}
-                        />
-                      ))}
-                    </ShopGrid>
-                  </div>
-                )}
+          {(filteredManufacturados.length + filteredInsumos.length > 0 || hasFilters) && (
+            <ShopSection
+              title="Productos e insumos"
+              // subtitle="Artículos manufacturados e insumos listos para la venta."
+              count={filteredManufacturados.length + filteredInsumos.length}
+            >
+              {filteredManufacturados.length === 0 && filteredInsumos.length === 0 ? (
+                <p className="text-xs text-muted">
+                  No se encontraron artículos con los filtros actuales.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {filteredManufacturados.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-text">
+                        Artículos manufacturados ({filteredManufacturados.length})
+                      </p>
+                      <ShopGrid>
+                        {filteredManufacturados.map(m => (
+                          <ShopCard
+                            key={m.id}
+                            type="manufacturado"
+                            title={m.denominacion}
+                            price={m.precioVenta}
+                            categoryLabel={m.categoria?.denominacion ?? null}
+                            imageUrl={m.imagenUrl}
+                            description={m.descripcion}
+                          />
+                        ))}
+                      </ShopGrid>
+                    </div>
+                  )}
 
-                {filteredInsumos.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-text">
-                      Insumos ({filteredInsumos.length})
-                    </p>
-                    <ShopGrid>
-                      {filteredInsumos.map(i => (
-                        <ShopCard
-                          key={i.id}
-                          type="insumo"
-                          title={i.denominacion}
-                          price={i.precioVenta}
-                          categoryLabel={i.categoria?.denominacion ?? null}
-                          imageUrl={i.imagenUrl}
-                        />
-                      ))}
-                    </ShopGrid>
-                  </div>
-                )}
-              </div>
-            )}
-          </ShopSection>
+                  {filteredInsumos.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-text">
+                        Insumos ({filteredInsumos.length})
+                      </p>
+                      <ShopGrid>
+                        {filteredInsumos.map(i => (
+                          <ShopCard
+                            key={i.id}
+                            type="insumo"
+                            title={i.denominacion}
+                            price={i.precioVenta}
+                            categoryLabel={i.categoria?.denominacion ?? null}
+                            imageUrl={i.imagenUrl}
+                          />
+                        ))}
+                      </ShopGrid>
+                    </div>
+                  )}
+                </div>
+              )}
+            </ShopSection>
+          )}
         </>
       )}
     </main>
