@@ -29,7 +29,7 @@ import type {ArticuloInsumo} from '@/services/types/articuloInsumo'
 
 type Opt = string | {value: string; label: string}
 
-const STAFF_ROLES = ['SUPERADMIN', 'ADMIN', 'GERENTE']
+const STAFF_ROLES = ['superadmin', 'admin', 'gerente']
 
 function getOptValue(opt: Opt | null): string | null {
   if (!opt) return null
@@ -116,7 +116,10 @@ export default function ShopPage() {
     load()
   }, [load])
 
-  const isStaff = useMemo(() => (roles ? has(STAFF_ROLES) : false), [roles, has])
+  const isStaff = useMemo(() => {
+    if (!roles) return false
+    return has(STAFF_ROLES)
+  }, [roles, has])
 
   // Derived                                                           filtered collections
   const nonElaborarInsumos = useMemo(() => onlyNonElaborar(insumos), [insumos])
