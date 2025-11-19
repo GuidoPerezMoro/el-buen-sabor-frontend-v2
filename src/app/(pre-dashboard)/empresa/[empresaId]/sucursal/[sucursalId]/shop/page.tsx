@@ -3,8 +3,11 @@
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useParams} from 'next/navigation'
 
-import StatusMessage from '@/components/ui/StatusMessage'
 import ShopToolbar from '@/components/domain/shop/ShopToolbar'
+import ShopSection from '@/components/domain/shop/ShopSection'
+import ShopGrid from '@/components/domain/shop/ShopGrid'
+import ShopCard, {ShopItemKind} from '@/components/domain/shop/ShopCard'
+import ShopEmptyState from '@/components/domain/shop/ShopEmptyState'
 
 import {useRoles} from '@/hooks/useRoles'
 import {formatARS} from '@/lib/format'
@@ -174,21 +177,76 @@ export default function ShopPage() {
     [manufacturados, nonElaborarInsumos]
   )
 
-  if (loading) {
-    return <StatusMessage type="loading" title="Cargando tienda..." />
-  }
+  // When sortByPrice is active, merge active promos + productos + insumos into one list
+  const sortedUnifiedItems = useMemo(() => {
+    if (!sortByPrice) return []
 
-  if (error) {
-    return <StatusMessage type="error" message="Error al cargar la tienda." />
-  }
+    type Unified = {
+      kind: ShopItemKind
+      id: number
+      title: string
+      price: number
+      categoryLabel?: string | null
+      imageUrl?: string | null
+      promoBadge?: string | null
+    }
+
+    const list: Unified[] = []
+
+    activePromos.forEach(p => {
+      list.push({
+        kind: 'promo',
+        id: p.id,
+        title: p.denominacion,
+        price: p.precioPromocional,
+        categoryLabel: null,
+        imageUrl: p.imagenUrl,
+        promoBadge: null,
+      })
+    })
+
+    filteredManufacturados.forEach(m => {
+      list.push({
+        kind: 'manufacturado',
+        id: m.id,
+        title: m.denominacion,
+        price: m.precioVenta,
+        categoryLabel: m.categoria?.denominacion ?? null,
+        imageUrl: m.imagenUrl,
+      })
+    })
+
+    filteredInsumos.forEach(i => {
+      list.push({
+        kind: 'insumo',
+        id: i.id,
+        title: i.denominacion,
+        price: i.precioVenta,
+        categoryLabel: i.categoria?.denominacion ?? null,
+        imageUrl: i.imagenUrl,
+      })
+    })
+
+    return list.sort((a, b) => a.price - b.price)
+  }, [sortByPrice, activePromos, filteredManufacturados, filteredInsumos])
+
+  // if (loading) {
+  //   return <StatusMessage type="loading" title="Cargando tienda..." />
+  // }
+
+  // if (error) {
+  //   return <StatusMessage type="error" message="Error al cargar la tienda." />
+  // }
 
   return (
     <main className="p-4 sm:p-6 space-y-4">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold">Tienda</h1>
-        <p className="text-sm text-muted">
-          Explora las promociones, productos e insumos disponibles en esta sucursal.
-        </p>
+        {isStaff && (
+          <p className="text-sm text-muted">
+            Explora las promociones, productos e insumos disponibles en esta sucursal.
+          </p>
+        )}
       </header>
 
       <ShopToolbar
@@ -201,123 +259,163 @@ export default function ShopPage() {
         onSortToggle={setSortByPrice}
       />
 
-      {/* NOTE: For now, a simple debug-style layout to validate data & filters.
-                                                                  Next steps: replace with ShopSection                                                           ShopGrid                                                           ShopCard components
-                                                                  and implement merged sort behavior when sortByPrice === true. */}
+      {/* If sortByPrice is ON, show unified grid; otherwise sections */}
+      {sortByPrice ? (
+        <>
+          <ShopSection
+            title="Catálogo ordenado por precio"
+            subtitle="Mostrando promociones vigentes, productos e insumos."
+            count={sortedUnifiedItems.length}
+          >
+            {sortedUnifiedItems.length === 0 ? (
+              <ShopEmptyState scope="items" filtered={Boolean(search.trim() || categoryValue)} />
+            ) : (
+              <ShopGrid>
+                {sortedUnifiedItems.map(item => (
+                  <ShopCard
+                    key={`${item.kind}-${item.id}`}
+                    kind={item.kind}
+                    title={item.title}
+                    price={item.price}
+                    categoryLabel={item.categoryLabel}
+                    imageUrl={item.imageUrl}
+                    promoBadge={item.promoBadge ?? null}
+                  />
+                ))}
+              </ShopGrid>
+            )}
+          </ShopSection>
 
-      {/* Promociones */}
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Promociones</h2>
-        {filteredPromos.length === 0 ? (
-          <StatusMessage
-            type="empty"
-            message={
-              search.trim() || categoryValue
-                ? 'No se encontraron promociones con los filtros actuales.'
-                : 'Aún no hay promociones disponibles para esta sucursal.'
-            }
-          />
-        ) : (
-          <div className="space-y-2">
-            {/* Active promos */}
-            {activePromos.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-success">Vigentes ({activePromos.length})</p>
-                <ul className="space-y-1 text-sm">
-                  {activePromos.map(p => (
-                    <li
-                      key={p.id}
-                      className="flex items-center justify-between rounded bg-white p-2"
-                    >
-                      <span className="truncate">{p.denominacion}</span>
-                      <span className="ml-2 shrink-0 text-xs font-medium">
-                        {formatARS(p.precioPromocional)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+          {isStaff && inactivePromos.length > 0 && (
+            <ShopSection
+              title="Promociones fuera de vigencia"
+              subtitle="Solo visible para personal interno."
+              count={inactivePromos.length}
+              defaultOpen={false}
+            >
+              <ShopGrid>
+                {inactivePromos.map(p => (
+                  <ShopCard
+                    key={p.id}
+                    kind="promo"
+                    title={p.denominacion}
+                    price={p.precioPromocional}
+                    imageUrl={p.imagenUrl}
+                    inactive
+                  />
+                ))}
+              </ShopGrid>
+            </ShopSection>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Promociones (sección propia) */}
+          <ShopSection
+            title="Promociones"
+            subtitle="Promociones vigentes en esta sucursal."
+            count={filteredPromos.length}
+          >
+            {filteredPromos.length === 0 ? (
+              <ShopEmptyState scope="promos" filtered={Boolean(search.trim() || categoryValue)} />
+            ) : (
+              <div className="space-y-3">
+                {activePromos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-success">
+                      Vigentes ({activePromos.length})
+                    </p>
+                    <ShopGrid>
+                      {activePromos.map(p => (
+                        <ShopCard
+                          key={p.id}
+                          kind="promo"
+                          title={p.denominacion}
+                          price={p.precioPromocional}
+                          imageUrl={p.imagenUrl}
+                        />
+                      ))}
+                    </ShopGrid>
+                  </div>
+                )}
+
+                {isStaff && inactivePromos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted">
+                      Fuera de vigencia ({inactivePromos.length})
+                    </p>
+                    <ShopGrid>
+                      {inactivePromos.map(p => (
+                        <ShopCard
+                          key={p.id}
+                          kind="promo"
+                          title={p.denominacion}
+                          price={p.precioPromocional}
+                          imageUrl={p.imagenUrl}
+                          inactive
+                        />
+                      ))}
+                    </ShopGrid>
+                  </div>
+                )}
               </div>
             )}
+          </ShopSection>
 
-            {/* Inactive promos – only visible for staff */}
-            {isStaff && inactivePromos.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted">
-                  Fuera de vigencia ({inactivePromos.length})
-                </p>
-                <ul className="space-y-1 text-xs text-muted">
-                  {inactivePromos.map(p => (
-                    <li
-                      key={p.id}
-                      className="flex items-center justify-between rounded border border-dashed border-border bg-muted px-2 py-1"
-                    >
-                      <span className="truncate">{p.denominacion}</span>
-                      <span className="ml-2 shrink-0">{formatARS(p.precioPromocional)}</span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Productos + insumos no-para-elaborar */}
+          <ShopSection
+            title="Productos e insumos"
+            subtitle="Artículos manufacturados e insumos listos para la venta."
+            count={filteredManufacturados.length + filteredInsumos.length}
+          >
+            {filteredManufacturados.length === 0 && filteredInsumos.length === 0 ? (
+              <ShopEmptyState scope="items" filtered={Boolean(search.trim() || categoryValue)} />
+            ) : (
+              <div className="space-y-4">
+                {filteredManufacturados.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-text">
+                      Artículos manufacturados ({filteredManufacturados.length})
+                    </p>
+                    <ShopGrid>
+                      {filteredManufacturados.map(m => (
+                        <ShopCard
+                          key={m.id}
+                          kind="manufacturado"
+                          title={m.denominacion}
+                          price={m.precioVenta}
+                          categoryLabel={m.categoria?.denominacion ?? null}
+                          imageUrl={m.imagenUrl}
+                        />
+                      ))}
+                    </ShopGrid>
+                  </div>
+                )}
+
+                {filteredInsumos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-text">
+                      Insumos ({filteredInsumos.length})
+                    </p>
+                    <ShopGrid>
+                      {filteredInsumos.map(i => (
+                        <ShopCard
+                          key={i.id}
+                          kind="insumo"
+                          title={i.denominacion}
+                          price={i.precioVenta}
+                          categoryLabel={i.categoria?.denominacion ?? null}
+                          imageUrl={i.imagenUrl}
+                        />
+                      ))}
+                    </ShopGrid>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
-      </section>
-
-      {/* Productos                                                           insumos no-para-elaborar */}
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Productos e insumos</h2>
-        {filteredManufacturados.length === 0 && filteredInsumos.length === 0 ? (
-          <StatusMessage
-            type="empty"
-            message={
-              search.trim() || categoryValue
-                ? 'No se encontraron artículos con los filtros actuales.'
-                : 'Aún no hay artículos cargados para esta sucursal.'
-            }
-          />
-        ) : (
-          <div className="space-y-3">
-            {filteredManufacturados.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-text">
-                  Artículos manufacturados ({filteredManufacturados.length})
-                </p>
-                <ul className="space-y-1 text-sm">
-                  {filteredManufacturados.map(m => (
-                    <li
-                      key={m.id}
-                      className="flex items-center justify-between rounded bg-white p-2"
-                    >
-                      <span className="truncate">{m.denominacion}</span>
-                      <span className="ml-2 shrink-0 text-xs font-medium">
-                        {formatARS(m.precioVenta)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {filteredInsumos.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-text">Insumos ({filteredInsumos.length})</p>
-                <ul className="space-y-1 text-sm">
-                  {filteredInsumos.map(i => (
-                    <li
-                      key={i.id}
-                      className="flex items-center justify-between rounded bg-white p-2"
-                    >
-                      <span className="truncate">{i.denominacion}</span>
-                      <span className="ml-2 shrink-0 text-xs font-medium">
-                        {formatARS(i.precioVenta)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+          </ShopSection>
+        </>
+      )}
     </main>
   )
 }
