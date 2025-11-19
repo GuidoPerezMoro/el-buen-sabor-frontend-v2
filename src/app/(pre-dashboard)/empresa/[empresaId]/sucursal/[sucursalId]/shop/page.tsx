@@ -229,14 +229,6 @@ export default function ShopPage() {
     return list.sort((a, b) => a.price - b.price)
   }, [sortByPrice, activePromos, filteredManufacturados, filteredInsumos])
 
-  // if (loading) {
-  //   return <StatusMessage type="loading" title="Cargando tienda..." />
-  // }
-
-  // if (error) {
-  //   return <StatusMessage type="error" message="Error al cargar la tienda." />
-  // }
-
   return (
     <main className="p-4 sm:p-6 space-y-4">
       <header className="space-y-1">
