@@ -51,10 +51,8 @@ export default function UnidadDeMedidaForm({
 
     try {
       if (isEdit && initialData) {
-        console.log('[Unidad] Updating id:', initialData.id, 'payload:', result.data)
         await updateUnidad(initialData.id, result.data as Partial<UnidadDeMedidaPayload>)
       } else {
-        console.log('[Unidad] Creating payload:', result.data)
         await createUnidad(result.data)
       }
 

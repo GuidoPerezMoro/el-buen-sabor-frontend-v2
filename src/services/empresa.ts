@@ -39,12 +39,9 @@ export async function createEmpresaWithImage(data: EmpresaPayload, image: File):
   formData.append('data', dataBlob)
   formData.append('file', image)
 
-  console.log('[empresaService] create-with-image formData keys →', Array.from(formData.keys()))
-
   // interceptor in baseService will strip JSON header and let the browser set multipart boundary
   const response = await api.post<Empresa>(`${BASE}/create-with-image`, formData)
 
-  console.log('[empresaService] create-with-image response →', response.data)
   return response.data
 }
 
@@ -74,11 +71,8 @@ export async function updateEmpresaWithImage(
   formData.append('data', dataBlob)
   formData.append('file', image)
 
-  console.log('[empresaService] update-with-image formData keys →', Array.from(formData.keys()))
-
   // thanks to our interceptor, api will strip JSON header and set multipart boundary
   const response = await api.put<Empresa>(`${BASE}/update-with-image/${id}`, formData)
-  console.log('[empresaService] update-with-image response →', response.data)
   return response.data
 }
 

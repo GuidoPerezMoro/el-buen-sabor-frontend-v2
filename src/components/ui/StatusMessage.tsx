@@ -12,7 +12,7 @@ export default function StatusMessage({type, title, message, className}: StatusM
   const iconMap = {
     loading: <Loader2 className="w-10 h-10 text-primary animate-spin" />,
     error: <AlertTriangle className="w-10 h-10 text-danger" />,
-    empty: <FolderMinus className="w-10 h-10 text-muted" />,
+    empty: <FolderMinus className="w-10 h-10 text-text" />,
   }
 
   const defaultTitles = {
@@ -30,7 +30,7 @@ export default function StatusMessage({type, title, message, className}: StatusM
     >
       <div className="mb-4">{iconMap[type]}</div>
       <h3 className="text-lg font-semibold">{title ?? defaultTitles[type]}</h3>
-      {message && <p className="text-sm text-muted mt-1">{message}</p>}
+      {message && <p className="text-sm text-text mt-1">{message}</p>}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import TimePicker from '@/components/ui/TimePicker'
 import Dropdown from '@/components/ui/Dropdown'
 import Toggle from '@/components/ui/Toggle'
+import ImageDropzone from '@/components/ui/ImageDropzone'
 import useDialog from '@/hooks/useDialog'
 import {
   createSucursal,
@@ -16,7 +17,6 @@ import {
 import {Sucursal} from '@/services/types'
 import {
   sucursalSchema,
-  SucursalPayload,
   sucursalUpdateSchema,
   SucursalUpdatePayload,
   SucursalCreatePayload,
@@ -33,7 +33,6 @@ import {
   localidadesByProvinciaId,
   dedupeLocalidades,
 } from '@/services/localidad.utils'
-import ImageDropzone from '@/components/ui/ImageDropzone'
 
 interface SucursalFormProps {
   initialData?: Sucursal
@@ -251,15 +250,13 @@ export default function SucursalForm({
       {/* Encabezado: Imagen + campos principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Col 1: Imagen compacta */}
-        <div>
-          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
-          <ImageDropzone
-            previewUrl={initialData?.imagenUrl ?? null}
-            onFileAccepted={file => setImagen(file)}
-            className="max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
-          />
-          <p className="mt-1 text-xs text-muted">Recomendado JPG/PNG/WebP.</p>
-        </div>
+        <ImageDropzone
+          label="Imagen (opcional)"
+          previewUrl={initialData?.imagenUrl ?? null}
+          hint="Recomendado SVG/JPG/PNG/WebP..."
+          onFileAccepted={file => setImagen(file)}
+          className="max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
+        />
 
         {/* Col 2–3: Detalles: Nombre + horarios */}
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-1 gap-4">

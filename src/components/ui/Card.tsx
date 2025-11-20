@@ -65,9 +65,11 @@ export default function Card({
       </div>
 
       <div className="mt-auto flex justify-end gap-2">
-        <Button variant="secondary" size="sm" onClick={onSecondaryClick}>
-          {secondaryLabel}
-        </Button>
+        {onSecondaryClick && (
+          <Button variant="secondary" size="sm" onClick={onSecondaryClick}>
+            {secondaryLabel}
+          </Button>
+        )}
         <Button variant="primary" size="sm" onClick={onPrimaryClick}>
           {primaryLabel}
         </Button>

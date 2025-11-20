@@ -3,6 +3,7 @@
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useParams} from 'next/navigation'
 import useDialog from '@/hooks/useDialog'
+import {useRoles} from '@/hooks/useRoles'
 import SearchAddBar from '@/components/ui/SearchAddBar'
 import StatusMessage from '@/components/ui/StatusMessage'
 import Dialog from '@/components/ui/Dialog'
@@ -41,6 +42,10 @@ export default function ProductosPage() {
       setLoading(false)
     }
   }, [sucursalId])
+
+  const {roles} = useRoles()
+  const isCocinero = roles?.includes('cocinero')
+  const showPrecio = !isCocinero
 
   useEffect(() => {
     load()
@@ -98,8 +103,10 @@ export default function ProductosPage() {
         value={filter}
         onChange={setFilter}
         placeholder="Buscar por producto o categoría"
-        onAdd={() => openDialog('nuevo-producto')}
-        addLabel="Nuevo producto"
+        {...(!isCocinero && {
+          onAdd: () => openDialog('nuevo-producto'),
+          addLabel: 'Nuevo producto',
+        })}
       />
 
       {filtered.length === 0 ? (
@@ -118,6 +125,8 @@ export default function ProductosPage() {
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            canDelete={!isCocinero}
+            showPrecio={showPrecio}
           />
         </div>
       )}

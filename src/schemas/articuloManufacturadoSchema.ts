@@ -16,7 +16,7 @@ const detalleSchema = z.object({
 })
 
 const base = z.object({
-  denominacion: z.string().min(1, 'La denominación es obligatoria'),
+  denominacion: z.string().min(1, 'Ingrese el nombre del producto'),
   precioVenta: z.number().nonnegative('Debe ser ≥ 0'),
   descripcion: z.string().max(2000).nullable().optional(),
   tiempoEstimadoMinutos: z.number().int().nonnegative('Debe ser ≥ 0'),

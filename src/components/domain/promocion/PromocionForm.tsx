@@ -1,6 +1,7 @@
 'use client'
 
 import {ChangeEvent, useEffect, useState} from 'react'
+import useDialog from '@/hooks/useDialog'
 import Input from '@/components/ui/Input'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
@@ -8,7 +9,7 @@ import MultiSelectCheckbox from '@/components/ui/MultiSelectCheckbox'
 import DatePicker from '@/components/ui/DatePicker'
 import TimePicker from '@/components/ui/TimePicker'
 import ImageDropzone from '@/components/ui/ImageDropzone'
-import useDialog from '@/hooks/useDialog'
+import PromocionDetailsEditor from '@/components/domain/promocion/PromocionDetailsEditor'
 import {
   Promocion,
   PromocionCreatePayload,
@@ -22,12 +23,10 @@ import {
   createPromocionWithImage,
   updatePromocionWithImage,
 } from '@/services/promocion'
-
 import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
 import {fetchAllArticuloManufacturados} from '@/services/articuloManufacturado'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
-import PromocionDetailsEditor from './PromocionDetailsEditor'
 import {buildArticuloOptionsForSucursal, TIPO_PROMOCION_OPTIONS} from '@/services/promocion.utils'
 import {filterSucursalesByEmpresaId} from '@/services/sucursal.utils'
 
@@ -105,6 +104,7 @@ export default function PromocionForm({
     TIPO_PROMOCION_OPTIONS.map(o => ({value: o.value, label: o.label}))
   )
   const [articuloOptions, setArticuloOptions] = useState<DD[]>([])
+  const [labelById, setLabelById] = useState<Record<number, string>>({})
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
@@ -124,8 +124,21 @@ export default function PromocionForm({
       setArticuloOptions(
         buildArticuloOptionsForSucursal({insumos, manufacturados: prods, sucursalId})
       )
+
+      // Build a reliable label map for editor rendering, even if an item isn’t present in filtered options
+      const map: Record<number, string> = {}
+      for (const i of insumos) map[i.id] = `${i.denominacion} [Insumo]`
+      for (const p of prods) map[p.id] = `${p.denominacion} [Prod]`
+      // Ensure items already on the promo have at least their raw denominación as fallback
+      if (initialData?.detalles?.length) {
+        for (const d of initialData.detalles) {
+          const id = d.articulo.id
+          if (!map[id]) map[id] = d.articulo.denominacion
+        }
+      }
+      setLabelById(map)
     })()
-  }, [empresaId, sucursalId])
+  }, [empresaId, sucursalId, initialData])
 
   // reset on edit switch
   useEffect(() => {
@@ -255,15 +268,13 @@ export default function PromocionForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Col 1: Imagen compacta */}
         <div className="order-first">
-          <label className="mb-1 block text-sm font-medium text-text">Imagen (opcional)</label>
           <ImageDropzone
+            label="Imagen (opcional)"
+            hint="Recomendado 4:3"
             previewUrl={initialData?.imagenUrl ?? null}
             onFileAccepted={file => setImagen(file)}
             className="max-w-full md:max-w-xs aspect-[4/3] max-h-56 md:max-h-60"
           />
-          <p className="mt-1 text-xs text-muted">
-            Recomendado 4:3. Puedes arrastrar y soltar un archivo.
-          </p>
         </div>
 
         {/* Col 2–3: Denominación, Tipo, Precio, Descripción */}
@@ -337,6 +348,7 @@ export default function PromocionForm({
       <PromocionDetailsEditor
         articuloOptions={articuloOptions}
         detalles={detalles}
+        labelById={labelById}
         onAdd={(id, qty) => setDetalles(prev => [...prev, {idArticulo: id, cantidad: qty}])}
         onChangeCantidad={(id, qty) => updateCantidad(id, qty)}
         onRemove={removeDetalle}

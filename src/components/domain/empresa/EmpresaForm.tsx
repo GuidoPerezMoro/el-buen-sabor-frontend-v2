@@ -68,18 +68,14 @@ export default function EmpresaForm({
 
       if (isEdit && initialData) {
         if (imagen) {
-          console.log('[EmpresaForm] Updating empresa WITH new image:', initialData.id)
           await updateEmpresaWithImage(initialData.id, payload, imagen)
         } else {
-          console.log('[EmpresaForm] Updating empresa WITHOUT image:', initialData.id)
           await updateEmpresa(initialData.id, payload)
         }
       } else {
         if (imagen) {
-          console.log('[EmpresaForm] Creating empresa WITH image:', imagen)
           await createEmpresaWithImage(payload, imagen)
         } else {
-          console.log('[EmpresaForm] Creating empresa WITHOUT image, payload:', payload)
           await createEmpresa(payload)
         }
         // reset fields
@@ -112,8 +108,12 @@ export default function EmpresaForm({
       <div className="flex flex-col md:flex-row gap-6">
         {/* Imagen */}
         <div className="w-full md:w-1/2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Logo de la empresa</label>
-          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
+          <ImageDropzone
+            label="Logo de la empresa"
+            hint="Recomendado SVG/JPG/PNG/WebP."
+            onFileAccepted={setImagen}
+            previewUrl={initialData?.imagenUrl ?? null}
+          />
         </div>
 
         {/* Campos del formulario */}

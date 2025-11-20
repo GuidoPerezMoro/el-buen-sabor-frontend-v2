@@ -1,3 +1,4 @@
+// src/app/(pre-dashboard)/empresa/[empresaId]/sucursal/page.tsx
 'use client'
 
 import {useEffect, useState, useCallback} from 'react'
@@ -10,36 +11,111 @@ import useDialog from '@/hooks/useDialog'
 import {fetchAllSucursales} from '@/services/sucursal'
 import {Sucursal} from '@/services/types'
 import SucursalForm from '@/components/domain/sucursal/SucursalForm'
+import {useRoles} from '@/hooks/useRoles'
 
 export default function SucursalPage() {
   const router = useRouter()
   const {openDialog} = useDialog()
-  const {empresaId} = useParams()
+  const {empresaId} = useParams<{empresaId: string}>()
+
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [sucursalAEditar, setSucursalAEditar] = useState<Sucursal | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  // Roles (public users will have [])
+  const {roles, loading: rolesLoading} = useRoles()
+  const isSuper = roles?.includes('superadmin')
+  const isAdmin = roles?.includes('admin')
+  const isGerente = roles?.includes('gerente')
+  const isCocinero = roles?.includes('cocinero')
+
+  // Claims
+  const [empresaIdClaim, setEmpresaIdClaim] = useState<number | null | undefined>(undefined)
+  const [sucursalIdClaim, setSucursalIdClaim] = useState<number | null | undefined>(undefined)
+  const [claimsLoading, setClaimsLoading] = useState(true)
+
+  // Load sucursales (public: all for the empresa; gerente: only their own)
   const loadSucursales = useCallback(async () => {
     setLoading(true)
     setError(false)
     try {
       const data = await fetchAllSucursales()
       const empresaIdNum = Number(empresaId)
-      setSucursales(data.filter(s => s.empresa.id === empresaIdNum))
+      let result = data.filter(s => s.empresa.id === empresaIdNum)
+
+      const isRestricted = isGerente || isCocinero
+      if (isRestricted && sucursalIdClaim != null) {
+        result = result.filter(s => s.id === Number(sucursalIdClaim))
+      }
+      if (isRestricted && sucursalIdClaim == null) {
+        result = []
+      }
+
+      setSucursales(result)
     } catch (err) {
       console.error('Error al cargar sucursales', err)
       setError(true)
     } finally {
       setLoading(false)
     }
-  }, [empresaId])
+  }, [empresaId, isGerente, sucursalIdClaim])
+
+  // Fetch claims only if potentially needed (staff path)
+  useEffect(() => {
+    if (!isGerente && !isCocinero) {
+      setEmpresaIdClaim(undefined)
+      setSucursalIdClaim(undefined)
+      setClaimsLoading(false)
+      return
+    }
+    fetch('/api/me/claims', {cache: 'no-store'})
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        setEmpresaIdClaim(d?.empresaId != null ? Number(d.empresaId) : null)
+        setSucursalIdClaim(d?.sucursalId != null ? Number(d.sucursalId) : null)
+      })
+      .catch(() => {
+        setEmpresaIdClaim(null)
+        setSucursalIdClaim(null)
+      })
+      .finally(() => setClaimsLoading(false))
+  }, [isGerente, isCocinero])
+
+  useEffect(() => {
+    if (rolesLoading || claimsLoading) return
+
+    const isRestricted = isGerente || isCocinero
+
+    // Restricted roles (gerente/cocinero) must wait for claims
+    if (isRestricted) {
+      if (sucursalIdClaim !== undefined) {
+        loadSucursales()
+      }
+      return
+    }
+
+    // Unrestricted roles: load normally
+    loadSucursales()
+  }, [
+    rolesLoading,
+    claimsLoading,
+    isCocinero,
+    isGerente,
+    empresaIdClaim,
+    sucursalIdClaim,
+    loadSucursales,
+    router,
+  ])
 
   const handleSelectSucursal = (sucursalId: number) => {
-    router.push(`/empresa/${empresaId}/sucursal/${sucursalId}`)
+    const isStaff = roles?.some(r => ['superadmin', 'admin', 'gerente', 'cocinero'].includes(r))
+    const base = `/empresa/${empresaId}/sucursal/${sucursalId}`
+    router.push(isStaff ? base : `${base}/shop`)
   }
 
   const handleCreateSucursal = () => {
+    setSucursales(prev => prev) // no-op; keep
     setSucursalAEditar(null)
     openDialog('nueva-sucursal')
   }
@@ -49,11 +125,9 @@ export default function SucursalPage() {
     openDialog('editar-sucursal')
   }
 
-  useEffect(() => {
-    loadSucursales()
-  }, [loadSucursales])
+  if (loading || rolesLoading || claimsLoading)
+    return <StatusMessage type="loading" message="Cargando sucursales..." />
 
-  if (loading) return <StatusMessage type="loading" message="Cargando sucursales..." />
   if (error)
     return (
       <StatusMessage
@@ -66,11 +140,27 @@ export default function SucursalPage() {
     <main className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Sucursales</h1>
-        <Button onClick={handleCreateSucursal} variant="primary">
-          + Nueva sucursal
-        </Button>
+
+        {/* Solo super/admin crean/editar → público y gerente son sólo lectura */}
+        {(isSuper || isAdmin) && (
+          <Button onClick={handleCreateSucursal} variant="primary">
+            + Nueva sucursal
+          </Button>
+        )}
       </div>
 
+      {/* Aviso para gerente sin sucursal asignada */}
+      {isGerente && sucursalIdClaim === null && (
+        <div className="mb-4">
+          <StatusMessage
+            type="empty"
+            title="Sin sucursal asignada"
+            message="No tienes una sucursal asignada. Consulta con un administrador."
+          />
+        </div>
+      )}
+
+      {/* Dialogs staff-only */}
       <Dialog name="nueva-sucursal" title="Crear nueva sucursal">
         <SucursalForm
           empresaId={Number(empresaId)}
@@ -111,7 +201,7 @@ export default function SucursalPage() {
               line2={`Horario: ${sucursal.horarioApertura} - ${sucursal.horarioCierre}`}
               badge={sucursal.esCasaMatriz ? 'Casa matriz' : undefined}
               onPrimaryClick={() => handleSelectSucursal(sucursal.id)}
-              onSecondaryClick={() => handleEditSucursal(sucursal)}
+              onSecondaryClick={isSuper || isAdmin ? () => handleEditSucursal(sucursal) : undefined}
             />
           ))}
         </div>

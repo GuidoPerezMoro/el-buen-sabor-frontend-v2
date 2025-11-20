@@ -9,7 +9,7 @@ import useIsMdUp from '@/hooks/useIsMdUp'
 export interface SearchAddBarProps
   extends Pick<SearchBarProps, 'value' | 'onChange' | 'placeholder'> {
   filterLabel?: string
-  onAdd: () => void
+  onAdd?: () => void
   addLabel?: string
   showFilter?: boolean
   filterOptions?: ReadonlyArray<string | {value: string; label: string}>
@@ -51,14 +51,16 @@ export default function SearchAddBar({
           clearable={filterClearable}
         />
       )}
-      <Button
-        variant="primary"
-        icon={<Plus size={16} />}
-        onClick={onAdd}
-        className="flex items-center gap-1 px-4 whitespace-nowrap h-full"
-      >
-        {isMdUp && addLabel}
-      </Button>
+      {onAdd && (
+        <Button
+          variant="primary"
+          icon={<Plus size={16} />}
+          onClick={onAdd}
+          className="flex items-center gap-1 px-4 whitespace-nowrap h-full"
+        >
+          {isMdUp && addLabel}
+        </Button>
+      )}
     </div>
   )
 }

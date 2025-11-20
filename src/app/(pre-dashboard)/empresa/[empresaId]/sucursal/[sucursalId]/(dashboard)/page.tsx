@@ -1,5 +1,3 @@
-// app/empresa/[empresaId]/sucursal/[sucursalId]/page.tsx
-
 export default function DashboardPage() {
   return (
     <div>

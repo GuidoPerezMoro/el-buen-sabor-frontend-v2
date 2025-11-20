@@ -205,11 +205,13 @@ export default function ArticuloInsumoForm({
       <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6">
         {/* Imagen */}
         <div className="w-40 mx-auto md:w-25 md:mx-0">
-          <label className="block text-sm font-medium mb-2">Imagen del insumo</label>
-          <ImageDropzone onFileAccepted={setImagen} previewUrl={initialData?.imagenUrl ?? null} />
-          <p className="text-xs text-muted my-2">
-            Formatos comunes soportados (SVG, JPG, PNG, etc.).
-          </p>
+          <ImageDropzone
+            label="Imagen"
+            hint="Formatos soportados: SVG/JPG/PNG..."
+            onFileAccepted={setImagen}
+            previewUrl={initialData?.imagenUrl ?? null}
+          />
+
           <Dropdown
             label="Unidad de medida"
             options={unidadOptions}
