@@ -7,14 +7,24 @@ import ShopToolbar from '@/components/domain/shop/ShopToolbar'
 import ShopSection from '@/components/domain/shop/ShopSection'
 import ShopGrid from '@/components/domain/shop/ShopGrid'
 import ShopCard, {ShopItemType} from '@/components/domain/shop/ShopCard'
+import ShopItemDialog, {ShopItemDialogData} from '@/components/domain/shop/ShopItemDialog'
+
+import {formatARS} from '@/lib/format'
 
 import {useRoles} from '@/hooks/useRoles'
+import useDialog from '@/hooks/useDialog'
 
 import {fetchAllPromociones} from '@/services/promocion'
 import {fetchAllArticuloManufacturados} from '@/services/articuloManufacturado'
 import {fetchAllArticuloInsumos} from '@/services/articuloInsumo'
 
-import {filterPromocionesBySucursalId, filterPromocionesByText} from '@/services/promocion.utils'
+import {
+  buildPromocionVigenciaLabel,
+  filterPromocionesBySucursalId,
+  filterPromocionesByText,
+  isPromocionDateValid,
+  isPromocionTimeValid,
+} from '@/services/promocion.utils'
 import {
   filterManufacturadosBySucursalId,
   filterManufacturadosByText,
@@ -66,29 +76,12 @@ function buildCategoryOptions(
   return [promoOpt, ...catOpts]
 }
 
-// Simple "is active now?" check for promos
-function isPromocionActive(p: Promocion, now = new Date()): boolean {
-  // fecha: 'YYYY-MM-DD', hora: 'HH:mm:ss'
-  const from = new Date(`${p.fechaDesde}T${p.horaDesde}`)
-  const to = new Date(`${p.fechaHasta}T${p.horaHasta}`)
-  const t = now.getTime()
-  return t >= from.getTime() && t <= to.getTime()
-}
-
-// Small helper to show vigencia (for staff)
-function formatPromocionVigencia(p: Promocion): string {
-  const fromDate = p.fechaDesde
-  const toDate = p.fechaHasta
-  const fromTime = p.horaDesde.slice(0, 5)
-  const toTime = p.horaHasta.slice(0, 5)
-  return `Vigente del ${fromDate} al ${toDate}, de ${fromTime} a ${toTime}`
-}
-
 export default function ShopPage() {
   const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
   const sucursalId = Number(sid)
 
   const {roles, loading: rolesLoading, has} = useRoles()
+  const {openDialog, closeDialog} = useDialog()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -101,6 +94,7 @@ export default function ShopPage() {
   const [category, setCategory] = useState<Opt | null>(null)
   const [sortByPrice, setSortByPrice] = useState(false)
   const [showInactivePromos, setShowInactivePromos] = useState(true)
+  const [selectedItem, setSelectedItem] = useState<ShopItemDialogData | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -137,48 +131,56 @@ export default function ShopPage() {
 
   const categoryValue = getOptValue(category)
 
-  const {filteredPromos, filteredManufacturados, filteredInsumos, activePromos, inactivePromos} =
-    useMemo(() => {
-      const byTextPromos = filterPromocionesByText(promos, search)
-      const byTextManu = filterManufacturadosByText(manufacturados, search)
-      const byTextInsumos = filterArticuloInsumosByText(nonElaborarInsumos, search)
+  const {
+    filteredPromos,
+    filteredManufacturados,
+    filteredInsumos,
+    promosDateValid,
+    promosDateInvalid,
+    publicPromos,
+  } = useMemo(() => {
+    const byTextPromos = filterPromocionesByText(promos, search)
+    const byTextManu = filterManufacturadosByText(manufacturados, search)
+    const byTextInsumos = filterArticuloInsumosByText(nonElaborarInsumos, search)
 
-      // Category filtering
-      const val = categoryValue
+    // Category filtering
+    const val = categoryValue
 
-      const promosCat = byTextPromos.filter(p => {
-        if (!val) return true
-        if (val === 'PROMO') return true
-        // if user picked a concrete categoría, hide promos
-        return false
-      })
+    const promosCat = byTextPromos.filter(p => {
+      if (!val) return true
+      if (val === 'PROMO') return true
+      // if user picked a concrete categoría, hide promos
+      return false
+    })
 
-      const manuCat = byTextManu.filter(m => {
-        if (!val) return true
-        if (val === 'PROMO') return false
-        const catId = m.categoria?.id
-        return catId != null && String(catId) === val
-      })
+    const manuCat = byTextManu.filter(m => {
+      if (!val) return true
+      if (val === 'PROMO') return false
+      const catId = m.categoria?.id
+      return catId != null && String(catId) === val
+    })
 
-      const insCat = byTextInsumos.filter(i => {
-        if (!val) return true
-        if (val === 'PROMO') return false
-        const catId = i.categoria?.id
-        return catId != null && String(catId) === val
-      })
+    const insCat = byTextInsumos.filter(i => {
+      if (!val) return true
+      if (val === 'PROMO') return false
+      const catId = i.categoria?.id
+      return catId != null && String(catId) === val
+    })
 
-      const now = new Date()
-      const active = promosCat.filter(p => isPromocionActive(p, now))
-      const inactive = promosCat.filter(p => !isPromocionActive(p, now))
+    const now = new Date()
+    const byDateValid = promosCat.filter(p => isPromocionDateValid(p, now))
+    const byDateInvalid = promosCat.filter(p => !isPromocionDateValid(p, now))
+    const publicByDateAndTime = byDateValid.filter(p => isPromocionTimeValid(p, now))
 
-      return {
-        filteredPromos: promosCat,
-        filteredManufacturados: manuCat,
-        filteredInsumos: insCat,
-        activePromos: active,
-        inactivePromos: inactive,
-      }
-    }, [promos, manufacturados, nonElaborarInsumos, search, categoryValue])
+    return {
+      filteredPromos: promosCat,
+      filteredManufacturados: manuCat,
+      filteredInsumos: insCat,
+      promosDateValid: byDateValid,
+      promosDateInvalid: byDateInvalid,
+      publicPromos: publicByDateAndTime,
+    }
+  }, [promos, manufacturados, nonElaborarInsumos, search, categoryValue])
 
   const categoryOptions = useMemo(
     () => buildCategoryOptions(manufacturados, nonElaborarInsumos),
@@ -186,6 +188,15 @@ export default function ShopPage() {
   )
 
   const hasFilters = Boolean(search.trim() || categoryValue)
+
+  // Active / inactive promos depending on role:
+  // - Staff: date-valid are "vigentes" even if fuera de horario (shown with schedule hint).
+  // - Invitado/cliente: only date+time valid promos are visibles.
+  const activePromos: Promocion[] = useMemo(
+    () => (isStaff ? promosDateValid : publicPromos),
+    [isStaff, promosDateValid, publicPromos]
+  )
+  const inactivePromos: Promocion[] = promosDateInvalid
 
   // When sortByPrice is active, merge active promos + productos + insumos into one list
   const sortedUnifiedItems = useMemo(() => {
@@ -203,7 +214,7 @@ export default function ShopPage() {
 
     const list: Unified[] = []
 
-    activePromos.forEach(p => {
+    publicPromos.forEach(p => {
       list.push({
         type: 'promo',
         id: p.id,
@@ -238,7 +249,77 @@ export default function ShopPage() {
     })
 
     return list.sort((a, b) => a.price - b.price)
-  }, [sortByPrice, activePromos, filteredManufacturados, filteredInsumos])
+  }, [sortByPrice, publicPromos, filteredManufacturados, filteredInsumos])
+
+  // Group manufacturados + insumos by categoría
+  const categoryGroups = useMemo(() => {
+    type GroupItem = {
+      type: ShopItemType
+      id: number
+      title: string
+      price: number
+      description?: string | null
+      imageUrl?: string | null
+    }
+
+    type Group = {
+      id: string
+      label: string
+      items: GroupItem[]
+    }
+
+    const map = new Map<string, Group>()
+
+    const ensureGroup = (id: string, label: string) => {
+      const existing = map.get(id)
+      if (existing) return existing
+      const g: Group = {id, label, items: []}
+      map.set(id, g)
+      return g
+    }
+
+    const addItemToGroup = (
+      catId: number | null | undefined,
+      catLabel: string | null | undefined,
+      item: GroupItem
+    ) => {
+      const id = catId != null ? String(catId) : '__no_category__'
+      const label = catLabel || 'Sin categoría'
+      const group = ensureGroup(id, label)
+      group.items.push(item)
+    }
+
+    filteredManufacturados.forEach(m => {
+      addItemToGroup(m.categoria?.id, m.categoria?.denominacion, {
+        type: 'manufacturado',
+        id: m.id,
+        title: m.denominacion,
+        price: m.precioVenta,
+        description: m.descripcion,
+        imageUrl: m.imagenUrl,
+      })
+    })
+
+    filteredInsumos.forEach(i => {
+      addItemToGroup(i.categoria?.id, i.categoria?.denominacion, {
+        type: 'insumo',
+        id: i.id,
+        title: i.denominacion,
+        price: i.precioVenta,
+        imageUrl: i.imagenUrl,
+      })
+    })
+
+    const groups = Array.from(map.values())
+    groups.sort((a, b) => a.label.localeCompare(b.label, 'es'))
+    groups.forEach(g => g.items.sort((a, b) => a.title.localeCompare(b.title, 'es')))
+    return groups
+  }, [filteredManufacturados, filteredInsumos])
+
+  const openItemDialog = (data: ShopItemDialogData) => {
+    setSelectedItem(data)
+    openDialog('shop-item')
+  }
 
   return (
     <main className="p-4 sm:p-6 space-y-4">
@@ -264,11 +345,7 @@ export default function ShopPage() {
       {/* If sortByPrice is ON, show unified grid; otherwise sections */}
       {sortByPrice ? (
         <>
-          <ShopSection
-            title="Catálogo ordenado por precio"
-            // subtitle="Mostrando promociones vigentes, productos e insumos."
-            count={sortedUnifiedItems.length}
-          >
+          <ShopSection title="Catálogo ordenado por precio" count={sortedUnifiedItems.length}>
             {sortedUnifiedItems.length === 0 ? (
               <p className="text-xs text-muted">
                 {hasFilters
@@ -279,7 +356,7 @@ export default function ShopPage() {
               <ShopGrid>
                 {sortedUnifiedItems.map(item => {
                   const promo =
-                    item.type === 'promo' ? activePromos.find(p => p.id === item.id) : undefined
+                    item.type === 'promo' ? publicPromos.find(p => p.id === item.id) : undefined
 
                   return (
                     <ShopCard
@@ -299,8 +376,26 @@ export default function ShopPage() {
                       }
                       validityLabel={
                         item.type === 'promo' && promo && isStaff
-                          ? formatPromocionVigencia(promo)
+                          ? buildPromocionVigenciaLabel(promo)
                           : null
+                      }
+                      onClick={() =>
+                        openItemDialog({
+                          type: item.type,
+                          title: item.title,
+                          description:
+                            item.type === 'promo'
+                              ? (promo?.descripcionDescuento ?? null)
+                              : item.type === 'manufacturado'
+                                ? (manufacturados.find(m => m.id === item.id)?.descripcion ?? null)
+                                : null,
+                          price: formatARS(item.price),
+                          validityLabel:
+                            item.type === 'promo' && promo && isStaff
+                              ? buildPromocionVigenciaLabel(promo)
+                              : null,
+                          imageUrl: item.imageUrl ?? null,
+                        })
                       }
                     />
                   )
@@ -312,7 +407,6 @@ export default function ShopPage() {
           {isStaff && inactivePromos.length > 0 && (
             <ShopSection
               title="Promociones fuera de vigencia"
-              // subtitle="Solo visible para personal interno."
               count={inactivePromos.length}
               defaultOpen={false}
             >
@@ -324,7 +418,19 @@ export default function ShopPage() {
                     title={p.denominacion}
                     price={p.precioPromocional}
                     imageUrl={p.imagenUrl}
+                    description={p.descripcionDescuento}
+                    validityLabel={buildPromocionVigenciaLabel(p)}
                     inactive
+                    onClick={() =>
+                      openItemDialog({
+                        type: 'promo',
+                        title: p.denominacion,
+                        description: p.descripcionDescuento,
+                        price: formatARS(p.precioPromocional),
+                        validityLabel: buildPromocionVigenciaLabel(p),
+                        imageUrl: p.imagenUrl,
+                      })
+                    }
                   />
                 ))}
               </ShopGrid>
@@ -339,7 +445,6 @@ export default function ShopPage() {
           {(filteredPromos.length > 0 || hasFilters) && (
             <ShopSection
               title="Promociones"
-              // subtitle="Promociones vigentes en esta sucursal."
               count={isStaff ? filteredPromos.length : activePromos.length}
             >
               {filteredPromos.length === 0 ? (
@@ -362,7 +467,17 @@ export default function ShopPage() {
                             price={p.precioPromocional}
                             imageUrl={p.imagenUrl}
                             description={p.descripcionDescuento}
-                            validityLabel={isStaff ? formatPromocionVigencia(p) : null}
+                            validityLabel={isStaff ? buildPromocionVigenciaLabel(p) : null}
+                            onClick={() =>
+                              openItemDialog({
+                                type: 'promo',
+                                title: p.denominacion,
+                                description: p.descripcionDescuento,
+                                price: formatARS(p.precioPromocional),
+                                validityLabel: isStaff ? buildPromocionVigenciaLabel(p) : null,
+                                imageUrl: p.imagenUrl,
+                              })
+                            }
                           />
                         ))}
                       </ShopGrid>
@@ -393,8 +508,18 @@ export default function ShopPage() {
                               price={p.precioPromocional}
                               imageUrl={p.imagenUrl}
                               description={p.descripcionDescuento}
-                              validityLabel={formatPromocionVigencia(p)}
+                              validityLabel={buildPromocionVigenciaLabel(p)}
                               inactive
+                              onClick={() =>
+                                openItemDialog({
+                                  type: 'promo',
+                                  title: p.denominacion,
+                                  description: p.descripcionDescuento,
+                                  price: formatARS(p.precioPromocional),
+                                  validityLabel: buildPromocionVigenciaLabel(p),
+                                  imageUrl: p.imagenUrl,
+                                })
+                              }
                             />
                           ))}
                         </ShopGrid>
@@ -406,65 +531,43 @@ export default function ShopPage() {
             </ShopSection>
           )}
 
-          {/* Productos + insumos no-para-elaborar */}
-          {(filteredManufacturados.length + filteredInsumos.length > 0 || hasFilters) && (
-            <ShopSection
-              title="Productos e insumos"
-              // subtitle="Artículos manufacturados e insumos listos para la venta."
-              count={filteredManufacturados.length + filteredInsumos.length}
-            >
-              {filteredManufacturados.length === 0 && filteredInsumos.length === 0 ? (
-                <p className="text-xs text-muted">
-                  No se encontraron artículos con los filtros actuales.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {filteredManufacturados.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-text">
-                        Artículos manufacturados ({filteredManufacturados.length})
-                      </p>
-                      <ShopGrid>
-                        {filteredManufacturados.map(m => (
-                          <ShopCard
-                            key={m.id}
-                            type="manufacturado"
-                            title={m.denominacion}
-                            price={m.precioVenta}
-                            categoryLabel={m.categoria?.denominacion ?? null}
-                            imageUrl={m.imagenUrl}
-                            description={m.descripcion}
-                          />
-                        ))}
-                      </ShopGrid>
-                    </div>
-                  )}
-
-                  {filteredInsumos.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-text">
-                        Insumos ({filteredInsumos.length})
-                      </p>
-                      <ShopGrid>
-                        {filteredInsumos.map(i => (
-                          <ShopCard
-                            key={i.id}
-                            type="insumo"
-                            title={i.denominacion}
-                            price={i.precioVenta}
-                            categoryLabel={i.categoria?.denominacion ?? null}
-                            imageUrl={i.imagenUrl}
-                          />
-                        ))}
-                      </ShopGrid>
-                    </div>
-                  )}
-                </div>
-              )}
-            </ShopSection>
-          )}
+          {/* Productos + insumos agrupados por categoría */}
+          {(categoryGroups.length > 0 || hasFilters) &&
+            (categoryGroups.length === 0 ? (
+              <p className="text-xs text-muted">
+                No se encontraron artículos con los filtros actuales.
+              </p>
+            ) : (
+              categoryGroups.map(group => (
+                <ShopSection key={group.id} title={group.label} count={group.items.length}>
+                  <ShopGrid>
+                    {group.items.map(item => (
+                      <ShopCard
+                        key={`${item.type}-${item.id}`}
+                        type={item.type}
+                        title={item.title}
+                        price={item.price}
+                        imageUrl={item.imageUrl}
+                        description={item.description ?? null}
+                        onClick={() =>
+                          openItemDialog({
+                            type: item.type,
+                            title: item.title,
+                            description: item.description ?? null,
+                            price: formatARS(item.price),
+                            imageUrl: item.imageUrl ?? null,
+                          })
+                        }
+                      />
+                    ))}
+                  </ShopGrid>
+                </ShopSection>
+              ))
+            ))}
         </>
       )}
+
+      <ShopItemDialog name="shop-item" item={selectedItem} onClose={() => setSelectedItem(null)} />
     </main>
   )
 }

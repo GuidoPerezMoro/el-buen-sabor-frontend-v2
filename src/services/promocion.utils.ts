@@ -56,3 +56,37 @@ export function buildArticuloOptionsForSucursal(params: {
   }))
   return [...prodOpts, ...insumoOpts]
 }
+
+// ── Date / time helpers for Shop ────────────────────────────────────────────
+
+function parseYMD(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, (m ?? 1) - 1, d ?? 1)
+}
+
+/** Is the promotion within its calendar date range? (ignores time of day) */
+export function isPromocionDateValid(p: Promocion, now = new Date()): boolean {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const from = parseYMD(p.fechaDesde)
+  const to = parseYMD(p.fechaHasta)
+  return today.getTime() >= from.getTime() && today.getTime() <= to.getTime()
+}
+
+/** Is the current time within the promotion's time window (HH:mm:ss)? */
+export function isPromocionTimeValid(p: Promocion, now = new Date()): boolean {
+  const [fh, fm] = p.horaDesde.split(':').map(Number)
+  const [th, tm] = p.horaHasta.split(':').map(Number)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const fromMinutes = (fh ?? 0) * 60 + (fm ?? 0)
+  const toMinutes = (th ?? 0) * 60 + (tm ?? 0)
+  return nowMinutes >= fromMinutes && nowMinutes <= toMinutes
+}
+
+/** Human-readable vigencia label for staff (date + time). */
+export function buildPromocionVigenciaLabel(p: Promocion): string {
+  const fromDate = p.fechaDesde
+  const toDate = p.fechaHasta
+  const fromTime = p.horaDesde.slice(0, 5)
+  const toTime = p.horaHasta.slice(0, 5)
+  return `Vigente del ${fromDate} al ${toDate}, de ${fromTime} a ${toTime}`
+}

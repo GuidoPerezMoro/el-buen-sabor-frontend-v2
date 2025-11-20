@@ -6,7 +6,7 @@ import {cn} from '@/lib/utils'
 
 interface ShopSectionProps {
   title: string
-  subtitle?: string
+
   count?: number
   collapsible?: boolean
   defaultOpen?: boolean
@@ -15,7 +15,7 @@ interface ShopSectionProps {
 
 export default function ShopSection({
   title,
-  subtitle,
+
   count,
   collapsible = true,
   defaultOpen = true,
@@ -41,7 +41,6 @@ export default function ShopSection({
       >
         <div>
           <h2 className="text-lg font-semibold">{title}</h2>
-          {subtitle && <p className="text-xs text-muted mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-3">
           {typeof count === 'number' && (
