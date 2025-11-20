@@ -71,7 +71,8 @@ export default function ShopCard({
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            {type === 'promo' && (
+            {/* Cliente: sin vigencia -> mostramos pill de promoción */}
+            {type === 'promo' && !validityLabel && (
               <span className="inline-flex items-center gap-1 rounded-full border border-primary px-2 py-0.5 text-[10px] font-medium text-primary">
                 <Percent className="h-3 w-3" />
                 {promoBadge ?? 'Promoción'}
@@ -79,7 +80,12 @@ export default function ShopCard({
             )}
 
             {validityLabel && (
-              <p className="ml-auto text-right text-[10px] text-muted line-clamp-2">
+              <p
+                className={cn(
+                  'ml-auto text-right text-[11px] line-clamp-2',
+                  inactive ? 'text-danger/60 font-medium' : 'text-text'
+                )}
+              >
                 {validityLabel}
               </p>
             )}
