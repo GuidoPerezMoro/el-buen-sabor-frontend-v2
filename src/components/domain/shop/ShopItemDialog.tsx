@@ -104,11 +104,7 @@ export default function ShopItemDialog({name, item, onClose}: ShopItemDialogProp
             </form>
           )}
 
-          {!canUseCart && (
-            <p className="mt-2 text-[11px] text-muted">
-              El carrito está disponible solo para clientes e invitados.
-            </p>
-          )}
+          {!canUseCart && <p className="mt-2 text-[11px] text-muted">Esto es una vista previa.</p>}
         </div>
       </div>
     </Dialog>
