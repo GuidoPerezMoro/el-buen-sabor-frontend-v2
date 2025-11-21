@@ -1,6 +1,7 @@
 'use client'
 
-import {Trash} from 'lucide-react'
+import Image from 'next/image'
+import {Trash, Utensils} from 'lucide-react'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import {useCart} from '@/contexts/cart'
@@ -29,8 +30,25 @@ export default function CartDialog({name}: CartDialogProps) {
                 return (
                   <li
                     key={`${item.type}-${item.id}`}
-                    className="grid grid-cols-[1fr_auto_5.5rem_auto] items-center gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0"
+                    className="grid grid-cols-[3rem_1fr_auto_5.5rem_auto] items-center gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0"
                   >
+                    {/* thumbnail */}
+                    <div className="relative h-10 w-12 overflow-hidden rounded-md bg-muted/30">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Utensils className="h-4 w-4 text-muted" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+
                     {/* title + subtitle */}
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.title}</p>
