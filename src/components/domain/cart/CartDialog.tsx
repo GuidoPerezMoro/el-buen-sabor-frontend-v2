@@ -30,17 +30,20 @@ export default function CartDialog({name}: CartDialogProps) {
                 return (
                   <li
                     key={`${item.type}-${item.id}`}
-                    className="grid grid-cols-[3rem_1fr_auto_5.5rem_auto] items-center gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0"
+                    className="
+                      grid items-center gap-2 sm:gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0
+                      grid-cols-[3rem_1fr_auto] md:grid-cols-[3rem_1fr_auto_5.5rem_auto]
+                    "
                   >
                     {/* thumbnail */}
-                    <div className="relative h-10 w-12 overflow-hidden rounded-md bg-muted/30">
+                    <div className="relative h-9 w-11 md:h-10 md:w-12 overflow-hidden rounded-md bg-muted/30">
                       {item.imageUrl ? (
                         <Image
                           src={item.imageUrl}
                           alt={item.title}
                           fill
                           className="object-cover"
-                          sizes="48px"
+                          sizes="(max-width: 768px) 44px, 48px"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
@@ -52,32 +55,41 @@ export default function CartDialog({name}: CartDialogProps) {
                     {/* title + subtitle */}
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.title}</p>
-                      <p className="text-xs text-muted">
+                      <p className="text-[11px] sm:text-xs text-muted hidden xs:block">
                         {item.type === 'promo' ? 'Promoción' : 'Producto'} ·{' '}
                         {formatARS(item.unitPrice)} c/u
                       </p>
                     </div>
 
-                    {/* qty */}
-                    <QuantityControl
-                      className="h-8"
-                      value={item.quantity}
-                      min={1}
-                      onChange={val => setItemQuantity(item.type, item.id, val)}
-                    />
-                    {/* line total: fixed width, right-aligned, tabular digits */}
-                    <span className="text-xs font-medium tabular-nums text-right w-[5.5rem]">
+                    {/* actions (mobile: one cell; desktop: same order, tighter spacing) */}
+                    <div
+                      className="
+                        col-start-3 row-start-1 justify-self-end
+                        flex items-center gap-2
+                      "
+                    >
+                      <QuantityControl
+                        className="h-8 md:h-8"
+                        value={item.quantity}
+                        min={1}
+                        onChange={val => setItemQuantity(item.type, item.id, val)}
+                      />
+                      <span className="text-xs font-medium tabular-nums text-right w-[5.5rem] hidden md:inline-block">
+                        {formatARS(lineTotal)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.type, item.id)}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
+                        aria-label="Eliminar artículo"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {/* price (mobile): show here so it sits under/next to qty without cramping */}
+                    <span className="text-xs font-medium tabular-nums text-right col-start-3 w-[5.5rem] md:hidden">
                       {formatARS(lineTotal)}
                     </span>
-                    {/* delete */}
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.type, item.id)}
-                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
-                      aria-label="Eliminar artículo"
-                    >
-                      <Trash className="h-3.5 w-3.5" />
-                    </button>
                   </li>
                 )
               })}
