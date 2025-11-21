@@ -32,7 +32,7 @@ export default function CartDialog({name}: CartDialogProps) {
                     key={`${item.type}-${item.id}`}
                     className="
                       grid items-center gap-2 sm:gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0
-                      grid-cols-[3rem_1fr_auto] md:grid-cols-[3rem_1fr_auto_5.5rem_auto]
+                      grid-cols-[3rem_1fr_auto] md:grid-cols-[3rem_1fr_minmax(8rem,auto)_5.5rem_auto]
                     "
                   >
                     {/* thumbnail */}
@@ -61,35 +61,30 @@ export default function CartDialog({name}: CartDialogProps) {
                       </p>
                     </div>
 
-                    {/* actions (mobile: one cell; desktop: same order, tighter spacing) */}
-                    <div
-                      className="
-                        col-start-3 row-start-1 justify-self-end
-                        flex items-center gap-2
-                      "
-                    >
-                      <QuantityControl
-                        className="h-8 md:h-8"
-                        value={item.quantity}
-                        min={1}
-                        onChange={val => setItemQuantity(item.type, item.id, val)}
-                      />
-                      <span className="text-xs font-medium tabular-nums text-right w-[5.5rem] hidden md:inline-block">
-                        {formatARS(lineTotal)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.type, item.id)}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
-                        aria-label="Eliminar artículo"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    {/* price (mobile): show here so it sits under/next to qty without cramping */}
+                    {/* qty */}
+                    <QuantityControl
+                      className="h-8 md:h-8 col-start-3 justify-self-end"
+                      value={item.quantity}
+                      min={1}
+                      onChange={val => setItemQuantity(item.type, item.id, val)}
+                    />
+                    {/* price (mobile) */}
                     <span className="text-xs font-medium tabular-nums text-right col-start-3 w-[5.5rem] md:hidden">
                       {formatARS(lineTotal)}
                     </span>
+                    {/* price (desktop) */}
+                    <span className="hidden md:block text-xs font-medium tabular-nums text-right w-[5.5rem] col-start-4 justify-self-end">
+                      {formatARS(lineTotal)}
+                    </span>
+                    {/* delete */}
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.type, item.id)}
+                      className="col-start-5 justify-self-end inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
+                      aria-label="Eliminar artículo"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 )
               })}
