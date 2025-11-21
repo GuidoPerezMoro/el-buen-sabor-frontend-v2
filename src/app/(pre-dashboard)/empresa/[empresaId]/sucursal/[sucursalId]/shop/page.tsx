@@ -80,6 +80,8 @@ function buildCategoryOptions(
 function buildDialogDataFromPromo(p: Promocion, isStaff: boolean): ShopItemDialogData {
   return {
     type: 'promo',
+    id: p.id,
+    unitPrice: p.precioPromocional,
     title: p.denominacion,
     description: p.descripcionDescuento ?? null,
     price: formatARS(p.precioPromocional),
@@ -91,6 +93,8 @@ function buildDialogDataFromPromo(p: Promocion, isStaff: boolean): ShopItemDialo
 function buildDialogDataFromManufacturado(m: ArticuloManufacturado): ShopItemDialogData {
   return {
     type: 'manufacturado',
+    id: m.id,
+    unitPrice: m.precioVenta,
     title: m.denominacion,
     description: m.descripcion ?? null,
     price: formatARS(m.precioVenta),
@@ -102,6 +106,8 @@ function buildDialogDataFromManufacturado(m: ArticuloManufacturado): ShopItemDia
 function buildDialogDataFromInsumo(i: ArticuloInsumo): ShopItemDialogData {
   return {
     type: 'insumo',
+    id: i.id,
+    unitPrice: i.precioVenta,
     title: i.denominacion,
     description: null,
     price: formatARS(i.precioVenta),

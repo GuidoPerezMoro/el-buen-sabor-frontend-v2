@@ -2,17 +2,32 @@
 
 import {useEffect, useMemo, useState} from 'react'
 import {useParams, usePathname} from 'next/navigation'
+
+import {ShoppingCart} from 'lucide-react'
+
 import CurrentUserLabel from '@/components/auth/CurrentUserLabel'
 import Breadcrumbs from '@/components/layouts/Breadcrumbs'
 import UserMenu from '@/components/auth/UserMenu'
+
 import {fetchEmpresaById} from '@/services/empresa'
 import {fetchSucursalById} from '@/services/sucursal'
+
+import {useRoles} from '@/hooks/useRoles'
+import {useCart} from '@/contexts/cart'
+import useDialog from '@/hooks/useDialog'
 
 export default function Header() {
   const {empresaId, sucursalId} = useParams()
   const pathname = usePathname()
   const [empresaName, setEmpresaName] = useState<string>('Empresa')
   const [sucursalName, setSucursalName] = useState<string>('Sucursal')
+
+  const {roles, loading: rolesLoading, has} = useRoles()
+  const {totalQuantity} = useCart()
+  const {openDialog} = useDialog()
+
+  const STAFF_ROLES = ['superadmin', 'admin', 'gerente', 'cocinero'] as const
+  const isStaff = roles ? has([...STAFF_ROLES]) : false
 
   // fetch empresa name when ruta includes empresaId
   useEffect(() => {
@@ -96,8 +111,23 @@ export default function Header() {
         )}
       </div>
 
-      {/* Right section: user menu */}
-      <UserMenu />
+      {/* Right section: cart (cliente/invitado only) + user menu */}
+      <div className="flex items-center gap-3">
+        {!rolesLoading && !isStaff && (
+          <button
+            type="button"
+            onClick={() => openDialog('cart')}
+            className="inline-flex items-center text-text hover:text-primary focus:outline-none"
+          >
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+            {totalQuantity > 0 && (
+              <span className="ml-1 text-xs font-medium">({totalQuantity})</span>
+            )}
+            <span className="sr-only">Abrir carrito</span>
+          </button>
+        )}
+        <UserMenu />
+      </div>
     </header>
   )
 }
