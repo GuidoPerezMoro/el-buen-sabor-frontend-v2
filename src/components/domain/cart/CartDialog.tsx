@@ -29,9 +29,10 @@ export default function CartDialog({name}: CartDialogProps) {
                 return (
                   <li
                     key={`${item.type}-${item.id}`}
-                    className="flex items-center justify-between gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0"
+                    className="grid grid-cols-[1fr_auto_5.5rem_auto] items-center gap-3 border-b border-muted/40 pb-2 last:border-0 last:pb-0"
                   >
-                    <div className="flex-1 min-w-0">
+                    {/* title + subtitle */}
+                    <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{item.title}</p>
                       <p className="text-xs text-muted">
                         {item.type === 'promo' ? 'Promoción' : 'Producto'} ·{' '}
@@ -39,24 +40,26 @@ export default function CartDialog({name}: CartDialogProps) {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <QuantityControl
-                        value={item.quantity}
-                        min={1}
-                        onChange={val => setItemQuantity(item.type, item.id, val)}
-                      />
-                      <span className="text-xs font-medium whitespace-nowrap">
-                        {formatARS(lineTotal)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.type, item.id)}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
-                        aria-label="Eliminar artículo"
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    {/* qty */}
+                    <QuantityControl
+                      className="h-8"
+                      value={item.quantity}
+                      min={1}
+                      onChange={val => setItemQuantity(item.type, item.id, val)}
+                    />
+                    {/* line total: fixed width, right-aligned, tabular digits */}
+                    <span className="text-xs font-medium tabular-nums text-right w-[5.5rem]">
+                      {formatARS(lineTotal)}
+                    </span>
+                    {/* delete */}
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.type, item.id)}
+                      className="inline-flex h-6 w-6 items-center justify-center rounded border border-transparent text-muted hover:text-danger hover:border-danger/40"
+                      aria-label="Eliminar artículo"
+                    >
+                      <Trash className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 )
               })}
