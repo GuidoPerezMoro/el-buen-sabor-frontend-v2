@@ -298,6 +298,7 @@ export default function ArticuloInsumoForm({
               value={categoriaOpt}
               onChange={val => setCategoriaOpt(val as DDOpt | null)}
               placeholder="Selecciona"
+              disabled={isEdit}
               error={formErrors.idCategoria}
             />
             <p className="text-xs text-muted mt-2">
