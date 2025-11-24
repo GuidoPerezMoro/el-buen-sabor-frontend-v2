@@ -53,22 +53,35 @@ function onlyNonElaborar(insumos: ArticuloInsumo[]): ArticuloInsumo[] {
 }
 
 // Build category options from manufacturados + insumos + special "Promociones"
+function makeCategoryKey(
+  catId: number | null | undefined,
+  label: string | null | undefined
+): string {
+  // stable, string-based key; handles "no category" as well
+  return `${catId ?? 'null'}::${label ?? ''}`
+}
+// Build category options from manufacturados + insumos + special "Promociones"
 function buildCategoryOptions(
   manufacturados: ArticuloManufacturado[],
   insumos: ArticuloInsumo[]
 ): Opt[] {
-  const map = new Map<number, string>()
+  const map = new Map<string, string>() // key = composite, value = label
 
   manufacturados.forEach(m => {
-    if (m.categoria) map.set(m.categoria.id, m.categoria.denominacion)
+    const label = m.categoria?.denominacion ?? 'Sin categoría'
+    const key = makeCategoryKey(m.categoria?.id ?? null, label)
+    map.set(key, label)
   })
+
   insumos.forEach(i => {
-    if (i.categoria) map.set(i.categoria.id, i.categoria.denominacion)
+    const label = i.categoria?.denominacion ?? 'Sin categoría'
+    const key = makeCategoryKey(i.categoria?.id ?? null, label)
+    map.set(key, label)
   })
 
   const catOpts: Opt[] = Array.from(map.entries())
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .map(([id, label]) => ({value: String(id), label}))
+    .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+    .map(([key, label]) => ({value: key, label}))
 
   // Special category for promos
   const promoOpt: Opt = {value: 'PROMO', label: 'Promociones'}
@@ -143,15 +156,23 @@ function deriveShopCollections(params: {
   const filteredManufacturados = byTextManu.filter(m => {
     if (!val) return true
     if (val === 'PROMO') return false
-    const catId = m.categoria?.id
-    return catId != null && String(catId) === val
+
+    const key = makeCategoryKey(
+      m.categoria?.id ?? null,
+      m.categoria?.denominacion ?? 'Sin categoría'
+    )
+    return key === val
   })
 
   const filteredInsumos = byTextInsumos.filter(i => {
     if (!val) return true
     if (val === 'PROMO') return false
-    const catId = i.categoria?.id
-    return catId != null && String(catId) === val
+
+    const key = makeCategoryKey(
+      i.categoria?.id ?? null,
+      i.categoria?.denominacion ?? 'Sin categoría'
+    )
+    return key === val
   })
 
   const promosDateValid = filteredPromos.filter(p => isPromocionDateValid(p, now))
@@ -328,9 +349,11 @@ export default function ShopPage() {
       catLabel: string | null | undefined,
       item: GroupItem
     ) => {
-      const id = catId != null ? String(catId) : '__no_category__'
-      const label = catLabel || 'Sin categoría'
-      const group = ensureGroup(id, label)
+      const label = (catLabel ?? '').trim() || 'Sin categoría'
+      // If there is no id, distinguish groups by label to avoid merging everything
+      const key = catId != null ? String(catId) : `no-id:${label}`
+
+      const group = ensureGroup(key, label)
       group.items.push(item)
     }
 
