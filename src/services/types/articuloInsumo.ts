@@ -31,9 +31,4 @@ export interface ArticuloInsumoUpdatePayload {
   stockMaximo?: number
   stockMinimo?: number
   esParaElaborar?: boolean
-
-  // Relaciones (probablemente inmutables)
-  //   idUnidadDeMedida?: number
-  //   idCategoria?: number
-  //   idSucursal?: number
 }
