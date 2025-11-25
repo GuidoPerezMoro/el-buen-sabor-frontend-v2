@@ -36,7 +36,6 @@ const partialBase = baseArticuloInsumoSchema.partial()
 export const articuloInsumoUpdateSchema = partialBase
   .extend({
     idUnidadDeMedida: requiredId('Unidad'),
-    idCategoria: requiredId('Categoría'),
   })
   .refine(
     (d: z.infer<typeof partialBase>) => {
