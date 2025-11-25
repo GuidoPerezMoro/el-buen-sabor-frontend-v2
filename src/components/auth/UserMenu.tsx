@@ -67,15 +67,6 @@ export default function UserMenu() {
           role="menu"
           className="absolute right-0 w-32 rounded-xl border border-border bg-background shadow z-50 p-1"
         >
-          {/* <a
-            role="menuitem"
-            href="/post-login"
-            className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
-            onClick={() => setOpen(false)}
-          >
-            Ir al dashboard
-          </a>
-          <div className="my-1 h-px bg-border" /> */}
           <a
             role="menuitem"
             href="/auth/logout"
