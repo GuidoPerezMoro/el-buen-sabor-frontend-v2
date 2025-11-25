@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import {useCart} from '@/contexts/cart'
 import {formatARS} from '@/lib/format'
 import QuantityControl from '@/components/domain/cart/QuantityControl'
+import {useEffect, useState} from 'react'
 
 interface CartDialogProps {
   name: string
@@ -14,6 +15,18 @@ interface CartDialogProps {
 
 export default function CartDialog({name}: CartDialogProps) {
   const {items, totalAmount, totalQuantity, clear, removeItem, setItemQuantity} = useCart()
+
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  if (!mounted) {
+    // Render only a stable shell identical on server & first client paint
+    return (
+      <Dialog name={name} title="Carrito">
+        <div className="p-4 text-sm text-muted">Cargando...</div>
+      </Dialog>
+    )
+  }
 
   const hasItems = items.length > 0
 
