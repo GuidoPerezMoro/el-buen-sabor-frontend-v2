@@ -1,3 +1,8 @@
+export interface EmpresaLite {
+  id: number
+  nombre: string
+}
+
 export interface SucursalLite {
   id: number
   nombre: string
@@ -14,5 +19,6 @@ export interface Empleado {
   /** Backend returns uppercase roles, e.g. "ADMIN", "COCINERO" */
   rol: string
   sucursal: SucursalLite
+  empresa: EmpresaLite | null
   imagenUrl: string | null
 }
