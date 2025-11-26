@@ -2,6 +2,7 @@
 import {useEffect, useRef, useState} from 'react'
 import {useUser} from '@auth0/nextjs-auth0/client'
 import {cn} from '@/lib/utils'
+import {useRoles} from '@/hooks/useRoles'
 
 function Avatar({name, picture}: {name?: string | null; picture?: string | null}) {
   if (picture) {
@@ -19,6 +20,7 @@ function Avatar({name, picture}: {name?: string | null; picture?: string | null}
 
 export default function UserMenu() {
   const {user, isLoading} = useUser()
+  const {has} = useRoles()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -67,6 +69,17 @@ export default function UserMenu() {
           role="menu"
           className="absolute right-0 w-32 rounded-xl border border-border bg-background shadow z-50 p-1"
         >
+          {/* Only for clientes */}
+          {has('cliente') && (
+            <a
+              role="menuitem"
+              href="/perfil"
+              className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
+              onClick={() => setOpen(false)}
+            >
+              Mi perfil
+            </a>
+          )}
           <a
             role="menuitem"
             href="/auth/logout"
