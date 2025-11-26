@@ -61,11 +61,7 @@ export default function ArticuloManufacturadoForm({
   const [preparacion, setPreparacion] = useState<string>(initialData?.preparacion ?? '')
   const [imagen, setImagen] = useState<File | null>(null)
 
-  const [categoriaOpt, setCategoriaOpt] = useState<DDOpt | null>(
-    initialData
-      ? {value: String(initialData.categoria.id), label: initialData.categoria.denominacion}
-      : null
-  )
+  const [categoriaOpt, setCategoriaOpt] = useState<DDOpt | null>(null)
 
   // For the add row
   const [addCatOpt, setAddCatOpt] = useState<DDOpt | null>(null)
@@ -116,13 +112,7 @@ export default function ArticuloManufacturadoForm({
     }
   }, [addInsumoOpt, addCatOpt, insumoMetaById])
 
-  // detalles editor state
-  const [detalles, setDetalles] = useState<DetalleRow[]>(
-    initialData?.detalles?.map(d => ({
-      cantidad: d.cantidad,
-      idArticuloInsumo: d.articuloInsumo?.id ?? 0,
-    })) ?? []
-  )
+  const [detalles, setDetalles] = useState<DetalleRow[]>([])
   const [newCantidad, setNewCantidad] = useState<number | ''>('')
 
   // ── options data ─────────────────────────────────────────────────────────
@@ -141,7 +131,16 @@ export default function ArticuloManufacturadoForm({
       const flatProd = flattenCategoriaTree(treeProd)
       setCategoriaOptions(flatProd.map(f => ({value: String(f.id), label: f.label})))
 
-      // Ingredientes: solo categorías SÍ insumo
+      // Si estamos editando, resolvemos la categoría a partir del nombre
+      if (initialData?.categoria?.denominacion) {
+        const currentName = initialData.categoria.denominacion
+        const found = flatProd.find(f => f.label.endsWith(currentName))
+        if (found) {
+          setCategoriaOpt({value: String(found.id), label: found.label})
+        }
+      }
+
+      // Ingredientes: solo categorías de tipo insumo
       const scopedInsumo = filterCategoriasBySucursalId(categorias, sucursalId).filter(
         c => c.esInsumo
       )
@@ -149,7 +148,7 @@ export default function ArticuloManufacturadoForm({
       const flatInsumo = flattenCategoriaTree(treeInsumo)
       setInsumoCategoriaOptions(flatInsumo.map(f => ({value: String(f.id), label: f.label})))
     })()
-  }, [sucursalId])
+  }, [sucursalId, initialData])
 
   // reset on edit change
   useEffect(() => {
@@ -159,20 +158,30 @@ export default function ArticuloManufacturadoForm({
     setDescripcion(initialData?.descripcion ?? '')
     setTiempoMin(initialData?.tiempoEstimadoMinutos ?? '')
     setPreparacion(initialData?.preparacion ?? '')
-    setCategoriaOpt(
-      initialData
-        ? {value: String(initialData.categoria.id), label: initialData.categoria.denominacion}
-        : null
-    )
-    setDetalles(
-      initialData?.detalles?.map(d => ({
-        cantidad: d.cantidad,
-        idArticuloInsumo: d.articuloInsumo?.id ?? 0,
-      })) ?? []
-    )
   }, [isEdit, initialData])
 
-  // ── detalles editor helpers ──────────────────────────────────────────────
+  // Cuando hay datos iniciales + insumos cargados, mapeamos los detalles
+  useEffect(() => {
+    if (!isEdit || !initialData) {
+      setDetalles([])
+      return
+    }
+
+    setDetalles(
+      initialData.detalles.map(d => {
+        const denom = d.articuloInsumo?.denominacion
+        const match = denom ? insumos.find(i => i.denominacion === denom) : undefined
+        return {
+          cantidad: d.cantidad,
+          // Si encontramos el insumo, usamos su id; si no, 0 (no se enviará bien al BE,
+          // pero al menos se muestra).
+          idArticuloInsumo: match ? match.id : 0,
+        }
+      })
+    )
+  }, [isEdit, initialData, insumos])
+
+  // Detalles helpers
   const addDetalle = () => {
     const id = Number(addInsumoOpt?.value)
     const qty = Number(newCantidad)
@@ -181,14 +190,13 @@ export default function ArticuloManufacturadoForm({
     setAddInsumoOpt(null)
     setNewCantidad('')
   }
-
-  const updateDetalle = (id: number, qty: number | '') => {
+  const updateDetalle = (index: number, qty: number | '') => {
     setDetalles(prev =>
-      prev.map(d => (d.idArticuloInsumo === id ? {...d, cantidad: qty as number} : d))
+      prev.map((d, i) => (i === index ? {...d, cantidad: (qty as number) || 0} : d))
     )
   }
-  const removeDetalle = (id: number) => {
-    setDetalles(prev => prev.filter(d => d.idArticuloInsumo !== id))
+  const removeDetalle = (index: number) => {
+    setDetalles(prev => prev.filter((_, i) => i !== index))
   }
 
   // ── validation/ui state ──────────────────────────────────────────────────
@@ -380,7 +388,7 @@ export default function ArticuloManufacturadoForm({
           <p className="text-sm text-muted">Aún no agregaste ingredientes.</p>
         )}
 
-        {detalles.map(d => {
+        {detalles.map((d, idx) => {
           const meta = insumoMetaById[d.idArticuloInsumo]
           const catLabel = meta?.categoriaLabel ?? '—'
           const unidadLabel = meta?.unidadLabel ?? '—'
@@ -390,7 +398,7 @@ export default function ArticuloManufacturadoForm({
 
           return (
             <div
-              key={d.idArticuloInsumo}
+              key={`${d.idArticuloInsumo}-${idx}`}
               className="grid grid-cols-[1fr_6rem_8rem_auto] items-center gap-3"
             >
               {/* "Categoría > Insumo" */}
@@ -406,9 +414,7 @@ export default function ArticuloManufacturadoForm({
                   type="number"
                   inputMode="decimal"
                   value={String(d.cantidad)}
-                  onChange={e =>
-                    updateDetalle(d.idArticuloInsumo, e.currentTarget.valueAsNumber || 0)
-                  }
+                  onChange={e => updateDetalle(idx, e.currentTarget.valueAsNumber || 0)}
                   placeholder="Cant."
                 />
               </div>
@@ -416,11 +422,7 @@ export default function ArticuloManufacturadoForm({
                 <span className="text-sm text-muted">× {unidadLabel}</span>
               </div>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => removeDetalle(d.idArticuloInsumo)}
-              >
+              <Button type="button" variant="secondary" onClick={() => removeDetalle(idx)}>
                 Quitar
               </Button>
             </div>
