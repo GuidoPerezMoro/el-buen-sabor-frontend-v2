@@ -22,9 +22,13 @@ export const clienteBaseSchema = z.object({
   rol: z.literal('CLIENTE').default('CLIENTE'),
 })
 
-// - Requires at least one domicilio
+// CREATE: Requires at least one domicilio
 export const clienteCreateSchema = clienteBaseSchema.extend({
   domicilios: z.array(domicilioSchema).min(1, 'Debe registrar al menos un domicilio'),
 })
 
 export type ClienteCreatePayload = z.infer<typeof clienteCreateSchema>
+
+// UPDATE: por ahora no permitimos editar domicilios desde el FE.
+export const clienteUpdateSchema = clienteBaseSchema
+export type ClienteUpdatePayload = z.infer<typeof clienteUpdateSchema>

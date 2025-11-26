@@ -47,7 +47,7 @@ export default function HomePage() {
               </Button>
             </a>
             {/* Secondary: Crear cuenta */}
-            <a href="/signup" className="block">
+            <a href="/auth/login?screen_hint=signup&returnTo=/perfil" className="block">
               <Button variant="secondary" className="w-full">
                 Crear cuenta
               </Button>

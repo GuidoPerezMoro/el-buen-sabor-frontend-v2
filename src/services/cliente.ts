@@ -1,6 +1,11 @@
 import api from './baseService'
 import type {Cliente} from './types/cliente'
-import {clienteCreateSchema, type ClienteCreatePayload} from '@/schemas/clienteSchema'
+import {
+  clienteCreateSchema,
+  clienteUpdateSchema,
+  type ClienteCreatePayload,
+  type ClienteUpdatePayload,
+} from '@/schemas/clienteSchema'
 
 const BASE = '/clientes'
 
@@ -44,13 +49,34 @@ export async function createClienteWithImage(
   return res.data
 }
 
-// NOTE:
-// We intentionally skip update endpoints for now (/clientes/update-with-image, etc.)
-// until the backend contract is stable (ids de domicilios, shape de update, etc.).
-// Once we have confirmed samples, we can add:
-//   - clienteUpdateSchema
-//   - updateCliente(...)
-//   - updateClienteWithImage(...)
+/**
+ * Actualizar cliente (sin imagen).
+ * - No enviamos domicilios: el backend hoy no maneja bien objetos anidados en update.
+ */
+export async function updateCliente(id: number, payload: ClienteUpdatePayload): Promise<Cliente> {
+  const data = clienteUpdateSchema.parse(payload)
+  // Asumimos mismo contrato que otras entidades: PUT /clientes/:id
+  const res = await api.put<Cliente>(`${BASE}/${id}`, data)
+  return res.data
+}
+
+/**
+ * Actualizar cliente + subir nueva imagen.
+ * - Multipart: { data: JSON, file: Binary }
+ * - Ruta alineada a sucursales/empleados; si el backend difiere, solo se ajusta aquí.
+ */
+export async function updateClienteWithImage(
+  id: number,
+  payload: ClienteUpdatePayload,
+  file: File
+): Promise<Cliente> {
+  const data = clienteUpdateSchema.parse(payload)
+  const form = new FormData()
+  form.append('data', new Blob([JSON.stringify(data)], {type: 'application/json'}))
+  form.append('file', file)
+  const res = await api.put<Cliente>(`${BASE}/update-with-image/${id}`, form)
+  return res.data
+}
 
 /**
  * Buscar cliente por email usando GET /clientes y filtrando en FE.

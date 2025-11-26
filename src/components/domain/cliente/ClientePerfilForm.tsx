@@ -1,20 +1,32 @@
 'use client'
 
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import ImageDropzone from '@/components/ui/ImageDropzone'
 import DomicilioFields from '@/components/domain/domicilio/DomicilioFields'
-import {clienteCreateSchema, type ClienteCreatePayload} from '@/schemas/clienteSchema'
-import {createCliente, createClienteWithImage} from '@/services/cliente'
+import {
+  clienteCreateSchema,
+  clienteUpdateSchema,
+  type ClienteCreatePayload,
+  type ClienteUpdatePayload,
+} from '@/schemas/clienteSchema'
+import {
+  createCliente,
+  createClienteWithImage,
+  updateCliente,
+  updateClienteWithImage,
+} from '@/services/cliente'
 import type {Cliente} from '@/services/types/cliente'
 
-type Mode = 'create'
+type Mode = 'create' | 'edit'
 
 interface Props {
   mode: Mode
   authUserEmail: string | null | undefined
+  initialCliente?: Cliente | null
   onCreated?: (cliente: Cliente) => void
+  onUpdated?: (cliente: Cliente) => void
 }
 
 interface DomicilioFormState {
@@ -40,24 +52,39 @@ function makeEmptyDomicilio(): DomicilioFormState {
   }
 }
 
-export default function ClientePerfilForm({mode, authUserEmail, onCreated}: Props) {
+export default function ClientePerfilForm({
+  mode,
+  authUserEmail,
+  initialCliente,
+  onCreated,
+  onUpdated,
+}: Props) {
   const isCreate = mode === 'create'
 
-  const [nombre, setNombre] = useState('')
-  const [apellido, setApellido] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [email, setEmail] = useState(() => authUserEmail ?? '')
-  const [fechaNacimiento, setFechaNacimiento] = useState('')
+  const [nombre, setNombre] = useState(initialCliente?.nombre ?? '')
+  const [apellido, setApellido] = useState(initialCliente?.apellido ?? '')
+  const [telefono, setTelefono] = useState(initialCliente?.telefono ?? '')
+  const [email, setEmail] = useState(() => initialCliente?.email ?? authUserEmail ?? '')
+  const [fechaNacimiento, setFechaNacimiento] = useState(initialCliente?.fechaNacimiento ?? '')
+  const [imagen, setImagen] = useState<File | null>(null)
 
   const [domicilios, setDomicilios] = useState<DomicilioFormState[]>([makeEmptyDomicilio()])
   const [domicilioErrors, setDomicilioErrors] = useState<DomicilioFormErrors[]>([])
-
-  const [imagen, setImagen] = useState<File | null>(null)
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
 
   const canAddMoreDomicilios = useMemo(() => domicilios.length < 5, [domicilios.length])
+
+  // Si cambian los datos iniciales (p.ej. después de refetch), sincronizar el form en modo edit.
+  useEffect(() => {
+    if (!initialCliente || isCreate) return
+    setNombre(initialCliente.nombre ?? '')
+    setApellido(initialCliente.apellido ?? '')
+    setTelefono(initialCliente.telefono ?? '')
+    setEmail(initialCliente.email ?? authUserEmail ?? '')
+    setFechaNacimiento(initialCliente.fechaNacimiento ?? '')
+  }, [initialCliente, authUserEmail, isCreate])
 
   const handleAddDomicilio = () => {
     setDomicilios(prev => [...prev, makeEmptyDomicilio()])
@@ -81,59 +108,95 @@ export default function ClientePerfilForm({mode, authUserEmail, onCreated}: Prop
       const trimmedTel = telefono.trim()
       const trimmedFnac = fechaNacimiento.trim()
 
-      const domicilioPayloads = domicilios.map(d => ({
-        calle: d.calle.trim(),
-        numero: Number(d.numero),
-        cp: Number(d.cp),
-        idLocalidad: d.localidadId != null ? d.localidadId : (null as any),
-      }))
+      if (isCreate) {
+        // ── CREATE ─────────────────────────────────────────────────────────────
+        const domicilioPayloads = domicilios.map(d => ({
+          calle: d.calle.trim(),
+          numero: Number(d.numero),
+          cp: Number(d.cp),
+          idLocalidad: d.localidadId != null ? d.localidadId : (null as any),
+        }))
 
-      const raw: ClienteCreatePayload = {
+        const raw: ClienteCreatePayload = {
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          ...(trimmedTel && {telefono: trimmedTel}),
+          ...(trimmedEmail && {email: trimmedEmail}),
+          ...(trimmedFnac && {fechaNacimiento: trimmedFnac}),
+          // rol se fuerza a "CLIENTE" en el schema (sino el backend lo deja null)
+          rol: 'CLIENTE',
+          domicilios: domicilioPayloads as any,
+        }
+
+        const result = clienteCreateSchema.safeParse(raw)
+        if (!result.success) {
+          const errs: Record<string, string> = {}
+          const domErrs: DomicilioFormErrors[] = Array(domicilios.length)
+            .fill(0)
+            .map(() => ({}))
+
+          result.error.errors.forEach(e => {
+            const path = e.path.join('.')
+            if (path.startsWith('domicilios.')) {
+              const parts = path.split('.')
+              const index = Number(parts[1] ?? '-1')
+              const field = parts[2] as keyof DomicilioFormErrors | undefined
+              if (!Number.isNaN(index) && index >= 0 && index < domErrs.length && field) {
+                domErrs[index][field] = e.message
+              }
+            } else {
+              errs[path] = e.message
+            }
+          })
+
+          setFormErrors(errs)
+          setDomicilioErrors(domErrs)
+          setSubmitting(false)
+          return
+        }
+
+        const payload = result.data
+
+        const created = await (imagen
+          ? createClienteWithImage(payload, imagen)
+          : createCliente(payload))
+
+        onCreated?.(created)
+        return
+      }
+
+      // ── EDIT ────────────────────────────────────────────────────────────────
+      if (!initialCliente) {
+        throw new Error('No se encontró el cliente a editar.')
+      }
+
+      const rawUpdate: ClienteUpdatePayload = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
+        // backend bug: reforzamos rol CLIENTE también en update por consistencia
+        rol: 'CLIENTE',
         ...(trimmedTel && {telefono: trimmedTel}),
         ...(trimmedEmail && {email: trimmedEmail}),
         ...(trimmedFnac && {fechaNacimiento: trimmedFnac}),
-        // rol se fuerza a "CLIENTE" en el schema (sino el backend lo deja null)
-        rol: 'CLIENTE',
-        domicilios: domicilioPayloads as any,
       }
 
-      const result = clienteCreateSchema.safeParse(raw)
-      if (!result.success) {
+      const parsed = clienteUpdateSchema.safeParse(rawUpdate)
+      if (!parsed.success) {
         const errs: Record<string, string> = {}
-        const domErrs: DomicilioFormErrors[] = Array(domicilios.length)
-          .fill(0)
-          .map(() => ({}))
-
-        result.error.errors.forEach(e => {
+        parsed.error.errors.forEach(e => {
           const path = e.path.join('.')
-          if (path.startsWith('domicilios.')) {
-            // Ej: domicilios.0.calle
-            const parts = path.split('.')
-            const index = Number(parts[1] ?? '-1')
-            const field = parts[2] as keyof DomicilioFormErrors | undefined
-            if (!Number.isNaN(index) && index >= 0 && index < domErrs.length && field) {
-              domErrs[index][field] = e.message
-            }
-          } else {
-            errs[path] = e.message
-          }
+          errs[path] = e.message
         })
-
         setFormErrors(errs)
-        setDomicilioErrors(domErrs)
         setSubmitting(false)
         return
       }
 
-      const payload = result.data
+      const updated = await (imagen
+        ? updateClienteWithImage(initialCliente.id, parsed.data, imagen)
+        : updateCliente(initialCliente.id, parsed.data))
 
-      const created = await (imagen
-        ? createClienteWithImage(payload, imagen)
-        : createCliente(payload))
-
-      onCreated?.(created)
+      onUpdated?.(updated)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al guardar el perfil de cliente.'
       setFormErrors({general: message})
@@ -151,7 +214,7 @@ export default function ClientePerfilForm({mode, authUserEmail, onCreated}: Prop
             label="Foto de perfil (opcional)"
             hint="Recomendado JPG/PNG/WebP."
             onFileAccepted={setImagen}
-            previewUrl={null}
+            previewUrl={initialCliente?.imagenUrl ?? null}
             className="max-w-xs md:max-w-none aspect-square max-h-60 mx-auto"
           />
         </div>
