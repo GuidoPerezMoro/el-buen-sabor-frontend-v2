@@ -1,4 +1,3 @@
-// src/app/403/page.tsx  (SERVER)
 import Link from 'next/link'
 import ForbiddenActions from './ForbiddenActions'
 import Button from '@/components/ui/Button'
