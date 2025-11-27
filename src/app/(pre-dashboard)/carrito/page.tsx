@@ -4,18 +4,19 @@ import {useEffect, useMemo, useState} from 'react'
 import Image from 'next/image'
 import {useRouter} from 'next/navigation'
 import {useUser} from '@auth0/nextjs-auth0/client'
-import {Trash, Utensils} from 'lucide-react'
-
-import Button from '@/components/ui/Button'
-import StatusMessage from '@/components/ui/StatusMessage'
 import {useCart} from '@/contexts/cart'
 import {useRoles} from '@/hooks/useRoles'
-import QuantityControl from '@/components/domain/cart/QuantityControl'
+
+import {Trash, Utensils} from 'lucide-react'
+
 import {formatARS} from '@/lib/format'
+import Button from '@/components/ui/Button'
+import StatusMessage from '@/components/ui/StatusMessage'
+import QuantityControl from '@/components/domain/cart/QuantityControl'
+
+import type {Cliente, TipoEnvio} from '@/services/types'
 import {fetchClienteByEmail} from '@/services/cliente'
-import type {Cliente} from '@/services/types/cliente'
 import {createPedido, createPedidoMercadoPago} from '@/services/pedido'
-import type {TipoEnvio} from '@/services/types/pedido'
 
 export default function CarritoPage() {
   const router = useRouter()
@@ -145,6 +146,9 @@ export default function CarritoPage() {
         idSucursal: sucursalId,
         detalles,
       })
+
+      // ✅ Clear cart *before* redirect
+      clear()
 
       const pref = await createPedidoMercadoPago(pedido.id)
       if (!pref.initPoint) {
