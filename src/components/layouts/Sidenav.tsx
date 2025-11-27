@@ -11,9 +11,10 @@ import {
   Wheat,
   Tags,
   Ruler,
+  ListChecks,
+  ShoppingBasketIcon,
   UsersRound,
   Settings,
-  ShoppingBasketIcon,
 } from 'lucide-react'
 import type {Role} from '@/services/types'
 import {useRoles} from '@/hooks/useRoles'
@@ -74,6 +75,14 @@ const NAV: NavEl[] = [
     label: 'Unidades de medida',
     icon: Ruler,
     allow: ['superadmin', 'admin', 'gerente'],
+  },
+  {type: 'divider'},
+  {
+    type: 'item',
+    makeHref: b => `${b}/pedidos`,
+    label: 'Pedidos',
+    icon: ListChecks,
+    allow: ['superadmin', 'admin', 'gerente', 'cocinero'],
   },
   {type: 'divider'},
   {
