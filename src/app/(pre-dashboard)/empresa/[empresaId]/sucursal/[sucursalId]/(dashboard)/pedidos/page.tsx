@@ -86,6 +86,18 @@ export default function PedidosPage() {
     return byText.filter(p => p.estado === estadoFilter)
   }, [items, filterText, estadoFilter, roles])
 
+  // Añadimos un campo auxiliar para ordenar por fecha+hora
+  const enriched = useMemo(() => {
+    return filtered.map(p => {
+      const d = new Date(`${p.fechaDePedido}T${p.horarioEstimada}`)
+      const ts = Number.isNaN(d.getTime()) ? 0 : d.getTime()
+      return {
+        ...p,
+        sortTimestamp: ts,
+      }
+    })
+  }, [filtered])
+
   const estadoFilterOptions = useMemo(() => {
     const base = ESTADO_PEDIDO_VALUES
 
@@ -184,7 +196,7 @@ export default function PedidosPage() {
       ) : (
         <div className="bg-white rounded-md border">
           <PedidosTable
-            items={filtered}
+            items={enriched}
             onView={handleView}
             onChangeEstado={handleChangeEstado}
             onDelete={handleDelete}
