@@ -110,3 +110,32 @@ export interface Pedido {
   empleado: PedidoEmpleado | null
   detalles: PedidoDetalle[]
 }
+
+// ── Checkout payloads ───────────────────────────────────────────────────────
+
+export type PedidoDetalleCreate =
+  | {
+      cantidad: number
+      idArticulo: number
+      idPromocion?: never
+    }
+  | {
+      cantidad: number
+      idPromocion: number
+      idArticulo?: never
+    }
+
+export interface PedidoCreatePayload {
+  tipoDeEnvio: TipoEnvio
+  formaDePago: FormaPago
+  idCliente: number
+  idDomicilio: number
+  idSucursal: number
+  detalles: PedidoDetalleCreate[]
+}
+
+export interface PedidoMercadoPagoPreference {
+  id: string
+  statusCode: number
+  initPoint: string
+}
