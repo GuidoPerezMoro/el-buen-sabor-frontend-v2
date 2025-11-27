@@ -109,6 +109,34 @@ export default function ClientePerfilForm({
     setDomicilioErrors(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleCalleChange = (index: number, value: string) => {
+    if (!isCreate) return
+    setDomicilios((prev: DomicilioFormState[]) =>
+      prev.map((d, i) => (i === index ? {...d, calle: value} : d))
+    )
+  }
+
+  const handleNumeroChange = (index: number, value: number | '') => {
+    if (!isCreate) return
+    setDomicilios((prev: DomicilioFormState[]) =>
+      prev.map((d, i) => (i === index ? {...d, numero: value} : d))
+    )
+  }
+
+  const handleCpChange = (index: number, value: number | '') => {
+    if (!isCreate) return
+    setDomicilios((prev: DomicilioFormState[]) =>
+      prev.map((d, i) => (i === index ? {...d, cp: value} : d))
+    )
+  }
+
+  const handleLocalidadChange = (index: number, value: number | null) => {
+    if (!isCreate) return
+    setDomicilios((prev: DomicilioFormState[]) =>
+      prev.map((d, i) => (i === index ? {...d, localidadId: value} : d))
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormErrors({})
@@ -318,32 +346,10 @@ export default function ClientePerfilForm({
                 numero={dom.numero}
                 cp={dom.cp}
                 localidadId={dom.localidadId}
-                onChangeCalle={v =>
-                  isCreate
-                    ? setDomicilios(prev =>
-                        prev.map((d, i) => (i === index ? {...d, calle: v} : d))
-                      )
-                    : prev => prev
-                }
-                onChangeNumero={v =>
-                  isCreate
-                    ? setDomicilios(prev =>
-                        prev.map((d, i) => (i === index ? {...d, numero: v} : d))
-                      )
-                    : prev => prev
-                }
-                onChangeCp={v =>
-                  isCreate
-                    ? setDomicilios(prev => prev.map((d, i) => (i === index ? {...d, cp: v} : d)))
-                    : prev => prev
-                }
-                onChangeLocalidadId={id =>
-                  isCreate
-                    ? setDomicilios(prev =>
-                        prev.map((d, i) => (i === index ? {...d, localidadId: id} : d))
-                      )
-                    : prev => prev
-                }
+                onChangeCalle={v => handleCalleChange(index, v)}
+                onChangeNumero={v => handleNumeroChange(index, v)}
+                onChangeCp={v => handleCpChange(index, v)}
+                onChangeLocalidadId={id => handleLocalidadChange(index, id)}
                 disableLocalidad={!isCreate}
                 errors={isCreate ? domicilioErrors[index] : undefined}
               />
