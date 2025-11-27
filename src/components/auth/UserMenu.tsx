@@ -20,7 +20,7 @@ function Avatar({name, picture}: {name?: string | null; picture?: string | null}
 
 export default function UserMenu() {
   const {user, isLoading} = useUser()
-  const {has} = useRoles()
+  const {has, loading: rolesLoading} = useRoles()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -49,6 +49,13 @@ export default function UserMenu() {
     )
   }
 
+  // UI-only heuristic:
+  // - If the token already has "cliente", use that.
+  // - If it has no staff roles, treat the user as a cliente for menu purposes.
+  //   This fixes the first-login case where the role assignment may lag behind the token.
+  const isClienteLike =
+    !rolesLoading && (has('cliente') || !has(['superadmin', 'admin', 'gerente', 'cocinero']))
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -70,7 +77,7 @@ export default function UserMenu() {
           className="absolute right-0 w-32 rounded-xl border border-border bg-background shadow z-50 p-1"
         >
           {/* Only for clientes */}
-          {has('cliente') && (
+          {isClienteLike && (
             <a
               role="menuitem"
               href="/perfil"

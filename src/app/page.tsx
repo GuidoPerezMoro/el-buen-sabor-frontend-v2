@@ -1,16 +1,51 @@
 'use client'
 
-import Button from '@/components/ui/Button'
+import {useEffect} from 'react'
 import {useRouter} from 'next/navigation'
 import {useUser} from '@auth0/nextjs-auth0/client'
+import {useRoles} from '@/hooks/useRoles'
+import Button from '@/components/ui/Button'
+import {fetchClienteByEmail} from '@/services/cliente'
 
 export default function HomePage() {
   const router = useRouter()
   const {user, isLoading} = useUser()
+  const {has, loading: rolesLoading} = useRoles()
 
   const handleStart = () => {
     router.push('/post-login')
   }
+
+  // Si el usuario inició sesión y parece ser cliente pero aún no tiene perfil,
+  // lo redirigimos automáticamente a /perfil para completar sus datos.
+  useEffect(() => {
+    if (isLoading || rolesLoading) return
+    if (!user?.email) return
+
+    // Staff roles no deben ir a /perfil automáticamente
+    const staffRoles = ['superadmin', 'admin', 'gerente', 'cocinero']
+    if (has(staffRoles)) return
+
+    // "Cliente-like": tiene rol cliente o ningún rol de staff
+    const isClienteLike = has('cliente') || !has(staffRoles)
+    if (!isClienteLike) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const existing = await fetchClienteByEmail(user.email!)
+        if (!cancelled && !existing) {
+          router.replace('/perfil')
+        }
+      } catch {
+        // fail-open: si el backend falla, no bloqueamos el home
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isLoading, rolesLoading, user, has, router])
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-muted/60 to-background flex items-center justify-center p-6">

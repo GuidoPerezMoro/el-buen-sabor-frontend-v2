@@ -4,5 +4,5 @@ import {redirect} from 'next/navigation'
 // Uses the built-in /auth/login route from @auth0/nextjs-auth0 (App Router integration).
 // If you ever change returnTo, you only update it here.
 export default function SignUpPage() {
-  redirect('/auth/login?screen_hint=signup&returnTo=/post-login')
+  redirect('/auth/login?screen_hint=signup&returnTo=/perfil')
 }
