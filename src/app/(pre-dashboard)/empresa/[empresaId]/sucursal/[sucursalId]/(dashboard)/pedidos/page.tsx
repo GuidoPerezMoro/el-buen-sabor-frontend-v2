@@ -11,6 +11,7 @@ import {TriangleAlert} from 'lucide-react'
 import {ESTADO_PEDIDO_VALUES, type Pedido} from '@/services/types'
 import {fetchAllPedidos, deletePedido} from '@/services/pedido'
 import {
+  filterPedidosByRole,
   filterPedidosBySucursalId,
   filterPedidosByText,
   getEstadoPedidoLabel,
@@ -31,7 +32,7 @@ export default function PedidosPage() {
   const {sucursalId: sid} = useParams<Params>()
   const sucursalId = Number(sid)
   const {openDialog, closeDialog} = useDialog()
-  const {roles} = useRoles()
+  const {roles, primaryRole} = useRoles()
 
   const [items, setItems] = useState<Pedido[]>([])
   const [filterText, setFilterText] = useState('')
@@ -39,10 +40,10 @@ export default function PedidosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const isSuperadmin = roles?.includes('superadmin')
-  const isAdmin = roles?.includes('admin')
-  const isGerente = roles?.includes('gerente')
-  const isCocinero = roles?.includes('cocinero')
+  const isCocinero = primaryRole === 'cocinero'
+  const isGerente = primaryRole === 'gerente'
+  const isAdmin = primaryRole === 'admin'
+  const isSuperadmin = primaryRole === 'superadmin'
   const canUpdateEstado = true // todos los staff pueden cambiar estado por ahora
   const canDelete = !isCocinero
   const showCosto = isSuperadmin || isAdmin
@@ -78,21 +79,29 @@ export default function PedidosPage() {
   }, [load])
 
   const filtered = useMemo(() => {
-    const byText = filterPedidosByText(items, filterText)
+    // Primero, limitar por rol (ej. cocinero solo ve preparación/terminado)
+    const byRole = filterPedidosByRole(items, roles ?? [])
+    const byText = filterPedidosByText(byRole, filterText)
     if (estadoFilter === 'ALL') return byText
     return byText.filter(p => p.estado === estadoFilter)
-  }, [items, filterText, estadoFilter])
+  }, [items, filterText, estadoFilter, roles])
 
-  const estadoFilterOptions = useMemo(
-    () => [
+  const estadoFilterOptions = useMemo(() => {
+    const base = ESTADO_PEDIDO_VALUES
+
+    const visibleEstados =
+      primaryRole === 'cocinero'
+        ? (['PREPARACION', 'TERMINADO'] as (typeof ESTADO_PEDIDO_VALUES)[number][])
+        : base
+
+    return [
       {value: 'ALL', label: 'Todos'},
-      ...ESTADO_PEDIDO_VALUES.map(e => ({
+      ...visibleEstados.map(e => ({
         value: e,
         label: getEstadoPedidoLabel(e),
       })),
-    ],
-    []
-  )
+    ]
+  }, [primaryRole])
 
   // View details
   const [viewing, setViewing] = useState<Pedido | null>(null)
@@ -206,6 +215,7 @@ export default function PedidosPage() {
           <UpdateEstadoDialog
             pedido={updating}
             onUpdated={() => load(false)}
+            roles={roles}
             onClose={() => {
               setUpdating(null)
               closeDialog('update-estado-pedido')

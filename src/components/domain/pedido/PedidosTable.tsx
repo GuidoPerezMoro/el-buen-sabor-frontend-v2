@@ -4,15 +4,10 @@ import {useMemo} from 'react'
 import {Info, RefreshCcw, Trash} from 'lucide-react'
 import Table, {Column} from '@/components/ui/Table'
 import IconButton from '@/components/ui/IconButton'
-import {formatARS} from '@/lib/format'
+import {formatARS, formatTimeHM} from '@/lib/format'
 import {Pedido} from '@/services/types/pedido'
 import PedidoStateBadge from './PedidoStateBadge'
-import {
-  formatHorarioEstimadaToHM,
-  getFormaPagoLabel,
-  getTipoEnvioLabel,
-  isPedidoDelayed,
-} from '@/services/pedido.utils'
+import {getFormaPagoLabel, getTipoEnvioLabel, isPedidoDelayed} from '@/services/pedido.utils'
 
 type Props = {
   items: Pedido[]
@@ -51,7 +46,7 @@ export default function PedidosTable({
               className={isPedidoDelayed(p) ? 'font-semibold text-danger' : 'font-semibold'}
               title="Hora estimada de entrega"
             >
-              Est. {formatHorarioEstimadaToHM(p.horarioEstimada)}
+              Est. {formatTimeHM(p.horarioEstimada)}
             </span>
             <span className="text-muted">{p.fechaDePedido}</span>
           </div>

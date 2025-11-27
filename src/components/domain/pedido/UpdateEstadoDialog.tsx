@@ -1,22 +1,23 @@
 'use client'
 
 import {useMemo, useState} from 'react'
-import Button from '@/components/ui/Button'
-import {Pedido, EstadoPedido} from '@/services/types/pedido'
-import {getAllowedNextEstados, getEstadoPedidoLabel} from '@/services/pedido.utils'
-import {updatePedidoEstado} from '@/services/pedido'
-import PedidoStateBadge from './PedidoStateBadge'
 import {ArrowRight} from 'lucide-react'
+import Button from '@/components/ui/Button'
 import Dropdown from '@/components/ui/Dropdown'
+import PedidoStateBadge from './PedidoStateBadge'
+import {Pedido, EstadoPedido} from '@/services/types/pedido'
+import {getAllowedNextEstadosForRole, getEstadoPedidoLabel} from '@/services/pedido.utils'
+import {updatePedidoEstado} from '@/services/pedido'
 
 interface Props {
   pedido: Pedido
   onUpdated: () => void
   onClose: () => void
+  roles?: string[] | null
 }
 
-export default function UpdateEstadoDialog({pedido, onUpdated, onClose}: Props) {
-  const allowed = getAllowedNextEstados(pedido.estado)
+export default function UpdateEstadoDialog({pedido, onUpdated, onClose, roles}: Props) {
+  const allowed = getAllowedNextEstadosForRole(pedido.estado, roles)
   const estadoOptions = useMemo(
     () => allowed.map(e => ({value: e, label: getEstadoPedidoLabel(e)})),
     [allowed]
@@ -62,6 +63,7 @@ export default function UpdateEstadoDialog({pedido, onUpdated, onClose}: Props) 
                 value={selected}
                 onChange={val => setSelected(val as {value: EstadoPedido; label: string} | null)}
                 placeholder="Nuevo estado"
+                searchable={false}
                 clearable={false}
               />
             </div>
@@ -78,10 +80,6 @@ export default function UpdateEstadoDialog({pedido, onUpdated, onClose}: Props) 
           <p className="text-xs text-muted mt-1">Este pedido ya no admite cambios de estado.</p>
         )}
       </div>
-
-      {/* NOTE: "confirm note" fue parte del scope, pero el endpoint solo acepta `estado`.
-          Para evitar datos fantasma que no se persisten, NO se incluye nota por ahora.
-          Si el backend la soporta, la agregamos después. */}
 
       {error && <p className="text-xs text-danger">{error}</p>}
 

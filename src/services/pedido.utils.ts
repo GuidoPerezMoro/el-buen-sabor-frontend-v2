@@ -1,4 +1,6 @@
+import {getPrimaryStaffRole} from '@/hooks/useRoles'
 import {EstadoPedido, FormaPago, Pedido, TipoEnvio} from '@/services/types/pedido'
+import {hasAnyRole} from '@/services/types'
 
 export function filterPedidosBySucursalId(list: Pedido[], sucursalId: number): Pedido[] {
   return list.filter(p => p.sucursal?.id === sucursalId)
@@ -70,6 +72,24 @@ const PEDIDO_ALLOWED_NEXT_ESTADOS: Record<EstadoPedido, EstadoPedido[]> = {
 
 export function getAllowedNextEstados(current: EstadoPedido): EstadoPedido[] {
   return PEDIDO_ALLOWED_NEXT_ESTADOS[current] ?? []
+}
+
+/** Aplica restricciones de negocio según el rol. */
+export function getAllowedNextEstadosForRole(
+  current: EstadoPedido,
+  roles?: string[] | null
+): EstadoPedido[] {
+  const base = getAllowedNextEstados(current)
+  const role = getPrimaryStaffRole(roles)
+
+  if (role === 'cocinero') {
+    // Cocinero: solo puede marcar preparación como terminado.
+    if (current === 'PREPARACION') return ['TERMINADO']
+    return []
+  }
+
+  // Gerente / admin / superadmin: por ahora tienen el mapa completo.
+  return base
 }
 
 // Polling
@@ -145,13 +165,14 @@ export function filterPedidosByText(list: Pedido[], query: string): Pedido[] {
   })
 }
 
-/** Devuelve "HH:MM" a partir de un string horario tipo "21:42:42.12". */
-export function formatHorarioEstimadaToHM(horario: string): string {
-  if (!horario) return '--:--'
-  const [timePart] = horario.split('.') // descartar fracción de segundo
-  const [hh, mm] = timePart.split(':')
-  if (!hh || !mm) return timePart ?? '--:--'
-  return `${hh}:${mm}`
+/** Filtra pedidos visibles según rol (además del filtro por sucursal). */
+export function filterPedidosByRole(list: Pedido[], roles?: string[] | null): Pedido[] {
+  if (hasAnyRole(roles ?? undefined, ['cocinero'])) {
+    // Cocina: solo pedidos relevantes al flujo de preparación.
+    return list.filter(p => p.estado === 'PREPARACION' || p.estado === 'TERMINADO')
+  }
+  // Otros staff ven todos los estados disponibles por ahora.
+  return list
 }
 
 /** Intenta construir un Date local usando fechaDePedido + horarioEstimada. */
