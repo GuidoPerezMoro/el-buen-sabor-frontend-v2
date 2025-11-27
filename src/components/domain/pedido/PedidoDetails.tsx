@@ -1,19 +1,33 @@
 'use client'
 
-import {formatARS} from '@/lib/format'
+import {formatARS, formatDateDMY, formatTimeHM} from '@/lib/format'
 import {Pedido} from '@/services/types/pedido'
 import PedidoStateBadge from './PedidoStateBadge'
+import {useRoles} from '@/hooks/useRoles'
+import {getFormaPagoLabel, getTipoEnvioLabel} from '@/services/pedido.utils'
 
 interface Props {
   pedido: Pedido
 }
 
 export default function PedidoDetails({pedido}: Props) {
+  const {roles} = useRoles()
+  const isCocinero = roles?.includes('cocinero')
+  const isGerente = roles?.includes('gerente')
+
+  // Visibilidad de dinero
+  const canSeeMoney = !isCocinero
+  const canSeeTotal = canSeeMoney
+  const canSeeCosto = canSeeMoney && !isGerente
+
   const clienteNombre = `${pedido.cliente?.nombre ?? ''} ${pedido.cliente?.apellido ?? ''}`.trim()
   const domicilio = pedido.domicilio
   const loc = domicilio?.localidad
   const prov = loc?.provincia
   const pais = prov?.pais
+
+  const fechaFormatted = formatDateDMY(pedido.fechaDePedido)
+  const horaFormatted = formatTimeHM(pedido.horarioEstimada)
 
   return (
     <div className="space-y-4 text-sm">
@@ -23,15 +37,21 @@ export default function PedidoDetails({pedido}: Props) {
           <span className="text-xs text-muted">Estado</span>
           <PedidoStateBadge estado={pedido.estado} />
         </div>
-        <div className="space-y-0.5 text-right">
-          <p>
-            <span className="text-xs text-muted mr-1">Total:</span>
-            <span className="font-semibold">{formatARS(pedido.total)}</span>
-          </p>
-          <p className="text-xs text-muted">
-            Costo: <span className="font-mono">{formatARS(pedido.costoTotal ?? 0)}</span>
-          </p>
-        </div>
+        {(canSeeTotal || canSeeCosto) && (
+          <div className="space-y-0.5 text-right">
+            {canSeeTotal && (
+              <p>
+                <span className="text-xs text-muted mr-1">Total:</span>
+                <span className="font-semibold">{formatARS(pedido.total)}</span>
+              </p>
+            )}
+            {canSeeCosto && (
+              <p className="text-xs text-muted">
+                Costo: <span className="font-mono">{formatARS(pedido.costoTotal ?? 0)}</span>
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Cliente */}
@@ -39,7 +59,7 @@ export default function PedidoDetails({pedido}: Props) {
         <h4 className="text-sm font-semibold mb-1">Cliente</h4>
         <div className="space-y-0.5">
           <p>{clienteNombre || 'Sin nombre'}</p>
-          {pedido.cliente?.telefono && (
+          {!isCocinero && pedido.cliente?.telefono && (
             <p className="text-xs text-muted">Teléfono: {pedido.cliente.telefono}</p>
           )}
         </div>
@@ -50,10 +70,15 @@ export default function PedidoDetails({pedido}: Props) {
         <h4 className="text-sm font-semibold mb-1">Domicilio</h4>
         {domicilio ? (
           <p className="text-sm text-text">
-            {domicilio.calle} {domicilio.numero}, CP {domicilio.cp}
-            {loc?.nombre && ` – ${loc.nombre}`}
-            {prov?.nombre && `, ${prov.nombre}`}
-            {pais?.nombre && `, ${pais.nombre}`}
+            {domicilio.calle} {domicilio.numero}
+            {(() => {
+              const partes: string[] = []
+              if (loc?.nombre) partes.push(loc.nombre)
+              if (prov?.nombre) partes.push(prov.nombre)
+              if (pais?.nombre) partes.push(pais.nombre)
+              return partes.length ? `, ${partes.join(', ')}` : ''
+            })()}
+            {domicilio.cp ? `, CP ${domicilio.cp}` : ''}
           </p>
         ) : (
           <p className="text-sm text-muted">Sin domicilio asociado.</p>
@@ -69,17 +94,19 @@ export default function PedidoDetails({pedido}: Props) {
         <div>
           <p className="text-muted">Fecha</p>
           <p>
-            {pedido.fechaDePedido} · {pedido.horarioEstimada}
+            {fechaFormatted} · {horaFormatted}
           </p>
         </div>
         <div>
           <p className="text-muted">Tipo de envío</p>
-          <p>{pedido.tipoDeEnvio}</p>
+          <p>{getTipoEnvioLabel(pedido.tipoDeEnvio)}</p>
         </div>
-        <div>
-          <p className="text-muted">Forma de pago</p>
-          <p>{pedido.formaDePago}</p>
-        </div>
+        {canSeeMoney && (
+          <div>
+            <p className="text-muted">Forma de pago</p>
+            <p>{getFormaPagoLabel(pedido.formaDePago)}</p>
+          </div>
+        )}
       </section>
 
       {/* Detalles */}
@@ -104,7 +131,7 @@ export default function PedidoDetails({pedido}: Props) {
                     <span className="font-mono w-6 text-right">{d.cantidad}</span>
                     <span>× {label}</span>
                   </div>
-                  <span className="font-mono">{formatARS(d.subTotal)}</span>
+                  {canSeeMoney && <span className="font-mono">{formatARS(d.subTotal)}</span>}
                 </li>
               )
             })}

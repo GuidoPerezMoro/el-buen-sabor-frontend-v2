@@ -7,7 +7,12 @@ import IconButton from '@/components/ui/IconButton'
 import {formatARS} from '@/lib/format'
 import {Pedido} from '@/services/types/pedido'
 import PedidoStateBadge from './PedidoStateBadge'
-import {formatHorarioEstimadaToHM, isPedidoDelayed} from '@/services/pedido.utils'
+import {
+  formatHorarioEstimadaToHM,
+  getFormaPagoLabel,
+  getTipoEnvioLabel,
+  isPedidoDelayed,
+} from '@/services/pedido.utils'
 
 type Props = {
   items: Pedido[]
@@ -17,30 +22,7 @@ type Props = {
   canUpdateEstado?: boolean
   canDelete?: boolean
   showCosto?: boolean
-}
-
-function mapFormaPagoLabel(valor: string): string {
-  switch (valor) {
-    case 'EFECTIVO':
-      return 'Efectivo'
-    case 'MERCADO_PAGO':
-      return 'Mercado Pago'
-    case 'TARJETA':
-      return 'Tarjeta'
-    default:
-      return valor
-  }
-}
-
-function mapTipoEnvioLabel(valor: string): string {
-  switch (valor) {
-    case 'DELIVERY':
-      return 'Delivery'
-    case 'TAKE_AWAY':
-      return 'Retiro en local'
-    default:
-      return valor
-  }
+  hideMoney?: boolean
 }
 
 export default function PedidosTable({
@@ -51,6 +33,7 @@ export default function PedidosTable({
   canUpdateEstado = true,
   canDelete = true,
   showCosto = false,
+  hideMoney = false,
 }: Props) {
   const columns = useMemo<Column<Pedido>[]>(
     () => [
@@ -64,8 +47,11 @@ export default function PedidosTable({
         header: 'Hora / Fecha',
         accessor: p => (
           <div className="flex flex-col text-xs">
-            <span className={isPedidoDelayed(p) ? 'font-semibold text-danger' : 'font-semibold'}>
-              {formatHorarioEstimadaToHM(p.horarioEstimada)}
+            <span
+              className={isPedidoDelayed(p) ? 'font-semibold text-danger' : 'font-semibold'}
+              title="Hora estimada de entrega"
+            >
+              Est. {formatHorarioEstimadaToHM(p.horarioEstimada)}
             </span>
             <span className="text-muted">{p.fechaDePedido}</span>
           </div>
@@ -85,20 +71,24 @@ export default function PedidosTable({
         ),
       },
       {
-        header: 'Envío / Pago',
+        header: hideMoney ? 'Envío' : 'Envío / Pago',
         accessor: p => (
           <div className="flex flex-col text-xs">
-            <span>{mapTipoEnvioLabel(p.tipoDeEnvio)}</span>
-            <span className="text-muted">{mapFormaPagoLabel(p.formaDePago)}</span>
+            <span>{getTipoEnvioLabel(p.tipoDeEnvio)}</span>
+            {!hideMoney && <span className="text-muted">{getFormaPagoLabel(p.formaDePago)}</span>}
           </div>
         ),
       },
-      {
-        header: 'Total',
-        accessor: p => <span className="font-medium">{formatARS(p.total)}</span>,
-        sortable: true,
-        sortKey: 'total',
-      },
+      ...(!hideMoney
+        ? [
+            {
+              header: 'Total',
+              accessor: (p: Pedido) => <span className="font-medium">{formatARS(p.total)}</span>,
+              sortable: true,
+              sortKey: 'total' as keyof Pedido,
+            },
+          ]
+        : []),
       ...(showCosto
         ? [
             {

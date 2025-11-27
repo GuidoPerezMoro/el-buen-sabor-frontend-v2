@@ -13,6 +13,7 @@ import {fetchAllPedidos, deletePedido} from '@/services/pedido'
 import {
   filterPedidosBySucursalId,
   filterPedidosByText,
+  getEstadoPedidoLabel,
   startPedidosPolling,
 } from '@/services/pedido.utils'
 import PedidosTable from '@/components/domain/pedido/PedidosTable'
@@ -87,8 +88,7 @@ export default function PedidosPage() {
       {value: 'ALL', label: 'Todos'},
       ...ESTADO_PEDIDO_VALUES.map(e => ({
         value: e,
-        // reutilizamos label de utils para el dropdown en la página
-        label: e, // label "bonita" la resolveremos con CSS/Badge, aquí basta valor crudo
+        label: getEstadoPedidoLabel(e),
       })),
     ],
     []
@@ -182,6 +182,7 @@ export default function PedidosPage() {
             canDelete={canDelete}
             canUpdateEstado={canUpdateEstado}
             showCosto={showCosto}
+            hideMoney={isCocinero}
           />
         </div>
       )}

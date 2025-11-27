@@ -1,4 +1,4 @@
-import {EstadoPedido, Pedido} from './types/pedido'
+import {EstadoPedido, FormaPago, Pedido, TipoEnvio} from '@/services/types/pedido'
 
 export function filterPedidosBySucursalId(list: Pedido[], sucursalId: number): Pedido[] {
   return list.filter(p => p.sucursal?.id === sucursalId)
@@ -25,6 +25,30 @@ export function getEstadoPedidoLabel(estado: EstadoPedido): string {
       return 'En reparto'
     default:
       return estado
+  }
+}
+
+export function getFormaPagoLabel(value: FormaPago | string): string {
+  switch (value) {
+    case 'EFECTIVO':
+      return 'Efectivo'
+    case 'MERCADO_PAGO':
+      return 'Mercadopago'
+    case 'TARJETA':
+      return 'Tarjeta'
+    default:
+      return String(value)
+  }
+}
+
+export function getTipoEnvioLabel(value: TipoEnvio | string): string {
+  switch (value) {
+    case 'DELIVERY':
+      return 'Delivery'
+    case 'TAKE_AWAY':
+      return 'Retiro en local'
+    default:
+      return String(value)
   }
 }
 
@@ -141,6 +165,11 @@ function buildEstimatedDate(pedido: Pedido): Date | null {
 
 /** True si la hora estimada ya quedó en el pasado respecto al reloj local. */
 export function isPedidoDelayed(pedido: Pedido): boolean {
+  // Una vez entregado o facturado, ya no se considera "atrasado"
+  if (pedido.estado === 'ENTREGADO' || pedido.estado === 'FACTURADO') {
+    return false
+  }
+
   const est = buildEstimatedDate(pedido)
   if (!est) return false
   const now = new Date()
