@@ -204,7 +204,7 @@ function buildEstimatedDate(pedido: Pedido): Date | null {
 /** True si la hora estimada ya quedó en el pasado respecto al reloj local. */
 export function isPedidoDelayed(pedido: Pedido): boolean {
   // Una vez entregado o facturado, ya no se considera "atrasado"
-  if (pedido.estado === 'ENTREGADO' || pedido.estado === 'FACTURADO') {
+  if (pedido.estado === 'ENTREGADO' || pedido.estado === 'FACTURADO'|| pedido.estado === 'CANCELADO'|| pedido.estado === 'RECHAZADO') {
     return false
   }
 
