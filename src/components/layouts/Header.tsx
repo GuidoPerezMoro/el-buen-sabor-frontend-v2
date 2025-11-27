@@ -1,7 +1,7 @@
 'use client'
 
 import {useEffect, useMemo, useState} from 'react'
-import {useParams, usePathname} from 'next/navigation'
+import {useParams, usePathname, useRouter} from 'next/navigation'
 
 import {ShoppingCart} from 'lucide-react'
 
@@ -14,17 +14,16 @@ import {fetchSucursalById} from '@/services/sucursal'
 
 import {useRoles} from '@/hooks/useRoles'
 import {useCart} from '@/contexts/cart'
-import useDialog from '@/hooks/useDialog'
 
 export default function Header() {
   const {empresaId, sucursalId} = useParams()
   const pathname = usePathname()
+  const router = useRouter()
   const [empresaName, setEmpresaName] = useState<string>('Empresa')
   const [sucursalName, setSucursalName] = useState<string>('Sucursal')
 
   const {roles, loading: rolesLoading, has} = useRoles()
   const {totalQuantity} = useCart()
-  const {openDialog} = useDialog()
 
   const STAFF_ROLES = ['superadmin', 'admin', 'gerente', 'cocinero'] as const
   const isStaff = roles ? has([...STAFF_ROLES]) : false
@@ -74,11 +73,23 @@ export default function Header() {
       configuracion: 'Configuración',
       unidadesDeMedida: 'Unidades de medida',
       shop: 'Tienda',
+      carrito: 'Carrito',
       // add more as needed
     }
     const pretty = map[tail] ?? tail.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
     return {label: pretty} as const
   }, [pathname, sucursalId])
+
+  const handleCart = () => {
+    const isCliente = roles ? has('cliente') : false
+
+    if (!isCliente) {
+      router.push('/auth/login')
+      return
+    }
+
+    router.push('/carrito')
+  }
 
   return (
     <header className="w-full min-h-[48px] bg-primary/10 border-surface px-4 py-3 flex items-center justify-between relative overflow-visible z-40">
@@ -116,7 +127,7 @@ export default function Header() {
         {!rolesLoading && !isStaff && (
           <button
             type="button"
-            onClick={() => openDialog('cart')}
+            onClick={handleCart}
             className="inline-flex items-center text-text hover:text-primary focus:outline-none"
           >
             <ShoppingCart className="h-5 w-5" aria-hidden="true" />

@@ -5,6 +5,7 @@ import '@/app/globals.css'
 import {Provider} from 'react-redux'
 import {store} from '@/store/store'
 import {DialogProvider} from '@/contexts/dialog'
+import {CartProvider} from '@/contexts/cart'
 
 const inter = Inter({subsets: ['latin']})
 
@@ -13,7 +14,9 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en">
       <body className={inter.className}>
         <Provider store={store}>
-          <DialogProvider>{children}</DialogProvider>
+          <CartProvider>
+            <DialogProvider>{children}</DialogProvider>
+          </CartProvider>
         </Provider>
       </body>
     </html>
