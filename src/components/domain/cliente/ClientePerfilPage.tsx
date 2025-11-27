@@ -79,37 +79,13 @@ export default function ClientePerfilPage() {
     <main className="min-h-screen bg-gradient-to-b from-muted/60 to-background flex justify-center p-4 sm:p-6">
       <section className="w-full max-w-3xl rounded-2xl border border-border/60 bg-background/80 shadow-lg backdrop-blur-md p-4 sm:p-6 md:p-8 space-y-4">
         <header className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text">
-                Mi perfil
-              </h1>
-              <p className="text-sm text-muted">
-                Gestiona tus datos de contacto y domicilios para tus pedidos.
-              </p>
-            </div>
-
-            {/* CTA principal cuando ya hay perfil */}
-            {!isLoading && user && state === 'ready' && cliente && !editing && (
-              <div className="flex flex-wrap gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setEditing(true)}
-                  className="text-sm"
-                >
-                  Editar datos
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={() => router.push('/post-login')}
-                  className="text-sm"
-                >
-                  Comenzar a comprar
-                </Button>
-              </div>
-            )}
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-text">
+              Mi perfil
+            </h1>
+            <p className="text-sm text-muted">
+              Gestiona tus datos de contacto y domicilios para tus pedidos.
+            </p>
           </div>
         </header>
 
@@ -149,11 +125,11 @@ export default function ClientePerfilPage() {
         {/* Perfil existente */}
         {!isLoading && user && state === 'ready' && cliente && !editing && (
           <div className="mt-4 space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h2 className="text-lg font-semibold">Datos personales</h2>
 
-              <div className="flex items-center gap-4 mb-2">
-                <div className="h-14 w-14 rounded-full overflow-hidden bg-muted flex items-center justify-center text-base font-semibold text-text">
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="h-16 w-16 rounded-full overflow-hidden bg-muted flex items-center justify-center text-base font-semibold text-text shrink-0">
                   {cliente.imagenUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -165,32 +141,32 @@ export default function ClientePerfilPage() {
                     <span>{avatarInitials}</span>
                   )}
                 </div>
-              </div>
 
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt className="text-muted">Nombre</dt>
-                  <dd className="font-medium">{cliente.nombre}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Apellido</dt>
-                  <dd className="font-medium">{cliente.apellido}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Teléfono</dt>
-                  <dd className="font-medium">{cliente.telefono || '-'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Email</dt>
-                  <dd className="font-medium">{cliente.email}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted">Fecha de nacimiento</dt>
-                  <dd className="font-medium">
-                    {cliente.fechaNacimiento ? cliente.fechaNacimiento : '-'}
-                  </dd>
-                </div>
-              </dl>
+                <dl className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-muted">Nombre</dt>
+                    <dd className="font-medium">{cliente.nombre}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">Apellido</dt>
+                    <dd className="font-medium">{cliente.apellido}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">Teléfono</dt>
+                    <dd className="font-medium">{cliente.telefono || '-'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">Email</dt>
+                    <dd className="font-medium">{cliente.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">Fecha de nacimiento</dt>
+                    <dd className="font-medium">
+                      {cliente.fechaNacimiento ? cliente.fechaNacimiento : '-'}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -217,10 +193,30 @@ export default function ClientePerfilPage() {
                 ))}
               </ul>
             </div>
+
+            {/* CTA principal al pie cuando ya hay perfil */}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="text-sm"
+                onClick={() => setEditing(true)}
+              >
+                Editar datos
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className="text-sm"
+                onClick={() => router.push('/post-login')}
+              >
+                Comenzar a comprar
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Modo edición inline */}
+        {/* Edit */}
         {!isLoading && user && state === 'ready' && cliente && editing && (
           <div className="mt-4 space-y-4">
             <ClientePerfilForm
@@ -228,17 +224,8 @@ export default function ClientePerfilPage() {
               authUserEmail={user.email}
               initialCliente={cliente}
               onUpdated={handleUpdated}
+              onCancel={() => setEditing(false)}
             />
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-sm"
-                onClick={() => setEditing(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
           </div>
         )}
       </section>

@@ -27,6 +27,7 @@ interface Props {
   initialCliente?: Cliente | null
   onCreated?: (cliente: Cliente) => void
   onUpdated?: (cliente: Cliente) => void
+  onCancel?: () => void
 }
 
 interface DomicilioFormState {
@@ -58,6 +59,7 @@ export default function ClientePerfilForm({
   initialCliente,
   onCreated,
   onUpdated,
+  onCancel,
 }: Props) {
   const isCreate = mode === 'create'
 
@@ -68,7 +70,17 @@ export default function ClientePerfilForm({
   const [fechaNacimiento, setFechaNacimiento] = useState(initialCliente?.fechaNacimiento ?? '')
   const [imagen, setImagen] = useState<File | null>(null)
 
-  const [domicilios, setDomicilios] = useState<DomicilioFormState[]>([makeEmptyDomicilio()])
+  const [domicilios, setDomicilios] = useState<DomicilioFormState[]>(() => {
+    if (initialCliente && !isCreate) {
+      return initialCliente.domicilios.map(d => ({
+        calle: d.calle,
+        numero: d.numero,
+        cp: d.cp,
+        localidadId: d.localidad?.id ?? (d as any).idLocalidad ?? null,
+      }))
+    }
+    return [makeEmptyDomicilio()]
+  })
   const [domicilioErrors, setDomicilioErrors] = useState<DomicilioFormErrors[]>([])
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -260,20 +272,25 @@ export default function ClientePerfilForm({
       <div className="space-y-3 mt-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Domicilios</h2>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={handleAddDomicilio}
-            disabled={!canAddMoreDomicilios}
-          >
-            Agregar domicilio
-          </Button>
+          {isCreate && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleAddDomicilio}
+              disabled={!canAddMoreDomicilios}
+            >
+              Agregar domicilio
+            </Button>
+          )}
         </div>
-        <p className="text-xs text-muted">
-          Puedes registrar uno o varios domicilios. Al menos uno es obligatorio para crear tu
-          perfil.
-        </p>
+
+        {isCreate && (
+          <p className="text-xs text-muted">
+            Puedes registrar uno o varios domicilios. Al menos uno es obligatorio para crear tu
+            perfil.
+          </p>
+        )}
 
         <div className="space-y-6">
           {domicilios.map((dom, index) => (
@@ -283,7 +300,7 @@ export default function ClientePerfilForm({
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-sm font-medium">Domicilio {index + 1}</h3>
-                {domicilios.length > 1 && (
+                {isCreate && domicilios.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -302,20 +319,33 @@ export default function ClientePerfilForm({
                 cp={dom.cp}
                 localidadId={dom.localidadId}
                 onChangeCalle={v =>
-                  setDomicilios(prev => prev.map((d, i) => (i === index ? {...d, calle: v} : d)))
+                  isCreate
+                    ? setDomicilios(prev =>
+                        prev.map((d, i) => (i === index ? {...d, calle: v} : d))
+                      )
+                    : prev => prev
                 }
                 onChangeNumero={v =>
-                  setDomicilios(prev => prev.map((d, i) => (i === index ? {...d, numero: v} : d)))
+                  isCreate
+                    ? setDomicilios(prev =>
+                        prev.map((d, i) => (i === index ? {...d, numero: v} : d))
+                      )
+                    : prev => prev
                 }
                 onChangeCp={v =>
-                  setDomicilios(prev => prev.map((d, i) => (i === index ? {...d, cp: v} : d)))
+                  isCreate
+                    ? setDomicilios(prev => prev.map((d, i) => (i === index ? {...d, cp: v} : d)))
+                    : prev => prev
                 }
                 onChangeLocalidadId={id =>
-                  setDomicilios(prev =>
-                    prev.map((d, i) => (i === index ? {...d, localidadId: id} : d))
-                  )
+                  isCreate
+                    ? setDomicilios(prev =>
+                        prev.map((d, i) => (i === index ? {...d, localidadId: id} : d))
+                      )
+                    : prev => prev
                 }
-                errors={domicilioErrors[index]}
+                disableLocalidad={!isCreate}
+                errors={isCreate ? domicilioErrors[index] : undefined}
               />
             </div>
           ))}
@@ -325,6 +355,11 @@ export default function ClientePerfilForm({
       {formErrors.general && <p className="text-sm text-danger">{formErrors.general}</p>}
 
       <div className="flex justify-end gap-2 mt-2">
+        {onCancel && (
+          <Button type="button" variant="secondary" disabled={submitting} onClick={onCancel}>
+            Cancelar
+          </Button>
+        )}
         <Button type="submit" variant="primary" loading={submitting}>
           {isCreate ? 'Guardar perfil' : 'Guardar cambios'}
         </Button>
