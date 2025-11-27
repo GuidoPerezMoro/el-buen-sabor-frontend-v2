@@ -52,7 +52,7 @@ export default function PedidosTable({
           </div>
         ),
         sortable: true,
-        sortKey: 'fechaDePedido',
+        sortKey: 'sortTimestamp' as keyof Pedido,
       },
       {
         header: 'Cliente',
