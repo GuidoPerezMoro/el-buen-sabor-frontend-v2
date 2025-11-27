@@ -2,11 +2,17 @@
 
 import Image from 'next/image'
 import {Sandwich} from 'lucide-react' // if your icon set lacks Sandwich, use UtensilsCrossed
+import {useRoles} from '@/hooks/useRoles'
 import {formatARS} from '@/lib/format'
 import {ArticuloManufacturado} from '@/services/types/articuloManufacturado'
 
 export default function ManufacturadoDetails({item}: {item: ArticuloManufacturado}) {
+  const {roles} = useRoles()
+  const isCocinero = roles?.includes('cocinero')
+
   const price = item.precioVenta ? formatARS(item.precioVenta) : '—'
+  const cost =
+    (item.costoTotal ?? 0) === 0 || item.costoTotal == null ? '—' : formatARS(item.costoTotal)
   const time = item.tiempoEstimadoMinutos ?? 0
 
   return (
@@ -35,10 +41,17 @@ export default function ManufacturadoDetails({item}: {item: ArticuloManufacturad
           <p className="text-sm text-muted">{item.categoria?.denominacion ?? '—'}</p>
           {/* Tiempo en su propia línea */}
           <p className="text-sm text-muted mt-0.5">{time} min de preparación</p>
-          {/* Precio */}
-          <p className="text-sm mt-2">
-            <strong>Precio:</strong> {price}
-          </p>
+          {/* Precio + costo (ocultos para cocinero) */}
+          {!isCocinero && (
+            <div className="text-sm mt-2 space-y-0.5">
+              <p>
+                <strong>Precio:</strong> {price}
+              </p>
+              <p>
+                <strong>Costo:</strong> {cost}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

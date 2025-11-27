@@ -25,6 +25,9 @@ export const empleadoCreateSchema = empleadoBaseSchema.extend({
   idSucursal: z.number({
     invalid_type_error: 'El ID de sucursal debe ser un número',
   }),
+  idEmpresa: z.number({
+    invalid_type_error: 'El ID de empresa debe ser un número',
+  }),
 })
 export type EmpleadoCreatePayload = z.infer<typeof empleadoCreateSchema>
 
@@ -37,5 +40,10 @@ export const empleadoUpdateSchema = empleadoBaseSchema.extend({
   idSucursal: z.number({
     invalid_type_error: 'El ID de sucursal debe ser un número',
   }),
+  idEmpresa: z
+    .number({
+      invalid_type_error: 'El ID de empresa debe ser un número',
+    })
+    .optional(),
 })
 export type EmpleadoUpdatePayload = z.infer<typeof empleadoUpdateSchema>

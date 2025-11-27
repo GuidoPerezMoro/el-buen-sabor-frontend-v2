@@ -15,11 +15,11 @@ export interface ArticuloManufacturadoDetalle {
 }
 
 export interface ArticuloManufacturado extends Articulo {
-  imagenUrl: string | null
-
   descripcion: string | null
   tiempoEstimadoMinutos: number // int >= 0
   preparacion: string | null
+
+  costoTotal: number
 
   detalles: ArticuloManufacturadoDetalle[]
 }

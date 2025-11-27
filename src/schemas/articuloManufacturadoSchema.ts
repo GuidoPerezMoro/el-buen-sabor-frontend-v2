@@ -39,7 +39,8 @@ export const articuloManufacturadoCreateSchema = base
   })
 
 export const articuloManufacturadoUpdateSchema = base.partial().extend({
-  idCategoria: requiredId('Categoría'),
+  // En UPDATE permitimos omitir categoría; el backend conserva la existente.
+  idCategoria: z.number().int().positive('Categoría requerida').optional(),
   detalles: z.array(detalleSchema).optional(),
 })
 

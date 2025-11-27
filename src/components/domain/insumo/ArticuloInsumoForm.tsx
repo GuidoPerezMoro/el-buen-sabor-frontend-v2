@@ -79,6 +79,7 @@ export default function ArticuloInsumoForm({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [imagen, setImagen] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.imagenUrl ?? null)
 
   // Load unidades & categorias (only insumo categories present in this sucursal)
   useEffect(() => {
@@ -119,6 +120,7 @@ export default function ArticuloInsumoForm({
         : null
     )
     setFormErrors({})
+    setPreviewUrl(initialData?.imagenUrl ?? null)
   }, [isEdit, initialData])
 
   // ── submit ───────────────────────────────────────────────────────────────
@@ -138,7 +140,7 @@ export default function ArticuloInsumoForm({
           stockMinimo: stockMinimo === '' ? undefined : Number(stockMinimo),
           esParaElaborar,
           idUnidadDeMedida: unidadOpt ? Number(unidadOpt.value) : undefined,
-          idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
+          // idCategoria: categoriaOpt ? Number(categoriaOpt.value) : undefined,
         }
         const parsed = articuloInsumoUpdateSchema.safeParse(raw)
         if (!parsed.success) {
@@ -153,6 +155,7 @@ export default function ArticuloInsumoForm({
         } else {
           await updateArticuloInsumo(initialData.id, parsed.data)
         }
+        if (imagen) setPreviewUrl(null)
       } else {
         const raw = {
           denominacion: denominacion.trim(),
@@ -189,6 +192,7 @@ export default function ArticuloInsumoForm({
         setEsParaElaborar(false)
         setUnidadOpt(null)
         setCategoriaOpt(null)
+        setPreviewUrl(null)
       }
 
       onSuccess?.()
@@ -208,8 +212,11 @@ export default function ArticuloInsumoForm({
           <ImageDropzone
             label="Imagen"
             hint="Formatos soportados: SVG/JPG/PNG..."
-            onFileAccepted={setImagen}
-            previewUrl={initialData?.imagenUrl ?? null}
+            onFileAccepted={file => {
+              setImagen(file)
+              setPreviewUrl(file ? URL.createObjectURL(file) : null)
+            }}
+            previewUrl={previewUrl}
           />
 
           <Dropdown
@@ -244,6 +251,7 @@ export default function ArticuloInsumoForm({
               label="Precio compra"
               type="number"
               inputMode="decimal"
+              prefix={'$'}
               value={precioCompra}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioCompra(e.target.value)}
               error={formErrors.precioCompra}
@@ -252,6 +260,7 @@ export default function ArticuloInsumoForm({
               label="Precio venta"
               type="number"
               inputMode="decimal"
+              prefix={'$'}
               value={precioVenta}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrecioVenta(e.target.value)}
               error={formErrors.precioVenta}
@@ -298,6 +307,7 @@ export default function ArticuloInsumoForm({
               value={categoriaOpt}
               onChange={val => setCategoriaOpt(val as DDOpt | null)}
               placeholder="Selecciona"
+              disabled={isEdit}
               error={formErrors.idCategoria}
             />
             <p className="text-xs text-muted mt-2">
@@ -318,7 +328,7 @@ export default function ArticuloInsumoForm({
           Cancelar
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          {isEdit ? 'Guardar cambios' : 'Crear artículo'}
+          {isEdit ? 'Guardar cambios' : 'Crear'}
         </Button>
       </div>
     </form>

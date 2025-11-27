@@ -15,7 +15,8 @@ import {fetchAllEmpleados, deleteEmpleado} from '@/services/empleado'
 import {filterEmpleadosBySucursalId, filterEmpleadosByText} from '@/services/empleado.utils'
 
 export default function EmpleadosPage() {
-  const {sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const {empresaId: eid, sucursalId: sid} = useParams<{empresaId: string; sucursalId: string}>()
+  const empresaId = Number(eid)
   const sucursalId = Number(sid)
   const {openDialog, closeDialog} = useDialog()
   const {roles} = useRoles()
@@ -113,7 +114,12 @@ export default function EmpleadosPage() {
       )}
 
       <Dialog name="nuevo-empleado" title="Nuevo empleado">
-        <EmpleadoForm sucursalId={sucursalId} dialogName="nuevo-empleado" onSuccess={load} />
+        <EmpleadoForm
+          empresaId={empresaId}
+          sucursalId={sucursalId}
+          dialogName="nuevo-empleado"
+          onSuccess={load}
+        />
       </Dialog>
 
       <Dialog
@@ -123,6 +129,7 @@ export default function EmpleadosPage() {
       >
         {editing && (
           <EmpleadoForm
+            empresaId={empresaId}
             sucursalId={sucursalId}
             initialData={editing}
             dialogName="editar-empleado"

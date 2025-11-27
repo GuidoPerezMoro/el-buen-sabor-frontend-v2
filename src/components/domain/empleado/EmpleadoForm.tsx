@@ -21,6 +21,7 @@ import {
 } from '@/services/empleado'
 
 interface Props {
+  empresaId: number
   sucursalId: number
   initialData?: Empleado
   onSuccess?: () => void
@@ -40,7 +41,13 @@ const roleToValue = (r: string | null | undefined): number | null => {
   return idx >= 0 ? idx + 1 : null
 }
 
-export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialogName}: Props) {
+export default function EmpleadoForm({
+  empresaId,
+  sucursalId,
+  initialData,
+  onSuccess,
+  dialogName,
+}: Props) {
   const isEdit = !!initialData
   const {closeDialog} = useDialog()
 
@@ -90,6 +97,8 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
           // UI: rol no cambia, pero BE lo pide → reenviar el actual
           rol: initialData.rol,
           idSucursal: initialData.sucursal.id,
+          // Preferimos el id de la URL; si el empleado ya trae empresa, debería coincidir.
+          idEmpresa: initialData.empresa?.id ?? empresaId,
         }
         const parsed = empleadoUpdateSchema.safeParse(raw)
         if (!parsed.success) {
@@ -116,6 +125,7 @@ export default function EmpleadoForm({sucursalId, initialData, onSuccess, dialog
           ...(!!_email && {email: _email}),
           ...(!!_fnac && {fechaNacimiento: _fnac}),
           rol: rol ?? '',
+          idEmpresa: empresaId,
           idSucursal: sucursalId,
         }
         const parsed = empleadoCreateSchema.safeParse(raw)

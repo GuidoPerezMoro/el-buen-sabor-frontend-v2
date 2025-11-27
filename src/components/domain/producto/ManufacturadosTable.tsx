@@ -64,6 +64,13 @@ export default function ManufacturadosTable({
               sortable: true,
               sortKey: 'precioVenta' as keyof ArticuloManufacturado,
             },
+            {
+              header: 'Costo',
+              accessor: (p: ArticuloManufacturado) =>
+                (p.costoTotal ?? 0) === 0 ? '-' : formatARS(p.costoTotal ?? 0),
+              sortable: true,
+              sortKey: 'costoTotal' as keyof ArticuloManufacturado,
+            },
           ]
         : []),
       {

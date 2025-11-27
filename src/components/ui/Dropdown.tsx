@@ -62,7 +62,9 @@ const _Dropdown = forwardRef<HTMLDivElement, DropdownProps<BaseOption>>(
 
     const selectedValue = value == null ? '' : typeof value === 'string' ? value : value.value
     const selectedOption = normalized.find(o => o.value === selectedValue)
-    const selectedLabel = selectedOption?.label ?? ''
+    const selectedLabel =
+      selectedOption?.label ??
+      (value == null ? '' : typeof value === 'string' ? value : value.label)
 
     const [isOpen, setIsOpen] = useState(false)
     const [filter, setFilter] = useState(searchable ? selectedLabel : '')
