@@ -62,12 +62,14 @@ export function getTipoEnvioLabel(value: TipoEnvio | string): string {
 const PEDIDO_ALLOWED_NEXT_ESTADOS: Record<EstadoPedido, EstadoPedido[]> = {
   PENDIENTE: ['PREPARACION', 'CANCELADO', 'RECHAZADO'],
   PREPARACION: ['TERMINADO', 'CANCELADO'],
-  TERMINADO: ['ENTREGADO', 'FACTURADO'],
+  // Listo en cocina: puede pasar a "listo para retirar" o "en reparto",
+  // pero ya no se factura directamente desde aquí.
+  TERMINADO: ['ENTREGADO', 'DELIVERY'],
+  DELIVERY: ['ENTREGADO'],
   ENTREGADO: ['FACTURADO'],
   FACTURADO: [],
   CANCELADO: [],
   RECHAZADO: [],
-  DELIVERY: ['ENTREGADO', 'FACTURADO'],
 }
 
 export function getAllowedNextEstados(current: EstadoPedido): EstadoPedido[] {
@@ -79,16 +81,31 @@ export function getAllowedNextEstadosForRole(
   current: EstadoPedido,
   roles?: string[] | null
 ): EstadoPedido[] {
-  const base = getAllowedNextEstados(current)
-  const role = getPrimaryStaffRole(roles)
+  const isCocinero = hasAnyRole(roles ?? undefined, ['cocinero'])
+  const isGerente = hasAnyRole(roles ?? undefined, ['gerente'])
+  const isAdmin = hasAnyRole(roles ?? undefined, ['admin'])
+  const isSuperadmin = hasAnyRole(roles ?? undefined, ['superadmin'])
 
-  if (role === 'cocinero') {
-    // Cocinero: solo puede marcar preparación como terminado.
+  // Cocinero: solo PREPARACION -> TERMINADO. Nada más.
+  if (isCocinero) {
     if (current === 'PREPARACION') return ['TERMINADO']
     return []
   }
 
-  // Gerente / admin / superadmin: por ahora tienen el mapa completo.
+  // Si no es staff conocido, no permitimos cambios (ruta ya debería estar protegida).
+  if (!isGerente && !isAdmin && !isSuperadmin) {
+    return []
+  }
+
+  const base = getAllowedNextEstados(current)
+
+  // Gerente: puede manejar operación (pendiente/preparación/terminado/entregado/delivery),
+  // pero no factura. Filtramos cualquier transición hacia FACTURADO.
+  if (isGerente && !isAdmin && !isSuperadmin) {
+    return base.filter(e => e !== 'FACTURADO')
+  }
+
+  // Admin y superadmin: tienen el mapa completo (incluye facturación).
   return base
 }
 
