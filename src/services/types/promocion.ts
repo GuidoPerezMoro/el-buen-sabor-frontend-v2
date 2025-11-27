@@ -4,8 +4,10 @@ import {Sucursal} from './sucursal'
 
 // API uses a string enum. Extend as backend grows.
 export enum TipoPromocion {
-  HAPPY_HOUR = 'HAPPY_HOUR',
-  PROMOCION = 'PROMOCION',
+  PROMOCION = 'PROMOCION', // precio fijo enviado por la app
+  HAPPY_HOUR = 'HAPPY_HOUR', // 20% OFF automático
+  CINCUENTAOFF = 'CINCUENTAOFF', // 50% OFF automático
+  DOSXUNO = 'DOSXUNO', // 2x1 automático
 }
 
 export type ArticuloRef = Pick<Articulo, 'id' | 'denominacion' | 'imagenUrl' | 'precioVenta'>
@@ -45,7 +47,7 @@ export interface PromocionCreatePayload {
   horaDesde: string
   horaHasta: string
   descripcionDescuento?: string | null
-  precioPromocional: number
+  precioPromocional?: number
   tipoPromocion: TipoPromocion
   idSucursales: number[]
   detalles: PromocionDetallePayload[]

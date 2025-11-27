@@ -5,8 +5,10 @@ import {ArticuloManufacturado} from './types/articuloManufacturado'
 import {Promocion, TipoPromocion} from './types/promocion'
 
 export const TIPO_PROMOCION_OPTIONS = [
-  {value: TipoPromocion.HAPPY_HOUR, label: 'Happy Hour'},
   {value: TipoPromocion.PROMOCION, label: 'Promoción'},
+  {value: TipoPromocion.HAPPY_HOUR, label: 'Happy Hour (20% OFF)'},
+  {value: TipoPromocion.CINCUENTAOFF, label: '50% OFF'},
+  {value: TipoPromocion.DOSXUNO, label: '2x1'},
 ] as const
 
 /** Returns true if the promo is linked to the given sucursal, regardless of API shape. */

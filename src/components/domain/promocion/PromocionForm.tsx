@@ -75,6 +75,7 @@ export default function PromocionForm({
       ? {value: opt.value, label: opt.label}
       : {value: initialData.tipoPromocion as any, label: String(initialData.tipoPromocion)}
   })
+  const currentTipo = tipo?.value as TipoPromocion | undefined
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [idSucursales, setIdSucursales] = useState<number[]>(() => {
@@ -105,6 +106,7 @@ export default function PromocionForm({
   )
   const [articuloOptions, setArticuloOptions] = useState<DD[]>([])
   const [labelById, setLabelById] = useState<Record<number, string>>({})
+  const [precioById, setPrecioById] = useState<Record<number, number>>({})
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
@@ -126,17 +128,26 @@ export default function PromocionForm({
       )
 
       // Build a reliable label map for editor rendering, even if an item isn’t present in filtered options
-      const map: Record<number, string> = {}
-      for (const i of insumos) map[i.id] = `${i.denominacion} [Insumo]`
-      for (const p of prods) map[p.id] = `${p.denominacion} [Prod]`
+      const labels: Record<number, string> = {}
+      const precios: Record<number, number> = {}
+
+      for (const i of insumos) {
+        labels[i.id] = `${i.denominacion} [Insumo]`
+        precios[i.id] = i.precioVenta ?? 0
+      }
+      for (const p of prods) {
+        labels[p.id] = `${p.denominacion} [Prod]`
+        precios[p.id] = p.precioVenta ?? 0
+      }
       // Ensure items already on the promo have at least their raw denominación as fallback
       if (initialData?.detalles?.length) {
         for (const d of initialData.detalles) {
           const id = d.articulo.id
-          if (!map[id]) map[id] = d.articulo.denominacion
+          if (!labels[id]) labels[id] = d.articulo.denominacion
         }
       }
-      setLabelById(map)
+      setLabelById(labels)
+      setPrecioById(precios)
     })()
   }, [empresaId, sucursalId, initialData])
 
@@ -176,8 +187,39 @@ export default function PromocionForm({
     setFormErrors({})
   }, [isEdit, initialData])
 
+  // Si el tipo es 2×1, normalizamos cantidades a 2 y bloqueamos errores locales de precio
+  useEffect(() => {
+    if (currentTipo !== TipoPromocion.DOSXUNO) return
+    setDetalles(prev =>
+      prev.map(d => ({
+        ...d,
+        cantidad: d.cantidad || 2,
+      }))
+    )
+  }, [currentTipo])
+
+  // Si el tipo no es PROMOCION, el precio se calcula en backend → limpiamos campo y error.
+  useEffect(() => {
+    if (currentTipo === TipoPromocion.PROMOCION) return
+    setPrecioPromo('')
+    setFormErrors(prev => {
+      const {precioPromocional, ...rest} = prev
+      return rest
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTipo])
+
   const updateCantidad = (id: number, qty: number | '') =>
-    setDetalles(prev => prev.map(d => (d.idArticulo === id ? {...d, cantidad: qty as number} : d)))
+    setDetalles(prev =>
+      prev.map(d =>
+        d.idArticulo === id
+          ? {
+              ...d,
+              cantidad: currentTipo === TipoPromocion.DOSXUNO ? 2 : (qty as number),
+            }
+          : d
+      )
+    )
   const removeDetalle = (id: number) => setDetalles(prev => prev.filter(d => d.idArticulo !== id))
 
   // submit
@@ -195,8 +237,11 @@ export default function PromocionForm({
           horaDesde: horaDesde ? toApiTime(horaDesde) : undefined,
           horaHasta: horaHasta ? toApiTime(horaHasta) : undefined,
           descripcionDescuento: descripcion,
-          precioPromocional: precioPromo === '' ? undefined : Number(precioPromo),
-          tipoPromocion: (tipo?.value as TipoPromocion) ?? undefined,
+          precioPromocional:
+            currentTipo === TipoPromocion.PROMOCION && precioPromo !== ''
+              ? Number(precioPromo)
+              : undefined,
+          tipoPromocion: currentTipo,
           idSucursales: idSucursales.length ? idSucursales : undefined,
           detalles: detalles.length ? detalles : undefined,
         }
@@ -221,8 +266,11 @@ export default function PromocionForm({
           horaDesde: toApiTime(horaDesde),
           horaHasta: toApiTime(horaHasta),
           descripcionDescuento: descripcion || undefined,
-          precioPromocional: Number(precioPromo || 0),
-          tipoPromocion: (tipo?.value as TipoPromocion) ?? TipoPromocion.HAPPY_HOUR,
+          precioPromocional:
+            currentTipo === TipoPromocion.PROMOCION && precioPromo !== ''
+              ? Number(precioPromo)
+              : undefined,
+          tipoPromocion: currentTipo ?? TipoPromocion.HAPPY_HOUR,
           idSucursales,
           detalles,
         }
@@ -294,6 +342,8 @@ export default function PromocionForm({
             onChange={v => setTipo(v as DD)}
             placeholder="Selecciona"
             error={formErrors.tipoPromocion}
+            searchable={false}
+            clearable={false}
           />
           <Input
             label="Precio promocional"
@@ -303,6 +353,12 @@ export default function PromocionForm({
             onChange={(e: ChangeEvent<HTMLInputElement>) => setPrecioPromo(e.target.value)}
             error={formErrors.precioPromocional}
             prefix="$"
+            disabled={currentTipo !== TipoPromocion.PROMOCION}
+            placeholder={
+              currentTipo === TipoPromocion.PROMOCION
+                ? ''
+                : 'Se calcula automáticamente según el tipo'
+            }
           />
           <div className="md:col-span-2">
             <Input
@@ -349,7 +405,17 @@ export default function PromocionForm({
         articuloOptions={articuloOptions}
         detalles={detalles}
         labelById={labelById}
-        onAdd={(id, qty) => setDetalles(prev => [...prev, {idArticulo: id, cantidad: qty}])}
+        precioById={precioById}
+        tipoPromocion={currentTipo}
+        onAdd={(id, qty) =>
+          setDetalles(prev => [
+            ...prev,
+            {
+              idArticulo: id,
+              cantidad: currentTipo === TipoPromocion.DOSXUNO ? 2 : qty,
+            },
+          ])
+        }
         onChangeCantidad={(id, qty) => updateCantidad(id, qty)}
         onRemove={removeDetalle}
         error={formErrors.detalles}
