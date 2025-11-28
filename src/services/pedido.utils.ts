@@ -1,6 +1,5 @@
-import {getPrimaryStaffRole} from '@/hooks/useRoles'
-import {EstadoPedido, FormaPago, Pedido, TipoEnvio} from '@/services/types/pedido'
-import {hasAnyRole} from '@/services/types'
+import {hasAnyRole, EstadoPedido, FormaPago, Pedido, TipoEnvio} from '@/services/types'
+import {fetchPedidoById} from './pedido'
 
 export function filterPedidosBySucursalId(list: Pedido[], sucursalId: number): Pedido[] {
   return list.filter(p => p.sucursal?.id === sucursalId)
@@ -163,6 +162,40 @@ export function startPedidosPolling(
   }
 }
 
+/** Polling para un único pedido por ID (ideal para seguimiento de cliente). */
+export function startPedidoPollingById(
+  pedidoId: number,
+  onUpdate: (pedido: Pedido) => void,
+  opts?: {intervalMs?: number; immediate?: boolean}
+): () => void {
+  const {intervalMs = 5000, immediate = true} = opts || {}
+
+  let timer: ReturnType<typeof setInterval> | null = null
+  let cancelled = false
+
+  const tick = async () => {
+    try {
+      const pedido = await fetchPedidoById(pedidoId)
+      if (!cancelled) onUpdate(pedido)
+    } catch {
+      // Swallow; errores de red puntuales no deberían romper el tracking.
+    }
+  }
+
+  if (immediate) {
+    void tick()
+  }
+
+  timer = setInterval(() => {
+    void tick()
+  }, intervalMs)
+
+  return () => {
+    cancelled = true
+    if (timer) clearInterval(timer)
+  }
+}
+
 /** Búsqueda solo por cliente (nombre + apellido). */
 export function filterPedidosByText(list: Pedido[], query: string): Pedido[] {
   const q = query.trim()
@@ -204,7 +237,12 @@ function buildEstimatedDate(pedido: Pedido): Date | null {
 /** True si la hora estimada ya quedó en el pasado respecto al reloj local. */
 export function isPedidoDelayed(pedido: Pedido): boolean {
   // Una vez entregado o facturado, ya no se considera "atrasado"
-  if (pedido.estado === 'ENTREGADO' || pedido.estado === 'FACTURADO'|| pedido.estado === 'CANCELADO'|| pedido.estado === 'RECHAZADO') {
+  if (
+    pedido.estado === 'ENTREGADO' ||
+    pedido.estado === 'FACTURADO' ||
+    pedido.estado === 'CANCELADO' ||
+    pedido.estado === 'RECHAZADO'
+  ) {
     return false
   }
 
