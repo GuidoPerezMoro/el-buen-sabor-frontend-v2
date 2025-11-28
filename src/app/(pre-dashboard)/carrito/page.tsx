@@ -155,8 +155,11 @@ export default function CarritoPage() {
         throw new Error('No se recibió la URL de pago de MercadoPago.')
       }
 
-      // Redirigir al checkout de MercadoPago
-      window.location.href = pref.initPoint
+      // Open MercadoPago in a new tab
+      window.open(pref.initPoint, '_blank')
+
+      // Redirect to seguimiento page in the current tab
+      router.push(`/pedido/${pedido.id}/seguimiento`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ocurrió un error al iniciar el pago.'
       setSubmitError(message)
