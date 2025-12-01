@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   } else if (r.has('gerente') || r.has('cocinero')) {
     // Only send directly to the sucursal if BOTH claims are present
     if (empresaId && sucursalId && empresaId !== 'null' && sucursalId !== 'null') {
-      dest = `/empresa/${empresaId}/sucursal/${sucursalId}`
+      dest = `/empresa/${empresaId}/sucursal/${sucursalId}/pedidos`
     } else {
       dest = '/empresa'
     }

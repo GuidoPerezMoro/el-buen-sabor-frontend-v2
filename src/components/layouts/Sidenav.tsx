@@ -35,9 +35,9 @@ type RenderEl = NavItemWithHref | DividerEl
 const NAV: NavEl[] = [
   {
     type: 'item',
-    makeHref: b => b,
-    label: 'Dashboard',
-    icon: Home,
+    makeHref: b => `${b}/pedidos`,
+    label: 'Pedidos',
+    icon: ListChecks,
     allow: ['superadmin', 'admin', 'gerente', 'cocinero'],
   },
   {type: 'divider'},
@@ -79,14 +79,6 @@ const NAV: NavEl[] = [
   {type: 'divider'},
   {
     type: 'item',
-    makeHref: b => `${b}/pedidos`,
-    label: 'Pedidos',
-    icon: ListChecks,
-    allow: ['superadmin', 'admin', 'gerente', 'cocinero'],
-  },
-  {type: 'divider'},
-  {
-    type: 'item',
     makeHref: b => `${b}/shop`,
     label: 'Tienda',
     icon: ShoppingBasketIcon,
@@ -101,13 +93,6 @@ const NAV: NavEl[] = [
     allow: ['superadmin', 'admin', 'gerente'],
   },
   {type: 'divider'},
-  {
-    type: 'item',
-    makeHref: b => `${b}/configuracion`,
-    label: 'Configuración',
-    icon: Settings,
-    allow: ['superadmin', 'admin', 'gerente', 'cocinero'],
-  },
 ]
 
 // remove consecutive/edge dividers (typed)

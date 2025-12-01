@@ -45,7 +45,9 @@ export function buildArticuloOptionsForSucursal(params: {
   sucursalId: number
 }) {
   const {insumos, manufacturados, sucursalId} = params
-  const insumosHere = filterArticuloInsumosBySucursalId(insumos, sucursalId)
+  const insumosHere = filterArticuloInsumosBySucursalId(insumos, sucursalId).filter(
+    i => !i.esParaElaborar
+  )
   const prodsHere = filterManufacturadosBySucursalId(manufacturados, sucursalId)
 
   const insumoOpts = insumosHere.map(i => ({
